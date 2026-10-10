@@ -161,7 +161,8 @@ export default function Login() {
     window.setTimeout(() => {
       setSubmitting(false);
       if (otp === DEMO_CODE) {
-        navigate("/donors", { replace: true });
+        const next = new URLSearchParams(window.location.search).get("next") || "/donors";
+        navigate(next, { replace: true });
       } else {
         setOtpIssue("wrong");
       }

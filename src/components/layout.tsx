@@ -6,8 +6,8 @@
  * smoothly present in the top navigation bar.
  */
 
-import { Link, NavLink, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import {
   Droplet,
   Home,
@@ -21,8 +21,23 @@ import {
 } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
+import { supabase } from "@/lib/supabase.ts";
 
 import type { ComponentType } from "react";
+
+export interface AuthContextType {
+  isLoggedIn: boolean;
+  requireAuth: (path: string) => void;
+}
+
+export const AuthContext = createContext<AuthContextType>({
+  isLoggedIn: false,
+  requireAuth: () => {},
+});
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
 
 type NavItem = {
   to: string;
@@ -121,6 +136,11 @@ function NavLinks({
 function LeftRail() {
   const { t, lang } = useAppShell();
   const { pathname } = useLocation();
+  const { isLoggedIn } = useAuth();
+
+  const visibleSecondaryNav = secondaryNav.filter(
+    (item) => isLoggedIn || item.to !== "/settings"
+  );
 
   return (
     <aside className="hidden lg:block w-64 shrink-0 border-r border-line bg-surface">
@@ -145,7 +165,7 @@ function LeftRail() {
           );
         })}
         <div className="mt-2 pt-2 border-t border-line flex flex-col gap-1">
-          {secondaryNav.map((item) => {
+          {visibleSecondaryNav.map((item) => {
             const Icon = item.icon;
             const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
             return (
@@ -186,8 +206,40 @@ function LeftRail() {
 export function Layout({ children }: { children: React.ReactNode }) {
   const { t, lang } = useAppShell();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check auth session on mount and subscribe to changes
+  useEffect(() => {
+    if (!supabase) return;
+
+    supabase.auth.getSession().then(({ data }) => {
+      setIsLoggedIn(Boolean(data.session));
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(Boolean(session));
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const requireAuth = useCallback(
+    (path: string) => {
+      if (isLoggedIn) {
+        navigate(path);
+      } else {
+        navigate(`/login?next=${path}`);
+      }
+    },
+    [isLoggedIn, navigate]
+  );
 
   // Track window scroll position to toggle sticky top-bar action buttons
   useEffect(() => {
@@ -204,126 +256,134 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // Close the drawer on navigation.
   useEffect(() => setMobileOpen(false), [pathname]);
 
+  const visibleSecondaryNav = secondaryNav.filter(
+    (item) => isLoggedIn || item.to !== "/settings"
+  );
+
   return (
-    <div className="min-h-dvh flex flex-col">
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-100 focus:rounded-xl focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:text-ink focus:shadow-lg"
-      >
-        {t("nav.skipToContent")}
-      </a>
+    <AuthContext.Provider value={{ isLoggedIn, requireAuth }}>
+      <div className="min-h-dvh flex flex-col">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-100 focus:rounded-xl focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:text-ink focus:shadow-lg"
+        >
+          {t("nav.skipToContent")}
+        </a>
 
-      {/* Constant top bar: sticky, never hides on scroll */}
-      <header className="sticky top-0 z-50 border-b border-line bg-surface/90 backdrop-blur-md">
-        <nav aria-label="Primary" className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="flex items-center justify-between h-[4.5rem] gap-2 sm:gap-4">
-            <Link to="/" className="flex items-center gap-2.5 shrink-0" aria-label={t("app.name")}>
-              <img src="/logo.svg" alt="" className="h-8 w-8" width={32} height={32} />
-              <Wordmark />
-            </Link>
+        {/* Constant top bar: sticky, never hides on scroll */}
+        <header className="sticky top-0 z-50 border-b border-line bg-surface/90 backdrop-blur-md">
+          <nav aria-label="Primary" className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="flex items-center justify-between h-[4.5rem] gap-2 sm:gap-4">
+              <Link to="/" className="flex items-center gap-2.5 shrink-0" aria-label={t("app.name")}>
+                <img src="/logo.svg" alt="" className="h-8 w-8" width={32} height={32} />
+                <Wordmark />
+              </Link>
 
-            {/* Center Area: Primary NavLinks when at top, Action buttons when scrolled */}
-            <div className="flex-1 flex items-center justify-center px-2 min-w-0">
-              <div className="relative flex items-center justify-center w-full max-w-lg h-10">
-                {/* Desktop links (top bar when not scrolled) */}
-                <div
-                  className={`hidden md:flex items-center gap-1 transition-all duration-300 ease-out ${
-                    isScrolled
-                      ? "opacity-0 pointer-events-none -translate-y-2 scale-95 invisible"
-                      : "opacity-100 pointer-events-auto translate-y-0 scale-100 visible"
-                  }`}
-                >
-                  <NavLinks items={primaryNav} className="flex items-center gap-1" />
-                </div>
-
-                {/* Scrolled Action Buttons: "Find Donor" & "Consult Doctor" */}
-                <div
-                  className={`flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 ease-out ${
-                    isScrolled
-                      ? "opacity-100 pointer-events-auto translate-y-0 scale-100 visible"
-                      : "opacity-0 pointer-events-none translate-y-2 scale-95 invisible"
-                  }`}
-                  aria-hidden={!isScrolled}
-                >
-                  <Link
-                    to="/donors"
-                    tabIndex={isScrolled ? 0 : -1}
-                    className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#4c061d] text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold shadow-xs hover:bg-[#380715] hover:shadow-md transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95"
-                    aria-label={t("donors.title")}
+              {/* Center Area: Primary NavLinks when at top, Action buttons when scrolled */}
+              <div className="flex-1 flex items-center justify-center px-2 min-w-0">
+                <div className="relative flex items-center justify-center w-full max-w-lg h-10">
+                  {/* Desktop links (top bar when not scrolled) */}
+                  <div
+                    className={`hidden md:flex items-center gap-1 transition-all duration-300 ease-out ${
+                      isScrolled
+                        ? "opacity-0 pointer-events-none -translate-y-2 scale-95 invisible"
+                        : "opacity-100 pointer-events-auto translate-y-0 scale-100 visible"
+                    }`}
                   >
-                    <Droplet className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 fill-current" strokeWidth={1.8} aria-hidden="true" />
-                    <span className="hidden sm:inline">{t("donors.title")}</span>
-                    <span className="sm:hidden">{lang === "bn" ? "রক্তদাতা" : "Donor"}</span>
-                  </Link>
-                  <Link
-                    to="/doctors"
-                    tabIndex={isScrolled ? 0 : -1}
-                    className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#006d6f] text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold shadow-xs hover:bg-[#005759] hover:shadow-md transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95"
-                    aria-label={t("doctors.title")}
+                    <NavLinks items={primaryNav} className="flex items-center gap-1" />
+                  </div>
+
+                  {/* Scrolled Action Buttons: "Find Donor" & "Consult Doctor" */}
+                  <div
+                    className={`flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 ease-out ${
+                      isScrolled
+                        ? "opacity-100 pointer-events-auto translate-y-0 scale-100 visible"
+                        : "opacity-0 pointer-events-none translate-y-2 scale-95 invisible"
+                    }`}
+                    aria-hidden={!isScrolled}
                   >
-                    <Stethoscope className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-                    <span className="hidden sm:inline">{t("doctors.title")}</span>
-                    <span className="sm:hidden">{lang === "bn" ? "ডাক্তার" : "Doctor"}</span>
-                  </Link>
+                    <button
+                      type="button"
+                      onClick={() => requireAuth("/donors")}
+                      tabIndex={isScrolled ? 0 : -1}
+                      className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#4c061d] text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold shadow-xs hover:bg-[#380715] hover:shadow-md transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95"
+                      aria-label={t("donors.title")}
+                    >
+                      <Droplet className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 fill-current" strokeWidth={1.8} aria-hidden="true" />
+                      <span className="hidden sm:inline">{t("donors.title")}</span>
+                      <span className="sm:hidden">{lang === "bn" ? "রক্তদাতা" : "Donor"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => requireAuth("/doctors")}
+                      tabIndex={isScrolled ? 0 : -1}
+                      className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#006d6f] text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold shadow-xs hover:bg-[#005759] hover:shadow-md transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95"
+                      aria-label={t("doctors.title")}
+                    >
+                      <Stethoscope className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+                      <span className="hidden sm:inline">{t("doctors.title")}</span>
+                      <span className="sm:hidden">{lang === "bn" ? "ডাক্তার" : "Doctor"}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
+
+              {/* Right controls */}
+              <div className="flex items-center gap-2 shrink-0">
+                <LanguageToggle />
+                <a
+                  href="tel:999"
+                  className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-brand text-white px-4 py-2 text-sm font-semibold hover:bg-brand-deep transition-colors"
+                >
+                  <Phone className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                  <span className="tnum">999</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen((open) => !open)}
+                  className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-ink cursor-pointer hover:bg-elevated transition-colors"
+                  aria-expanded={mobileOpen}
+                  aria-label={mobileOpen ? t("nav.close") : t("nav.menu")}
+                >
+                  {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
+          </nav>
 
-            {/* Right controls */}
-            <div className="flex items-center gap-2 shrink-0">
-              <LanguageToggle />
-              <a
-                href="tel:999"
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-brand text-white px-4 py-2 text-sm font-semibold hover:bg-brand-deep transition-colors"
-              >
-                <Phone className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-                <span className="tnum">999</span>
-              </a>
-              <button
-                type="button"
-                onClick={() => setMobileOpen((open) => !open)}
-                className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-ink cursor-pointer hover:bg-elevated transition-colors"
-                aria-expanded={mobileOpen}
-                aria-label={mobileOpen ? t("nav.close") : t("nav.menu")}
-              >
-                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
+          {/* Mobile drawer for screens smaller than lg */}
+          {mobileOpen && (
+            <div className="lg:hidden mx-4 mb-3 rounded-2xl border border-line bg-surface/95 backdrop-blur-md p-3 shadow-xl">
+              <NavLinks
+                items={[...primaryNav, ...visibleSecondaryNav]}
+                onNavigate={() => setMobileOpen(false)}
+                className="flex flex-col gap-1"
+              />
+              <div className="mt-3 pt-3 border-t border-line sm:hidden">
+                <a
+                  href="tel:999"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-blood text-white py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity"
+                >
+                  <Phone className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                  <span>{lang === "bn" ? "জরুরি সেবা (৯৯৯)" : "Emergency (999)"}</span>
+                </a>
+              </div>
             </div>
-          </div>
-        </nav>
+          )}
+        </header>
 
-        {/* Mobile drawer for screens smaller than lg */}
-        {mobileOpen && (
-          <div className="lg:hidden mx-4 mb-3 rounded-2xl border border-line bg-surface/95 backdrop-blur-md p-3 shadow-xl">
-            <NavLinks
-              items={[...primaryNav, ...secondaryNav]}
-              onNavigate={() => setMobileOpen(false)}
-              className="flex flex-col gap-1"
-            />
-            <div className="mt-3 pt-3 border-t border-line sm:hidden">
-              <a
-                href="tel:999"
-                className="flex items-center justify-center gap-2 rounded-xl bg-blood text-white py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity"
-              >
-                <Phone className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-                <span>{lang === "bn" ? "জরুরি সেবা (৯৯৯)" : "Emergency (999)"}</span>
-              </a>
-            </div>
-          </div>
-        )}
-      </header>
+        <div className="flex flex-1 w-full">
+          {/* Left rail on lg+ screens */}
+          <LeftRail />
 
-      <div className="flex flex-1 w-full">
-        {/* Left rail on lg+ screens */}
-        <LeftRail />
+          <main id="main" className="flex-1 w-full min-w-0">
+            {children}
+          </main>
+        </div>
 
-        <main id="main" className="flex-1 w-full min-w-0">
-          {children}
-        </main>
+        <Footer />
       </div>
-
-      <Footer />
-    </div>
+    </AuthContext.Provider>
   );
 }
 

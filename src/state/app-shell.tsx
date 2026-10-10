@@ -69,7 +69,7 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
     }
   });
 
-  const [theme, setThemeState] = useState<Theme>(() => readStored(THEME_KEY, ["light", "dark", "system"] as const) ?? "system");
+  const [theme, setThemeState] = useState<Theme>(() => readStored(THEME_KEY, ["light", "dark"] as const) ?? "light");
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -78,8 +78,7 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === "system") root.removeAttribute("data-theme");
-    else root.setAttribute("data-theme", theme);
+    root.setAttribute("data-theme", theme);
     writeStored(THEME_KEY, theme);
   }, [theme]);
 
