@@ -1,0 +1,15 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.local
+
+# Supabase local stack
+supabase/.temp
+supabase/.branches
+
+.DS_Store
+Thumbs.db
+*.log
+.vite

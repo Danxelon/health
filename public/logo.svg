@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Jibon Rokkha">
+  <title>Jibon Rokkha</title>
+  <defs>
+    <linearGradient id="jrTeal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12A08D"/>
+      <stop offset="1" stop-color="#0E7C6E"/>
+    </linearGradient>
+    <linearGradient id="jrBlood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E8364F"/>
+      <stop offset="1" stop-color="#D7263D"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Shield: protection -->
+  <path d="M32 4.5 54.5 12.2v18.3c0 13.5-9.1 24.6-22.5 29-13.4-4.4-22.5-15.5-22.5-29V12.2L32 4.5Z"
+        fill="url(#jrTeal)"/>
+
+  <!-- Droplet: blood -->
+  <path d="M32 17.5c-4.6 5.6-8.2 10.2-8.2 14.6a8.2 8.2 0 0 0 16.4 0c0-4.4-3.6-9-8.2-14.6Z"
+        fill="url(#jrBlood)"/>
+
+  <!-- Pulse: healthcare / life -->
+  <path d="M14 47.5h7.6l3.4-6.4 4.6 11.4 3.9-8.4 2.9 5.2 3.6-6.6H50"
+        fill="none" stroke="#FFFFFF" stroke-width="3.1"
+        stroke-linecap="round" stroke-linejoin="round" opacity="0.94"/>
+</svg>

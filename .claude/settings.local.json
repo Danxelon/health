@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-Item \"H:\\\\creativity\\\\health\\\\concept.txt\" | Select-Object Name, Length, LastWriteTime; $bytes = [System.IO.File]::ReadAllBytes\\(\"H:\\\\creativity\\\\health\\\\concept.txt\"\\); \"First 64 bytes: \" + \\(\\($bytes | Select-Object -First 64\\) -join ','\\))",
+      "PowerShell($n = \\(Get-Command node -ErrorAction SilentlyContinue\\); $np = \\(Get-Command npm -ErrorAction SilentlyContinue\\); \"node: \" + $\\(if\\($n\\){$n.Source}else{\"MISSING\"}\\); \"npm: \"  + $\\(if\\($np\\){$np.Source}else{\"MISSING\"}\\); if\\($n\\){ \"version: \" + \\(& node -v\\) })"
+    ]
+  }
+}

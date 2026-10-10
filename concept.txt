@@ -1,0 +1,13 @@
+A healthcare website for Bangladesh
+
+"Jibon Rokkha"
+
+user can find blood doner nearby or the blood info matched people nearby. the present and permanent addess will be shown as well as the phone number so that the user can seek help or can make a  phone call fron that page. there should be also the request option. it will contain regular health updates along with some blog posts and articles written by the doctors. we will integrate the telemedicine there also. at leat 1 doctor fron each upazila under 1 doctor of a district......thus it will go on to divisional then national....this nation will be contist of a panel of doctors. doctors can create their own account with valid info and certificates. and their account can also be made in such a way that each year all the students passed from the medicals will made the account from the institution or the government doctors will have a account automatically.......as our future plan is the web will be a government web where the info of all the citizens will be stored....like with the NID .. from the next time when any citizen will apply for the NID then they have to provide the blood info... thus it will be easy for the government to keep the records. but now i will use amy own server and database. the login system will be with phone number and NID number, a otp will come in the phone no. and with that user will sign in and can get this web's service. 
+
+let's come to the ui:
+
+firstly, the registration page will be there. it will seek the registration info and will be decorated nicely with some healthcare related elements. then in the home page will contain "find a doner" and "consult a doctor" and the blog posts , articles etc. make a nice ui arranging them. if clicked the find a doner then it will search for the blood info of the user in the database.....if found it will track the live location and show the nearby info matched people.....if not matched then it will ask all of the necessary info....umm..i think 5 to 7 info are needed about blood and the other info as user is resistered so his personal info will be shown. in the consult with a doctor option the web will show the area concerning doctor with the help of the live location and the subject or deaseae concerning doctors.....user can message the doctor there or can make a audion call from there.
+
+in this web application, there will be simple settings options as well as user cqan view profile. there should be complain options......any body can complain about the web or the doctor or other things.
+
+i will use supabase as the database...so give me thesql command for this. ui will be hosted on github and the backend will be hosted in the versel. 
