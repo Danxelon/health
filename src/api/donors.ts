@@ -119,7 +119,6 @@ export async function searchDonors(args: SearchDonorsArgs): Promise<SearchResult
     p_recipient_group: args.recipientGroup,
     p_lat: args.lat,
     p_lng: args.lng,
-    p_radius_km: null,
     p_urgency: args.urgency,
     p_upazila_id: args.upazilaId,
     p_component: args.component ?? "whole_blood",

@@ -8,34 +8,35 @@
 
 @theme {
   /* --- Brand ------------------------------------------------------------- */
-  /* Teal is the platform voice: trust, clinical calm, the logo mark.      */
-  --color-brand: #0e7c6e;
-  --color-brand-deep: #0a5f55;
-  --color-brand-soft: #e3f2ef;
+  /* Deep wine is the primary voice: warmth, urgency, the mark. Every primary
+     CTA and headline accent resolves here.                             */
+  --color-brand: #4c061d;
+  --color-brand-deep: #380715;
+  --color-brand-soft: #f3d9dc;
 
-  /* Maroon is the institutional/authority voice — the logo wordmark, the
-     "government-grade" register, editorial rules. Never used for danger.  */
-  --color-ink-brand: #6e2130;
-  --color-ink-brand-soft: #f6e9ea;
+  /* Teal is the supporting accent — the calm counterpart to wine. It
+     carries secondary actions and institution panels.                  */
+  --color-ink-brand: #006d6f;
+  --color-ink-brand-soft: #e2f1f0;
 
-  /* Blood red. Reserved. It appears ONLY on blood-group marks, urgency
-     badges, and destructive actions, so that when it appears it MEANS
-     something. The moment it decorates a heading, it stops working.      */
-  --color-blood: #d7263d;
-  --color-blood-deep: #a5152a;
-  --color-blood-soft: #fdecee;
+  /* Crimson for blood marks and urgency only — kept inside the wine
+     family so the palette stays wine / teal / blush.                 */
+  --color-blood: #c22a3a;
+  --color-blood-deep: #9c1e2c;
+  --color-blood-soft: #fbe8ea;
 
   /* --- Surfaces ---------------------------------------------------------- */
-  --color-bg: #f7faf9;
+  /* Clean white-first: a touch of warmth, never green-tinted.           */
+  --color-bg: #fafaf8;
   --color-surface: #ffffff;
-  --color-elevated: #eef4f2;
-  --color-line: #dbe5e2;
-  --color-line-strong: #c3d2ce;
+  --color-elevated: #f1f1ee;
+  --color-line: #e4e4df;
+  --color-line-strong: #cccccc;
 
   /* --- Text -------------------------------------------------------------- */
-  --color-ink: #0b1f1a;
-  --color-muted: #5b6f69;
-  --color-subtle: #8a9c96;
+  --color-ink: #171214;
+  --color-muted: #5c5558;
+  --color-subtle: #867b7f;
 
   /* --- Semantic ---------------------------------------------------------- */
   --color-warning: #c77700;
@@ -70,26 +71,26 @@
    -------------------------------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-brand: #2fa895;
-    --color-brand-deep: #1d8271;
-    --color-brand-soft: #10312c;
+    --color-brand: #d96a7c;
+    --color-brand-deep: #b34e5f;
+    --color-brand-soft: #401a24;
 
-    --color-ink-brand: #d98a97;
-    --color-ink-brand-soft: #33161c;
+    --color-ink-brand: #359f9b;
+    --color-ink-brand-soft: #12322f;
 
-    --color-blood: #ff5a6e;
-    --color-blood-deep: #e0334a;
-    --color-blood-soft: #37141b;
+    --color-blood: #f2687a;
+    --color-blood-deep: #d5475a;
+    --color-blood-soft: #3d1520;
 
-    --color-bg: #07110f;
-    --color-surface: #0d1b18;
-    --color-elevated: #142522;
-    --color-line: #1e3330;
-    --color-line-strong: #2a4641;
+    --color-bg: #140e10;
+    --color-surface: #1d1519;
+    --color-elevated: #2a1f23;
+    --color-line: #3b3034;
+    --color-line-strong: #524348;
 
-    --color-ink: #eaf3f1;
-    --color-muted: #9db2ac;
-    --color-subtle: #6f8781;
+    --color-ink: #f5eef0;
+    --color-muted: #c0b0b4;
+    --color-subtle: #8d7c81;
 
     --color-warning: #e8a33d;
     --color-warning-soft: #33260f;
@@ -101,26 +102,26 @@
 }
 
 :root[data-theme="dark"] {
-  --color-brand: #2fa895;
-  --color-brand-deep: #1d8271;
-  --color-brand-soft: #10312c;
+  --color-brand: #d96a7c;
+  --color-brand-deep: #b34e5f;
+  --color-brand-soft: #401a24;
 
-  --color-ink-brand: #d98a97;
-  --color-ink-brand-soft: #33161c;
+  --color-ink-brand: #359f9b;
+  --color-ink-brand-soft: #12322f;
 
-  --color-blood: #ff5a6e;
-  --color-blood-deep: #e0334a;
-  --color-blood-soft: #37141b;
+  --color-blood: #f2687a;
+  --color-blood-deep: #d5475a;
+  --color-blood-soft: #3d1520;
 
-  --color-bg: #07110f;
-  --color-surface: #0d1b18;
-  --color-elevated: #142522;
-  --color-line: #1e3330;
-  --color-line-strong: #2a4641;
+  --color-bg: #140e10;
+  --color-surface: #1d1519;
+  --color-elevated: #2a1f23;
+  --color-line: #3b3034;
+  --color-line-strong: #524348;
 
-  --color-ink: #eaf3f1;
-  --color-muted: #9db2ac;
-  --color-subtle: #6f8781;
+  --color-ink: #f5eef0;
+  --color-muted: #c0b0b4;
+  --color-subtle: #8d7c81;
 
   --color-warning: #e8a33d;
   --color-warning-soft: #33260f;

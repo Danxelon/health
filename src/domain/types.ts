@@ -378,6 +378,19 @@ export interface ArticleFeedItem {
   reaction_count: number;
 }
 
+/** A national health update shown in the right rail — advisory, not medical. */
+export interface NationalHealthUpdate {
+  id: string;
+  title: string;
+  title_bn: string | null;
+  body: string | null;
+  body_bn: string | null;
+  kind: "campaign" | "alert" | "notice";
+  source: string | null;
+  effective_from: string;
+  expires_at: string | null;
+}
+
 export interface Complaint {
   id: string;
   complainant_id: string;

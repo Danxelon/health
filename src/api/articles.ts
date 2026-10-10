@@ -9,7 +9,7 @@
 
 import type { ArticleFeedItem } from "@/domain/types.ts";
 import { DEMO_ARTICLES, DEMO_ARTICLE_BODIES } from "@/lib/demo-data.ts";
-import { callRpc, DEMO_MODE } from "@/lib/supabase.ts";
+import { DEMO_MODE, requireSupabase, toDomainError } from "@/lib/supabase.ts";
 
 export interface ArticleFeedArgs {
   tag?: string | null;
@@ -21,7 +21,12 @@ export async function fetchArticles(args: ArticleFeedArgs = {}): Promise<Article
     const list = args.tag ? DEMO_ARTICLES.filter((a) => a.tags?.includes(args.tag ?? "")) : DEMO_ARTICLES;
     return [...list].sort((a, b) => (a.published_at ?? "") < (b.published_at ?? "") ? 1 : -1);
   }
-  return callRpc<ArticleFeedItem[]>("article_feed", { p_tag: args.tag ?? null });
+  const client = requireSupabase();
+  const base = client.from("article_feed").select("*");
+  const query = args.tag ? base.contains("tags", [args.tag]) : base;
+  const { data, error } = await query.order("published_at", { ascending: false, nullsFirst: false });
+  if (error) throw toDomainError(error);
+  return (data as ArticleFeedItem[] | null) ?? [];
 }
 
 export interface ArticleDetail {
@@ -41,8 +46,14 @@ export async function fetchArticle(slug: string): Promise<ArticleDetail | null> 
     };
     return { item, bodyEn: bodies.body_en, bodyBn: bodies.body_bn };
   }
-  const rows = await callRpc<ArticleFeedItem[]>("article_by_slug", { p_slug: slug });
-  const item = rows[0];
+  const client = requireSupabase();
+  const { data, error } = await client
+    .from("article_feed")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) throw toDomainError(error);
+  const item = data as ArticleFeedItem | null;
   if (!item) return null;
-  return { item, bodyEn: item.excerpt ?? "", bodyBn: "" };
+  return { item, bodyEn: item.excerpt ?? "", bodyBn: item.excerpt_bn ?? "" };
 }

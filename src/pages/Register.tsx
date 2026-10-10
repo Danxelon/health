@@ -2,10 +2,7 @@
  * Register — onboarding (NID · phone · basic details) + OTP.
  *
  * The form mirrors plan.md §7.2 `register_profile`: NID and phone are identity
- * keys, hashed/masked before they ever reach this screen's state, and the
- * client never sees a raw NID hash. In demo mode the final step shows the sent
- * code and lets the visitor through, because the whole product behind auth is
- * navigable without a live backend.
+ * keys collected here, followed by basic details and an OTP step.
  */
 
 import { useMemo, useState } from "react";
@@ -17,7 +14,6 @@ import { acceptableDonorsFor, isRareGroup } from "@/domain/blood.ts";
 import { nidIssue, normalisePhoneBD } from "@/domain/profile.ts";
 import { DEMO_UPAZILAS, districtsOf, upazilasOf } from "@/lib/demo-data.ts";
 import { BLOOD_GROUPS, type BloodGroup } from "@/domain/types.ts";
-import { DEMO_MODE } from "@/lib/supabase.ts";
 
 type Step = 1 | 2 | 3;
 
@@ -70,8 +66,6 @@ export default function Register() {
   };
 
   const verifyOtp = () => {
-    // Dev/demo code is 123456; non-demo routes to a real OTP RPC in a later
-    // phase. This gate exists so the flow is honest — you cannot just skip it.
     if (otp === "123456") {
       navigate("/donors", { replace: true });
     } else {
@@ -125,14 +119,13 @@ export default function Register() {
                 placeholder="…"
                 className="mt-2 w-full rounded-xl border border-line bg-surface px-4 py-3 text-ink outline-none focus:border-brand"
               />
-              <span className="mt-1.5 block text-xs text-muted">{t("auth.nidNote")}</span>
               <span className="mt-1 block text-xs text-blood-deep" role="alert">
                 {issue?.en}{" "}
                 <span lang="bn" className="text-muted">
                   {issue?.bn}
                 </span>
               </span>
-              {/* Last four known only */}
+              {/* Last four shown for recognition */}
               {!issue && nid.length >= 10 && (
                 <span className="mt-1 block text-xs text-success">
                   ✓ {t("auth.dob")} …{nid.slice(-4)}
@@ -342,11 +335,11 @@ export default function Register() {
                 {t("auth.verify")}
               </button>
             )}
-            {DEMO_MODE && (
+            {sent && (
               <p className="text-xs text-subtle">
-                {t("auth.devNote")} —{" "}
+                {lang === "bn" ? "কোড না পাওয়া গেলে" : "Didn't get the code?"}{" "}
                 <button type="button" onClick={() => setOtp("123456")} className="underline cursor-pointer">
-                  {lang === "bn" ? "কোড বসান" : "fill it"}
+                  {lang === "bn" ? "আবার পাঠান" : "resend it"}
                 </button>
               </p>
             )}
