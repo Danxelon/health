@@ -63,7 +63,6 @@ export const STRINGS = {
     distance: { bn: "দূরত্ব", en: "Distance" },
     km: { bn: "কিমি", en: "km" },
     andMore: { bn: "আরও", en: "more" },
-    demoMode: { bn: "ডেমো ডেটা", en: "Demo data" },
     empty: { bn: "এখানে এখন কিছু নেই।", en: "Nothing here yet." },
   },
 
@@ -100,7 +99,6 @@ export const STRINGS = {
 
     emergencyTitle: { bn: "কাছের জরুরি অনুরোধ", en: "Nearby emergencies" },
     emergencyEmpty: { bn: "এই মুহূর্তে কাছাকাছি কোনো অনুরোধ নেই।", en: "No open requests near you right now." },
-    emergencyNote: { bn: "অবস্থান কখনো পুরো ঠিকানা নয় — শুধু দূরত্ব দেখানো হয়।", en: "Location is never an address — only a distance." },
     iCanHelp: { bn: "আমি সাহায্য করতে পারি", en: "I can help" },
 
     bloodBanks: { bn: "কাছের ব্লাড ব্যাংক", en: "Blood banks near you" },
@@ -126,16 +124,6 @@ export const STRINGS = {
       en: "Give a blood group and an upazila; get the compatible donors nearest to you.",
     },
     how3Title: { bn: "৩. যোগাযোগ", en: "3. Connect" },
-    how3Body: {
-      bn: "রক্তদাতা রাজি হলে তবে যোগাযোগের তথ্য প্রকাশিত হয় — এবং তা লিপিবদ্ধ থাকে।",
-      en: "Contact is shared only after the donor agrees — and every share is logged.",
-    },
-
-    privacyTitle: { bn: "গোপনীয়তা কোনো দাম চায় না", en: "Privacy is not an add-on here" },
-    privacyBody: {
-      bn: "জাতীয় পরিচয়পত্র কখনো সরাসরি সংরক্ষণ করা হয় না। অনুসন্ধানে ফোন নম্বর, ঠিকানা বা সঠিক অবস্থান কখনো ফেরত দেওয়া হয় না — শুধু দূরত্বের ব্যান্ড।",
-      en: "Your NID is never stored as written. Search never returns a phone number, an address, or an exact location — only a distance band.",
-    },
   },
 
   donors: {
@@ -163,10 +151,6 @@ export const STRINGS = {
     widen: { bn: "অনুসন্ধান বাড়ান", en: "Widen the search" },
     createRequest: { bn: "অনুরোধ তৈরি করুন", en: "Create a request" },
     asOf: { bn: "হালনাগাদ", en: "As of" },
-    privacyNote: {
-      bn: "যোগাযোগের নম্বর রক্তদাতা রাজি হলে তবে দেখানো হয়।",
-      en: "A phone number is shown only after the donor accepts.",
-    },
     compatibleWith: { bn: "যাদের কাছ থেকে নেওয়া যায়", en: "Can receive from" },
     respects: { bn: "নিরাপদ মিল", en: "Safe match" },
   },
@@ -284,11 +268,6 @@ export const STRINGS = {
     otp: { bn: "৬ সংখ্যার কোড", en: "6-digit code" },
     verify: { bn: "নিশ্চিত করুন", en: "Verify" },
     resend: { bn: "আবার পাঠান", en: "Resend" },
-    nidNote: {
-      bn: "আপনার এনআইডি কখনো সরাসরি সংরক্ষণ করা হয় না — শুধু একটি অপরিবর্তনীয় হ্যাশ ও শেষ ৪ সংখ্যা।",
-      en: "Your NID is never stored as written — only a one-way hash and the last four digits.",
-    },
-    devNote: { bn: "ডেভ মোডে কোড: ১২৩৪৫৬", en: "In dev mode the code is 123456" },
   },
 
   footer: {
