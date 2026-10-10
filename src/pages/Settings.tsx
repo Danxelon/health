@@ -44,7 +44,6 @@ import {
   Clock,
   Droplet,
   HeartPulse,
-  History,
   Languages,
   Palette,
   ShieldCheck,
@@ -79,6 +78,10 @@ const COPY = {
   },
   name: { bn: "নাম", en: "Name" },
   notGiven: { bn: "দেওয়া নেই", en: "Not given" },
+  identityNote: {
+    bn: "আপনার পরিচয় তথ্য এই অ্যাকাউন্টে রাখা হয়।",
+    en: "Your identity details are kept with this account.",
+  },
   themeBody: {
     bn: "আলো ও অন্ধকার — আপনার চোখের আরাম অনুযায়ী।",
     en: "Light or dark, whichever your eyes prefer.",
@@ -94,6 +97,10 @@ const COPY = {
   visibilityBody: {
     bn: "আপনার নম্বর কখনো অনুসন্ধান ফলাফলে দেখা যায় না। আপনি রাজি হওয়ার পরেই কেবল অনুরোধকারী সেটি দেখতে পান, এবং প্রতিটি প্রকাশ নিচে লিপিবদ্ধ থাকে।",
     en: "Your number never appears in search results. A requestor sees it only after you accept, and every share is recorded below.",
+  },
+  unlocksBody: {
+    bn: "কখন যোগাযোগের তথ্য দেখানো হয়েছে।",
+    en: "When your contact has been shown to others.",
   },
   actionTitle: { bn: "আপনার তথ্য, আপনার নিয়ন্ত্রণ", en: "Your record, your control" },
   actionBody: {
@@ -476,7 +483,7 @@ export default function Settings() {
             <SectionHeader
               eyebrow={t("settings.profile")}
               title={<span id="settings-identity">{t("settings.identity")}</span>}
-              body={t("auth.nidNote")}
+              body={COPY.identityNote[lang]}
             />
 
             {loading ? (
@@ -653,7 +660,7 @@ export default function Settings() {
             <SectionHeader
               eyebrow={t("settings.privacy")}
               title={<span id="settings-unlocks">{t("settings.unlocks")}</span>}
-              body={t("home.how3Body")}
+              body={COPY.unlocksBody[lang]}
             />
 
             {unlocks === null && !unlocksFailure ? (
@@ -699,11 +706,6 @@ export default function Settings() {
                 {t("settings.noUnlocks")}
               </p>
             )}
-
-            <p className="mt-6 flex items-center gap-2 text-xs text-subtle">
-              <History className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-              {t("donors.privacyNote")}
-            </p>
           </section>
         </div>
 

@@ -8,7 +8,7 @@
 
 import type { DoctorCard } from "@/domain/types.ts";
 import { DEMO_DOCTORS } from "@/lib/demo-data.ts";
-import { callRpc, DEMO_MODE } from "@/lib/supabase.ts";
+import { DEMO_MODE, requireSupabase, toDomainError } from "@/lib/supabase.ts";
 
 export interface DoctorFilters {
   specialtySlug?: string | null;
@@ -39,11 +39,18 @@ export async function fetchDoctors(filters: DoctorFilters = {}): Promise<DoctorC
     return [...list].sort(specialtySorter);
   }
 
-  const rows = await callRpc<DoctorCard[]>("search_doctors", {
-    p_specialty_slug: filters.specialtySlug ?? null,
-    p_district: filters.district_en ?? null,
-    p_free_only: filters.freeOnly ?? false,
-    p_lang: filters.languages ?? null,
+  const client = requireSupabase();
+  const { data, error } = await client.from("doctor_cards").select("*");
+  if (error) throw toDomainError(error);
+  if (data === null) return [];
+
+  const rows = (data as DoctorCard[]).filter((d) => {
+    if (filters.specialtySlug && d.specialty_slug !== filters.specialtySlug) return false;
+    if (filters.district_en && d.district_en !== filters.district_en) return false;
+    if (filters.freeOnly && (d.consult_fee ?? 0) > 0) return false;
+    if (filters.languages && !(d.languages ?? []).includes(filters.languages)) return false;
+    // availableTodayOnly is approximated: the view has no schedule.
+    return true;
   });
   return [...rows].sort(specialtySorter);
 }

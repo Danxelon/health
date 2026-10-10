@@ -335,14 +335,6 @@ export default function Register() {
                 {t("auth.verify")}
               </button>
             )}
-            {sent && (
-              <p className="text-xs text-subtle">
-                {lang === "bn" ? "কোড না পাওয়া গেলে" : "Didn't get the code?"}{" "}
-                <button type="button" onClick={() => setOtp("123456")} className="underline cursor-pointer">
-                  {lang === "bn" ? "আবার পাঠান" : "resend it"}
-                </button>
-              </p>
-            )}
           </div>
         )}
 

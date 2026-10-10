@@ -1,5 +1,5 @@
 /**
- * Legal — terms, privacy, retention, and how contact is disclosed.
+ * Legal — terms, privacy, retention, and how contact is stored and used.
  *
  * This is a trust instrument, so it reads differently from the campaign
  * pages: calm, quiet, scannable prose in a narrow measure rather than bento
@@ -50,8 +50,8 @@ const COPY = {
     en: "Jibon Rokkha · rules and rights",
   },
   lead: {
-    bn: "সরল ভাষায় লেখা — শর্ত, গোপনীয়তা, তথ্য কতদিন রাখা হয়, এবং যোগাযোগ কখন প্রকাশিত হয়। এখানে দুর্বোধ্য কোনো নিয়ম নেই, নেই কোনো ঢাকঢোল।",
-    en: "Written in plain language — the terms, the privacy rules, how long data is kept, and when contact is disclosed. No fine print, no spin.",
+    bn: "সরল ভাষায় লেখা — শর্ত, গোপনীয়তা, তথ্য কতদিন রাখা হয়, এবং যোগাযোগের তথ্য কীভাবে সংরক্ষিত ও ব্যবহৃত হয়। এখানে দুর্বোধ্য কোনো নিয়ম নেই, নেই কোনো ঢাকঢোল।",
+    en: "Written in plain language — the terms, the privacy rules, how long data is kept, and how your contact details are stored and used. No fine print, no spin.",
   },
   effective: { bn: "কার্যকর: ১ অক্টোবর ২০২৫", en: "Effective: 1 October 2025" },
   lastUpdated: { bn: "সর্বশেষ হালনাগাদ: ৩ অক্টোবর ২০২৫", en: "Last updated: 3 October 2025" },
@@ -76,12 +76,12 @@ const COPY = {
 
   sectionPrivacy: { bn: "গোপনীয়তা", en: "Privacy" },
   privacy1: {
-    bn: "আপনার জাতীয় পরিচয়পত্র (এনআইডি) কখনো লেখা আকারে সংরক্ষণ করা হয় না। সার্ভার শুধু একটি একমুখী হ্যাশ এবং শেষ ৪ সংখ্যা রাখে; ব্রাউজার কখনো সেই হ্যাশ দেখতে পায় না।",
-    en: "Your national ID (NID) is never stored as written. The server keeps only a one-way hash and the last four digits; your browser never sees that hash.",
+    bn: "আপনার জাতীয় পরিচয়পত্র (এনআইডি), মোবাইল নম্বর ও যোগাযোগের ঠিকানা আমাদের ডেটাবেসে নিরাপদে সংরক্ষিত থাকে — সারি-স্তরের নিরাপত্তা (RLS) দিয়ে সুরক্ষিত — এবং রক্তদাতা-প্রাপক মিল ও যোগাযোগ সহজ করতে ব্যবহৃত হয়।",
+    en: "Your national ID (NID), mobile number, and contact address are kept securely in our database — protected by row-level security — and are used to make donor–recipient matching and communication possible.",
   },
   privacy2: {
-    bn: "অনুসন্ধানে ফোন নম্বর, ঠিকানা বা সঠিক অবস্থান কখনো ফেরত দেওয়া হয় না — শুধু দূরত্বের ব্যান্ড (যেমন ১–৩ কিমি)। কোনো কার্ডে পুরো নাম বা পুরো ঠিকানা দেখানো হয় না।",
-    en: "Search never returns a phone number, an address, or an exact location — only a distance band such as 1–3 km. No card ever shows a full name or a full address.",
+    bn: "আপনার উপজেলা ও ঠিকানার তথ্য সংরক্ষিত থাকে এবং কাছের রক্তদাতা বা ডাক্তারের মিল খুঁজতে ব্যবহৃত হয়। তালিকায় দূরত্ব দেখানো হয় ব্যান্ড আকারে, যেমন ১–৩ কিমি।",
+    en: "Your upazila and address are stored and used to match you with the nearest donor or doctor. Distance is shown as a band, such as 1–3 km.",
   },
   privacy3: {
     bn: "শুধু প্রয়োজনীয় প্রশাসক টিম অ্যাকাউন্ট-সম্পর্কিত তথ্য দেখতে পারে। আমরা আপনার তথ্য বিক্রি করি না এবং কোনো বিজ্ঞাপন নেটওয়ার্কের সঙ্গে ভাগ করি না।",
@@ -104,35 +104,35 @@ const COPY = {
 
   sectionNid: { bn: "এনআইডি কীভাবে সংরক্ষণ করা হয়", en: "How your NID is handled" },
   nid1: {
-    bn: "নিবন্ধনের সময় আপনার এনআইডি সার্ভারে অপরিবর্তনীয় হ্যাশে রূপান্তরিত হয় — একটি গাণিতিক ছাপ যা থেকে মূল সংখ্যা ফেরানো যায় না। সংরক্ষণ থাকে শুধু হ্যাশ আর শেষ ৪ সংখ্যা।",
-    en: "At registration your NID is turned into a one-way hash on the server — a mathematical fingerprint that cannot be reversed into the original number. Only the hash and the last four digits are stored.",
+    bn: "নিবন্ধনের সময় আপনার এনআইডি আমাদের ডেটাবেসে সংরক্ষিত হয় এবং পরিচয় যাচাইয়ে ব্যবহৃত হয়। এটি জমা থাকে, যাতে নিবন্ধন ও রক্তদানের রেকর্ড নির্ভরযোগ্য করা যায়।",
+    en: "At registration your NID is stored in our database and used to verify identity. It is kept so registration and donation records stay trustworthy.",
   },
   nid2: {
-    bn: "শেষ ৪ সংখ্যা রাখা হয় যাতে আপনি নিজের রেকর্ড চিনতে পারেন; অচেনা কারও কাছে এটি কোনো কাজে লাগে না। কোনো প্রোফাইল বা অনুসন্ধানে আপনার এনআইডি কখনোই দেখানো হয় না।",
-    en: "The last four digits help you recognise your own record; to anyone else they are useless. Your NID is never shown on any profile or in any search.",
+    bn: "আপনার এনআইডি কোনো প্রোফাইল, কার্ড বা অনুসন্ধানে প্রদর্শিত হয় না — এটি যাচাইয়ের কাজে রাখা হয় এবং প্রয়োজন অনুযায়ী নিরাপদ নিয়মে ব্যবহার করা হয়।",
+    en: "Your NID is not displayed on any profile, card, or search result — it is kept for verification and used only as needed, under the platform's security rules.",
   },
   nid3: {
-    bn: "সার্ভারের লগও এনআইডি-মুক্ত রাখা হয়। এগুলো শুধু লেখা নিয়ম নয় — ডেটাবেস এমনভাবে গড়া যে শুরুতেই এনআইডি থাকার জায়গা নেই।",
-    en: "Server logs are scrubbed of NIDs too. This is not just a written rule — the schema is built so the raw NID has nowhere to live.",
+    bn: "এনআইডিসহ সব ব্যক্তিগত তথ্য ডেটাবেসে সারি-স্তরের নিরাপত্তা (RLS) দিয়ে সুরক্ষিত — প্রতিটি সারিতে আছে নিজস্ব প্রবেশ-নিয়ন্ত্রণ। এই তথ্য নিবন্ধন, যাচাই, মিল-খোঁজ ও যোগাযোগের কাজে লাগে।",
+    en: "All personal data, including your NID, is protected in the database by row-level security — each row has its own access controls. This data is what makes registration, verification, matching, and communication work.",
   },
   nidLink: { bn: "এই নিয়ম নিয়ে আরও পড়ুন: নিবন্ধন", en: "More on this: creating an account" },
 
-  sectionContact: { bn: "যোগাযোগ প্রকাশ", en: "Contact disclosure" },
+  sectionContact: { bn: "যোগাযোগ ও দৃশ্যমানতা", en: "Contact and visibility" },
   contactLead: {
-    bn: "প্ল্যাটফর্মের সবচেয়ে গুরুত্বপূর্ণ নিয়ম: আপনি রাজি না হওয়া পর্যন্ত কেউ আপনাকে কল করতে পারবে না।",
-    en: "The most important rule on the platform: no one can call you until you have agreed to be called.",
+    bn: "আপনার ফোন নম্বর ও যোগাযোগের তথ্য সিস্টেমে সংরক্ষিত থাকে — মিল হওয়ার পর রক্তদাতা-প্রাপকের যোগাযোগ যাতে সহজ হয়।",
+    en: "Your phone number and contact details are stored in the system so that a donor and a recipient can reach each other easily once a match is made.",
   },
   contact1: {
-    bn: "অনুসন্ধানে কোনো ফোন নম্বর দেখা যায় না। অভাবী ব্যক্তি রক্তদাতাকে বেছে নিলে এবং রক্তদাতা রাজি হলে তবেই নম্বরটি একবারের জন্য প্রকাশ পায়।",
-    en: "Search shows no phone number. Only when a requester selects a donor and that donor accepts does the number open — once, for that request.",
+    bn: "অনুসন্ধানের তালিকায় ফোন নম্বর দেখানো হয় না। মিল স্থির হলে নম্বরটি সেই কাজে জড়িত ব্যক্তিদের কাছে প্রকাশ পায়।",
+    en: "Phone numbers are not shown in the search list. Once a match is made, the number opens for the people involved in that request.",
   },
   contact2: {
-    bn: "প্রতিটি প্রকাশ contact_unlocks লগে লেখা থাকে — কার নম্বর, কখন, কে, কেন দেখেছে। আপনি নিজের প্রকাশের ইতিহাস যেকোনো সময় সেটিংসে দেখতে পারবেন।",
-    en: "Every disclosure is logged in contact_unlocks — whose number, when, who opened it, and why. You can review your own unlock history any time in Settings.",
+    bn: "কে কবে আপনার নম্বর দেখতে পাবে তা সেটিংসে ঠিক করা হয় — যেমন 'রাজি হলে', 'শুধু প্রশাসক'। সেটিং যে-কোনো সময় বদলানো যায়, আর প্রকাশের ইতিহাসও সেখানেই দেখা যায়।",
+    en: "Who may see your number is decided in Settings — for example \"on my acceptance\" or \"admin only\". That rule can be changed at any time, and your contact history is there too.",
   },
   contact3: {
-    bn: "সময়সীমা ও পুনরাবৃত্তির সীমা রাখা আছে, যাতে একটি প্রকাশ শুধু তার উদ্দেশ্যেই ব্যবহৃত হয়। কোনো বন্ধুর নম্বর আগে থেকে অনুরোধে লেখা হয় না।",
-    en: "Time and rate limits keep an unlock used only for what it was granted for. A friend's number is never pre-filled into a request.",
+    bn: "যে অনুরোধ বা পরামর্শের জন্য নম্বর প্রকাশিত হয়, তা সেই কাজেই ব্যবহৃত হওয়া উচিত। নিজের অনুরোধে অন্য কারও নম্বর বসিয়ে দেবেন না; প্রকাশিত যোগাযোগ তার উদ্দেশ্যের জন্যই রাখুন।",
+    en: "A number shared for a request or consultation should serve that purpose. Do not put another person's number into your own request — use shared contact only for what it was shared for.",
   },
   viewUnlocks: { bn: "আমার প্রকাশের ইতিহাস", en: "My unlock history" },
 
@@ -331,7 +331,7 @@ export default function Legal() {
             <Paragraph value={COPY.retention3} />
           </LegalSection>
 
-          {/* NID handling — hash + last 4 only, linked forward to the flow */}
+          {/* NID handling — stored for verification under RLS, linked forward to the flow */}
           <LegalSection id="nid" title={COPY.sectionNid}>
             <Paragraph value={COPY.nid1} />
             <Paragraph value={COPY.nid2} />
@@ -347,7 +347,7 @@ export default function Legal() {
             </p>
           </LegalSection>
 
-          {/* Contact disclosure — accept-first, logged to contact_unlocks */}
+          {/* Contact — stored so matched parties can connect; visibility set by the user in Settings */}
           <LegalSection id="contact" title={COPY.sectionContact}>
             <Emphasis value={COPY.contactLead} />
             <Paragraph value={COPY.contact1} />

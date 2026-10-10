@@ -47,7 +47,6 @@ import {
   ArrowLeft,
   ArrowRight,
   House,
-  Info,
   KeyRound,
   Phone,
   RotateCw,
@@ -57,7 +56,6 @@ import {
 
 import { useAppShell } from "@/state/app-shell.tsx";
 import { isValidPhoneBD, maskPhone, normalisePhoneBD } from "@/domain/profile.ts";
-import { DEMO_MODE } from "@/lib/supabase.ts";
 
 gsap.registerPlugin(useGSAP);
 
@@ -67,7 +65,7 @@ type Step = 1 | 2;
  *  a language switch mid-error re-renders in the new language. */
 type OtpIssue = "length" | "wrong" | null;
 
-/** The demo code, in one place so the hint and the gate cannot drift apart. */
+/** The demo gate code — the register screen uses the same value. */
 const DEMO_CODE = "123456";
 
 const COPY = {
@@ -90,10 +88,6 @@ const COPY = {
   back: {
     bn: "পেছনে",
     en: "Back",
-  },
-  fillCode: {
-    bn: "কোড বসিয়ে দিন",
-    en: "Fill the code",
   },
   requested: {
     bn: "নতুন কোডের অনুরোধ নেওয়া হয়েছে।",
@@ -163,8 +157,7 @@ export default function Login() {
     }
     setSubmitting(true);
     // The demo gate. A live build would call an OTP RPC from here; there is no
-    // auth module in this tree, so this is the whole of the check — and the
-    // demo note below the field says so out loud.
+    // auth module in this tree, so this is the whole of the check.
     window.setTimeout(() => {
       setSubmitting(false);
       if (otp === DEMO_CODE) {
@@ -392,34 +385,6 @@ export default function Login() {
               <p role="status" aria-live="polite" className="mt-2 text-xs text-success">
                 {requested ? COPY.requested[lang] : ""}
               </p>
-
-              {DEMO_MODE && (
-                <div
-                  role="note"
-                  className="mt-5 rounded-xl border border-line bg-brand-soft/60 px-4 py-3 text-xs text-brand-deep"
-                >
-                  <p className="flex items-start gap-2">
-                    <Info
-                      className="mt-0.5 h-3.5 w-3.5 shrink-0"
-                      strokeWidth={1.8}
-                      aria-hidden="true"
-                    />
-                    <span>{t("auth.devNote")}</span>
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOtp(DEMO_CODE);
-                      setOtpIssue(null);
-                      setRequested(false);
-                    }}
-                    className="mt-2 inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-surface px-3.5 text-xs font-semibold text-brand-deep transition-colors hover:bg-elevated"
-                  >
-                    <RotateCw className="h-3.5 w-3.5" strokeWidth={1.8} aria-hidden="true" />
-                    {COPY.fillCode[lang]}
-                  </button>
-                </div>
-              )}
             </div>
           </section>
         </div>

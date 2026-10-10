@@ -38,7 +38,6 @@ import { ArrowRight, CheckCircle2, Clock, Mail, MapPin, Phone, Send } from "luci
 import { useAppShell } from "@/state/app-shell.tsx";
 import { SectionHeader } from "@/components/ui.tsx";
 import { isValidPhoneBD } from "@/domain/profile.ts";
-import { DEMO_MODE } from "@/lib/supabase.ts";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -89,10 +88,6 @@ const COPY = {
   successBody: {
     bn: "আমরা সাধারণত ২ কর্মদিবসের মধ্যে উত্তর দিই। আপনার রেফারেন্স নম্বরটি রেখে দিন।",
     en: "We usually reply within 2 working days. Keep your reference number.",
-  },
-  successDemo: {
-    bn: "এটি ডেমো পরিবেশ — সত্যই কোনো বার্তা পাঠানো হয়নি, নম্বরটি নমুনা মাত্র।",
-    en: "This is the demo build — nothing was actually sent; the number is a sample.",
   },
   another: { bn: "আরেকটি বার্তা পাঠান", en: "Send another message" },
   officeTitle: { bn: "দপ্তর", en: "Office" },
@@ -198,8 +193,8 @@ export default function Contact() {
 
     setErrors(null);
     setSending(true);
-    // Demo mode and the (not-yet-wired) live path share this local success
-    // state. In a real build this is where the contact RPC would be called.
+    // The live path is not wired yet; the local success state stands in for
+    // the contact RPC a real build would call from here.
     window.setTimeout(() => {
       setTicket(makeTicket());
       setSending(false);
@@ -398,12 +393,6 @@ export default function Contact() {
                   </span>
                   <span className="tnum display text-2xl text-ink">{ticket}</span>
                 </div>
-
-                {DEMO_MODE && (
-                  <p className="text-xs text-subtle">
-                    {t("common.demoMode")} — {c("successDemo")}
-                  </p>
-                )}
 
                 <button
                   type="button"

@@ -2,20 +2,20 @@
  * <design_plan>
  * 1. RNG (seed = "About".length % 101 = 5):
  *    random.choice("Hero")      -> "Editorial claim" — one big two-line H1, soft aurora, no buttons
- *    random.choice("Component") -> "Privacy triptych" — three bordered rounded-3xl cards
- *    random.choice("GSAP")      -> "intro rise + card stagger + timeline rail scrub-draw"
+ *    random.choice("Component") -> "Three plain ways in" — bordered rounded-3xl bento cards
+ *    random.choice("GSAP")      -> "intro rise + card stagger"
  *    random.choice("Fonts")     -> "Cabinet Grotesk / Satoshi" — the brand stack, never Inter
- * 2. AIDA: attention  = editorial hero claim ("nearby help, kept private");
+ * 2. AIDA: attention  = editorial hero claim ("nearby help, lives on");
  *    interest         = mission bento naming who it serves;
- *    desire           = privacy triptych + the principles timeline;
- *    action           = maroon final CTA offering /donors and /doctors.
+ *    desire           = the do-grid — donors, doctors, national updates;
+ *    action           = maroon final CTA landing on the two roads in (/donors, /doctors).
  * 3. Hero math: H1 `max-w-6xl` with clamp(2.5rem, 5.6vw, 4.75rem) keeps the ~20-glyph
  *    Bengali phrase on exactly 2 lines at 320px and at 1440px. No stamps, no hero pill tags.
  * 4. Bento density: mission grid md:grid-cols-3 grid-flow-dense [3,1,1,1] = 6 cells / 2 full rows;
- *    privacy  grid md:grid-cols-3 grid-flow-dense [3,1,1,1] = 6 cells / 2 full rows;
- *    principles  md:grid-cols-4 = 4 cells / 1 full row. 16/16 filled, zero voids.
- * 5. Label sweep: no "SECTION 01", no emoji; primary CTA bg-brand + white text (AA on both themes),
- *    secondary border-line; maroon panels carry ink-brand-soft text so AA holds in light and dark.
+ *    do-grid md:grid-cols-3 grid-flow-dense [1,1,1] = 3 cells / 1 full row. All cells filled.
+ * 5. Label sweep: no "SECTION 01", no emoji; primary CTA bg-white on the maroon panel (AA in both
+ *    themes), secondary border-white/30; no privacy claims — the page speaks to what the
+ *    platform does, never to how NID or contact is stored.
  * </design_plan>
  */
 
@@ -28,9 +28,7 @@ import {
   ArrowRight,
   Droplet,
   HeartPulse,
-  Lock,
-  MapPin,
-  Phone,
+  Megaphone,
   ShieldCheck,
   Stethoscope,
 } from "lucide-react";
@@ -42,14 +40,10 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const COPY = {
   heroTitle: { bn: "কাছের সাহায্য,", en: "Help close by," },
-  heroAccent: { bn: "গোপন রাখা।", en: "kept private." },
+  heroAccent: { bn: "দীর্ঘজীবী হোক।", en: "lives on." },
   heroBody: {
-    bn: "রক্তদাতা, ডাক্তার ও স্বাস্থ্য তথ্য — এক জায়গায়। জরুরি মুহূর্তে কাছের সাহায্য, আর প্রতিটি ধাপে গোপনীয়তা।",
-    en: "Donors, doctors, and health information in one place — nearby help in a crisis, and privacy at every step.",
-  },
-  heroTrust: {
-    bn: "নিবন্ধন থেকে প্রকাশ — প্রতিটি ধাপে গোপনীয়তা।",
-    en: "From registration to release — privacy at every step.",
+    bn: "রক্তদাতা, ডাক্তার আর স্বাস্থ্য তথ্য — এক জায়গায়। জরুরি মুহূর্তে কাছের সঙ্গতিপূর্ণ রক্তদাতা, যেকোনো উপজেলা থেকে ডাক্তারি পরামর্শ, আর ডাক্তারদের লেখা নির্ভরযোগ্য স্বাস্থ্য তথ্য।",
+    en: "Donors, doctors, and health information — in one place. A compatible donor nearby in a crisis, doctor consultations from every upazila, and health guidance written by the doctors.",
   },
 
   missionTitle: { bn: "আমরা যা করি", en: "What we do" },
@@ -69,8 +63,8 @@ const COPY = {
   },
   whoDonors: { bn: "পাশের বাড়ির রক্তদাতা", en: "The donor next door" },
   whoDonorsBody: {
-    bn: "যদি পারেন, বাঁচাতে পারেন — দূরত্ব শুধু ব্যান্ডে।",
-    en: "If you can, you can save — distance stays a band.",
+    bn: "পাশের মানুষটিই পারেন বাঁচাতে — কয়েক মিনিটেই।",
+    en: "The person next door can be the one who saves — within minutes.",
   },
   whoDoctors: { bn: "প্রতিটি উপজেলার ডাক্তার", en: "A doctor in every upazila" },
   whoDoctorsBody: {
@@ -78,38 +72,28 @@ const COPY = {
     en: "Advice from verified doctors, in a recorded thread.",
   },
 
-  privacyTitle: { bn: "গোপনীয়তা কীভাবে কাজ করে", en: "How privacy works" },
-  privacySub: {
-    bn: "তিনটি স্তরে গোপনীয়তা — পরিচয়, যোগাযোগ আর অবস্থান।",
-    en: "Privacy in three layers — identity, contact, location.",
+  doEyebrow: { bn: "আজই শুরু করুন", en: "Take the first step" },
+  doTitle: { bn: "এখানে যা করতে পারেন", en: "What you can do here" },
+  doSub: {
+    bn: "তিনটি কাজ — রক্তদাতা খুঁজুন, ডাক্তারের সাথে কথা বলুন, আর জাতীয় স্বাস্থ্য নির্দেশনা দেখুন।",
+    en: "Three things — find a donor, talk to a doctor, and follow the national health guidance.",
   },
-  privacyBannerTitle: { bn: "দুটি নিয়ম আমরা কখনো ভাঙি না", en: "Two rules we never break" },
-  privacyBannerBody: {
-    bn: "জাতীয় পরিচয়পত্র কখনো সরাসরি সংরক্ষিত হয় না, এবং অনুসন্ধানে কখনো সঠিক অবস্থান দেখা যায় না।",
-    en: "Your national ID is never stored as written, and a search never reveals your exact location.",
+  doFindDonor: { bn: "সঙ্গতিপূর্ণ রক্তদাতা খুঁজুন", en: "Find a matched donor" },
+  doFindDonorBody: {
+    bn: "রক্তের গ্রুপ ও উপজেলা দিন — যারা দিতে পারবেন, কাছের মানুষকে দেখতে পাবেন।",
+    en: "Give a blood group and an upazila; see the compatible people nearest to you.",
   },
-  nidTitle: { bn: "এনআইডি কখনো সরাসরি নয়", en: "NID is never stored as written" },
-  nidBody: {
-    bn: "নিবন্ধনের সময় পুরো নম্বরটি কোথাও লেখা হয় না — শুধু একটি অপরিবর্তনীয় হ্যাশ ও শেষ ৪ সংখ্যা রাখা হয়।",
-    en: "The full number is never written down at registration — only a one-way hash and the last four digits are kept.",
+  doConsultDoc: { bn: "ডাক্তারের সাথে কথা বলুন", en: "Consult a doctor" },
+  doConsultDocBody: {
+    bn: "প্রতিটি উপজেলায় অন্তত একজন ডাক্তার — কয়েক মিনিটেই সাক্ষাৎ নিন।",
+    en: "At least one doctor in every upazila — book a consultation in minutes.",
   },
-  phoneTitle: { bn: "রাজি হলে তবে নম্বর", en: "Contact, only after acceptance" },
-  phoneBody: {
-    bn: "রক্তদাতা রাজি না করা পর্যন্ত ফোন নম্বর কারো কাছে প্রকাশ হয় না — প্রতিটি প্রকাশ লিপিবদ্ধ থাকে।",
-    en: "A donor's phone number is released to no one until the donor accepts — and every release is logged.",
+  doUpdates: { bn: "জাতীয় স্বাস্থ্য আপডেট", en: "National health updates" },
+  doUpdatesBody: {
+    bn: "সরকারি নির্দেশনা, কর্মসূচি ও ঘোষণা — ডাক্তারদের লেখা নিবন্ধসহ।",
+    en: "Official advisories, campaigns and notices — alongside doctor-written articles.",
   },
-  locationTitle: { bn: "সঠিক অবস্থান কখনো নয়", en: "Never an exact location" },
-  locationBody: {
-    bn: "অনুসন্ধানে শুধু দূরত্বের ব্যান্ড দেখানো হয় — ঠিকানা বা সঠিক স্থানাঙ্ক কখনো ফেরত দেওয়া হয় না।",
-    en: "Search returns only a distance band — an address or exact coordinates are never shared.",
-  },
-
-  timelineEyebrow: { bn: "আমাদের অঙ্গীকার", en: "Our commitments" },
-  timelineTitle: { bn: "আমাদের নীতি", en: "Our principles" },
-  timelineSub: {
-    bn: "নিবন্ধন থেকে প্রতিটি প্রকাশ — কোন নীতি কোথায় প্রযোজ্য।",
-    en: "From registration to every release — the rule that governs each step.",
-  },
+  doOpen: { bn: "খুলুন", en: "Open" },
 
   ctaLead: { bn: "সঙ্গে শুরু করুন", en: "Start here" },
   ctaTitle: { bn: "রক্তের প্রয়োজন? নাকি দিতে পারেন?", en: "Need blood, or ready to give?" },
@@ -120,37 +104,6 @@ const COPY = {
   ctaDonors: { bn: "রক্তদাতা খুঁজুন", en: "Find a donor" },
   ctaDoctors: { bn: "ডাক্তারের সাথে কথা বলুন", en: "Talk to a doctor" },
 } as const;
-
-const PRINCIPLES = [
-  {
-    title: { bn: "পরিচয় হ্যাশে সুরক্ষিত", en: "Identity stays hashed" },
-    body: {
-      bn: "যাচাইয়ের পর এনআইডি শুধু একটি হ্যাশ হয়ে থেকে যায়।",
-      en: "After verification, an NID exists only as a hash.",
-    },
-  },
-  {
-    title: { bn: "সম্মতি ছাড়া যোগাযোগ নেই", en: "No contact without consent" },
-    body: {
-      bn: "যোগাযোগের তথ্য দুই পক্ষের সম্মতিতে তবেই ছড়ায়।",
-      en: "Contact passes only when both sides say yes.",
-    },
-  },
-  {
-    title: { bn: "দূরত্বই একমাত্র তথ্য", en: "Distance is all we share" },
-    body: {
-      bn: "অনুসন্ধানে শুধু দূরত্বের ব্যান্ড — দিক বা ঠিকানা নয়।",
-      en: "Search shares a distance band — never a direction or address.",
-    },
-  },
-  {
-    title: { bn: "প্রতিটি প্রকাশ লিপিবদ্ধ", en: "Every release is logged" },
-    body: {
-      bn: "যোগাযোগ দেখার প্রতিটি ঘটনা প্রোফাইলে থেকে যায়।",
-      en: "Every contact view stays on your profile record.",
-    },
-  },
-];
 
 /* -------------------------------------------------------------------------- */
 /* Hero                                                                        */
@@ -203,14 +156,6 @@ function Hero() {
         >
           {COPY.heroBody[lang]}
         </p>
-
-        <div
-          data-hero-reveal
-          className="reveal-init mx-auto mt-8 flex items-center justify-center gap-2 text-xs text-muted"
-        >
-          <ShieldCheck className="h-4 w-4 text-success" strokeWidth={1.8} aria-hidden="true" />
-          <span>{COPY.heroTrust[lang]}</span>
-        </div>
       </div>
     </section>
   );
@@ -266,20 +211,20 @@ function Mission() {
       <div className="mt-8 grid grid-cols-1 md:grid-cols-3 grid-flow-dense gap-3">
         <div
           data-mission-card
-          className="reveal-init md:col-span-3 group relative overflow-hidden rounded-3xl bg-ink-brand p-6 sm:p-8 flex flex-col sm:flex-row sm:items-start gap-5"
+          className="reveal-init md:col-span-3 group relative overflow-hidden rounded-3xl bg-brand p-6 sm:p-8 flex flex-col sm:flex-row sm:items-start gap-5"
         >
           <div
             className="pointer-events-none absolute -right-16 -bottom-16 h-48 w-48 rounded-full bg-white/5"
             aria-hidden="true"
           />
-          <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-ink-brand-soft">
+          <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white">
             <ShieldCheck className="h-6 w-6" strokeWidth={1.8} aria-hidden="true" />
           </div>
           <div>
-            <h3 className="text-xl sm:text-2xl font-bold text-ink-brand-soft">
+            <h3 className="text-xl sm:text-2xl font-bold text-white">
               {COPY.missionCardTitle[lang]}
             </h3>
-            <p className="mt-2 text-sm sm:text-[15px] text-ink-brand-soft/75 max-w-2xl leading-relaxed">
+            <p className="mt-2 text-sm sm:text-[15px] text-white/80 max-w-2xl leading-relaxed">
               {COPY.missionLead[lang]}
             </p>
           </div>
@@ -309,11 +254,11 @@ function Mission() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Privacy — banner thesis + the mandated NID / phone / location triptych      */
+/* DoGrid — what the platform lets you do: donors, doctors, national updates   */
 /* -------------------------------------------------------------------------- */
 
-function Privacy() {
-  const { t, lang } = useAppShell();
+function DoGrid() {
+  const { lang } = useAppShell();
   const ref = useRef<HTMLElement>(null);
 
   useGSAP(
@@ -322,13 +267,13 @@ function Privacy() {
       const el = ref.current;
       if (!el) return;
       gsap.fromTo(
-        el.querySelectorAll("[data-privacy-card]"),
-        { y: 28, opacity: 0 },
+        el.querySelectorAll("[data-do-card]"),
+        { y: 26, opacity: 0 },
         {
           y: 0,
           opacity: 1,
           duration: 0.55,
-          stagger: 0.09,
+          stagger: 0.1,
           ease: "power2.out",
           scrollTrigger: { trigger: el, start: "top 88%" },
         }
@@ -338,131 +283,68 @@ function Privacy() {
   );
 
   const cards = [
-    { icon: ShieldCheck, tint: "text-brand", title: COPY.nidTitle[lang], body: COPY.nidBody[lang] },
-    { icon: Phone, tint: "text-ink-brand", title: COPY.phoneTitle[lang], body: COPY.phoneBody[lang] },
-    { icon: MapPin, tint: "text-blood", title: COPY.locationTitle[lang], body: COPY.locationBody[lang] },
+    {
+      icon: Droplet,
+      tint: "text-brand",
+      title: COPY.doFindDonor[lang],
+      body: COPY.doFindDonorBody[lang],
+      to: "/donors",
+    },
+    {
+      icon: Stethoscope,
+      tint: "text-ink-brand",
+      title: COPY.doConsultDoc[lang],
+      body: COPY.doConsultDocBody[lang],
+      to: "/doctors",
+    },
+    {
+      icon: Megaphone,
+      tint: "text-blood",
+      title: COPY.doUpdates[lang],
+      body: COPY.doUpdatesBody[lang],
+      to: "/articles",
+    },
   ];
 
   return (
     <section
       ref={ref}
       className="mx-auto max-w-7xl px-4 sm:px-6 mt-16 sm:mt-24"
-      aria-labelledby="privacy-h2"
+      aria-labelledby="do-h2"
     >
       <SectionHeader
-        eyebrow={t("footer.legal")}
-        title={<span id="privacy-h2">{COPY.privacyTitle[lang]}</span>}
-        body={COPY.privacySub[lang]}
+        eyebrow={COPY.doEyebrow[lang]}
+        title={<span id="do-h2">{COPY.doTitle[lang]}</span>}
+        body={COPY.doSub[lang]}
       />
 
       <div className="mt-8 grid grid-cols-1 md:grid-cols-3 grid-flow-dense gap-3">
-        <div
-          data-privacy-card
-          className="reveal-init md:col-span-3 rounded-3xl border border-line-strong bg-elevated p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center gap-4"
-        >
-          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-brand-deep">
-            <Lock className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
-          </span>
-          <div>
-            <h3 className="text-[15px] font-bold text-ink">{COPY.privacyBannerTitle[lang]}</h3>
-            <p className="mt-1 text-sm text-muted">{COPY.privacyBannerBody[lang]}</p>
-          </div>
-        </div>
-
         {cards.map((card) => {
           const Icon = card.icon;
           return (
-            <div
-              key={card.title}
-              data-privacy-card
-              className="reveal-init md:col-span-1 rounded-3xl border border-line bg-surface p-6"
+            <Link
+              key={card.to}
+              to={card.to}
+              data-do-card
+              className="reveal-init md:col-span-1 group relative overflow-hidden rounded-3xl border border-line bg-surface p-6 hover:-translate-y-1 hover:shadow-lg transition-all duration-300"
             >
-              <Icon className={`h-6 w-6 ${card.tint}`} strokeWidth={1.8} aria-hidden="true" />
+              <Icon
+                className={`h-6 w-6 transition-transform duration-700 ease-out group-hover:scale-110 ${card.tint}`}
+                strokeWidth={1.8}
+                aria-hidden="true"
+              />
               <h3 className="mt-4 text-[15px] font-bold text-ink">{card.title}</h3>
               <p className="mt-1 text-sm text-muted">{card.body}</p>
-            </div>
+              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand">
+                {COPY.doOpen[lang]}
+                <ArrowRight
+                  className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                  aria-hidden="true"
+                />
+              </span>
+            </Link>
           );
         })}
-      </div>
-    </section>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Principles — a stepped timeline with a scrubbed drawing rail                */
-/* -------------------------------------------------------------------------- */
-
-function Principles() {
-  const { lang } = useAppShell();
-  const ref = useRef<HTMLElement>(null);
-
-  useGSAP(
-    () => {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      const el = ref.current;
-      if (!el) return;
-
-      const rail = el.querySelector(".timeline-rail");
-      if (rail) {
-        gsap.fromTo(
-          rail,
-          { scaleX: 0 },
-          {
-            scaleX: 1,
-            ease: "none",
-            scrollTrigger: { trigger: el, start: "top 78%", scrub: 0.6 },
-          }
-        );
-      }
-
-      gsap.fromTo(
-        el.querySelectorAll("[data-principle]"),
-        { y: 26, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.55,
-          stagger: 0.1,
-          ease: "power2.out",
-          scrollTrigger: { trigger: el, start: "top 82%" },
-        }
-      );
-    },
-    { scope: ref }
-  );
-
-  return (
-    <section
-      ref={ref}
-      className="mx-auto max-w-7xl px-4 sm:px-6 mt-20 sm:mt-28"
-      aria-labelledby="principles-h2"
-    >
-      <SectionHeader
-        eyebrow={COPY.timelineEyebrow[lang]}
-        title={<span id="principles-h2">{COPY.timelineTitle[lang]}</span>}
-        body={COPY.timelineSub[lang]}
-      />
-
-      <div className="mt-10 relative">
-        <div
-          className="timeline-rail absolute left-6 right-6 top-6 hidden h-px origin-left bg-line-strong md:block"
-          aria-hidden="true"
-        />
-        <ol className="grid grid-cols-1 md:grid-cols-4 grid-flow-dense gap-10 sm:gap-6">
-          {PRINCIPLES.map((step, i) => (
-            <li key={step.title.en} data-principle className="reveal-init md:col-span-1 relative">
-              <div className="flex items-start gap-4 md:block">
-                <span className="relative z-10 inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line-strong bg-surface text-brand-deep font-bold tnum">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <div className="md:mt-4">
-                  <h3 className="text-[15px] font-bold text-ink">{step.title[lang]}</h3>
-                  <p className="mt-1.5 text-sm text-muted">{step.body[lang]}</p>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ol>
       </div>
     </section>
   );
@@ -503,29 +385,29 @@ function FinalCta() {
       className="mx-auto max-w-7xl px-4 sm:px-6 mt-20 sm:mt-28"
       aria-label={COPY.ctaTitle[lang]}
     >
-      <div className="grain relative overflow-hidden rounded-[2rem] bg-ink-brand px-6 py-16 sm:px-12 sm:py-20 text-center">
+      <div className="grain relative overflow-hidden rounded-[2rem] bg-brand px-6 py-16 sm:px-12 sm:py-20 text-center">
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage:
-              "radial-gradient(42rem 30rem at 80% -10%, rgba(14,124,110,0.42), transparent 60%), radial-gradient(36rem 28rem at 8% 110%, rgba(215,38,61,0.22), transparent 60%)",
+              "radial-gradient(42rem 30rem at 80% -10%, rgba(138,27,46,0.42), transparent 60%), radial-gradient(36rem 28rem at 8% 110%, rgba(215,38,61,0.22), transparent 60%)",
           }}
           aria-hidden="true"
         />
         <div className="relative mx-auto max-w-3xl">
           <p
             data-cta-reveal
-            className="reveal-init text-xs font-semibold uppercase tracking-[0.18em] text-ink-brand-soft"
+            className="reveal-init text-xs font-semibold uppercase tracking-[0.18em] text-white"
           >
             {COPY.ctaLead[lang]}
           </p>
           <h2
             data-cta-reveal
-            className="reveal-init display mt-3 text-[clamp(2rem,4.5vw,3.5rem)] text-ink-brand-soft"
+            className="reveal-init display mt-3 text-[clamp(2rem,4.5vw,3.5rem)] text-white"
           >
             {COPY.ctaTitle[lang]}
           </h2>
-          <p data-cta-reveal className="reveal-init mx-auto mt-4 max-w-xl text-[15px] text-ink-brand-soft/75">
+          <p data-cta-reveal className="reveal-init mx-auto mt-4 max-w-xl text-[15px] text-white/80">
             {COPY.ctaBody[lang]}
           </p>
 
@@ -535,7 +417,7 @@ function FinalCta() {
           >
             <Link
               to="/donors"
-              className="inline-flex h-11 items-center gap-2 rounded-full bg-brand px-7 text-[15px] font-semibold text-white hover:bg-brand-deep hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-7 text-[15px] font-semibold text-brand hover:bg-white/90 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
             >
               <Droplet className="h-4.5 w-4.5" strokeWidth={2} aria-hidden="true" />
               {COPY.ctaDonors[lang]}
@@ -543,14 +425,14 @@ function FinalCta() {
             </Link>
             <Link
               to="/doctors"
-              className="inline-flex h-11 items-center gap-2 rounded-full border border-ink-brand-soft/30 bg-white/5 px-7 text-[15px] font-semibold text-ink-brand-soft hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-white/30 bg-white/5 px-7 text-[15px] font-semibold text-white hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
             >
               <Stethoscope className="h-4.5 w-4.5" strokeWidth={1.8} aria-hidden="true" />
               {COPY.ctaDoctors[lang]}
             </Link>
           </div>
 
-          <p data-cta-reveal className="reveal-init mt-5 text-xs text-ink-brand-soft/60">
+          <p data-cta-reveal className="reveal-init mt-5 text-xs text-white/70">
             {t("footer.notice")}
           </p>
         </div>
@@ -568,8 +450,7 @@ export default function About() {
     <div className="overflow-x-hidden w-full max-w-full">
       <Hero />
       <Mission />
-      <Privacy />
-      <Principles />
+      <DoGrid />
       <FinalCta />
     </div>
   );
