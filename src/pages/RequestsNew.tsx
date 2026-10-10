@@ -9,15 +9,14 @@
  */
 
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Droplet, HeartPulse } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Droplet, HeartPulse } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
-import { DISTANCE_BANDS, type BloodComponent, type BloodGroup } from "@/domain/types.ts";
+import { type BloodComponent, type BloodGroup } from "@/domain/types.ts";
 import { COMPONENT_LABELS, URGENCY_LABELS } from "@/lib/strings.ts";
 import { createBloodRequest } from "@/api/requests.ts";
 import { BLOOD_GROUPS } from "@/domain/types.ts";
-import { Badge } from "@/components/ui.tsx";
 import { todayISO } from "@/domain/eligibility.ts";
 
 export default function RequestsNew() {

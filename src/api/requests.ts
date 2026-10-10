@@ -41,7 +41,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 /* -------------------------------------------------------------------------- */
 
 /** In-memory request store for demo mode, seeded from the feed items. */
-const demoStore: BloodRequest[] = DEMO_EMERGENCIES.map((e, i) => ({
+const demoStore: BloodRequest[] = DEMO_EMERGENCIES.map((e) => ({
   id: e.id,
   requestor_id: "demo-requestor",
   patient_name: null,
@@ -69,7 +69,7 @@ const demoResponders = (requestId: string): RequestResponder[] => {
   // A stable pseudo-responder set derived from the request id, so the same
   // tracking screen shows the same people across reloads.
   const n = (request.id.charCodeAt(request.id.length - 1) % 3) + 1;
-  const states: ResponseState[] = ["invited", n > 1 ? "accepted" : "declined", "invited"].slice(0, n);
+  const states: readonly ResponseState[] = (["invited", n > 1 ? "accepted" : "declined", "invited"] as const).slice(0, n);
   return states.map((state, i) => ({
     response_id: `${requestId}-r${i}`,
     donor_id: `demo-donor-${i + 1}`,

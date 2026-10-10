@@ -22,13 +22,11 @@ import {
   ArrowRight,
   ArrowUpRight,
   Droplet,
-  Eye,
   HeartPulse,
   MapPin,
   Phone,
   ShieldCheck,
   Stethoscope,
-  Timer,
 } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";

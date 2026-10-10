@@ -14,7 +14,7 @@ import { ArrowLeft, ArrowRight, ShieldCheck, Smartphone } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
 import { acceptableDonorsFor, isRareGroup } from "@/domain/blood.ts";
-import { nidIssue, normalizePhoneBD } from "@/domain/profile.ts";
+import { nidIssue, normalisePhoneBD } from "@/domain/profile.ts";
 import { DEMO_UPAZILAS, districtsOf, upazilasOf } from "@/lib/demo-data.ts";
 import { BLOOD_GROUPS, type BloodGroup } from "@/domain/types.ts";
 import { DEMO_MODE } from "@/lib/supabase.ts";
@@ -53,7 +53,7 @@ export default function Register() {
   const [otpError, setOtpError] = useState<string | null>(null);
 
   const issue = nidTouched ? nidIssue(nid) : null;
-  const phoneOk = phone.length === 0 || normalizePhoneBD(phone) !== null;
+  const phoneOk = phone.length === 0 || normalisePhoneBD(phone) !== null;
   const divisions = useMemo(
     () => [...new Set(DEMO_UPAZILAS.map((u) => u.division_en))].sort(),
     []

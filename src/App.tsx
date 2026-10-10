@@ -28,6 +28,10 @@ const ComplainPage = lazy(() => import("@/pages/Complain.tsx"));
 const ComplaintsMinePage = lazy(() => import("@/pages/ComplaintsMine.tsx"));
 const RegisterPage = lazy(() => import("@/pages/Register.tsx"));
 const LoginPage = lazy(() => import("@/pages/Login.tsx"));
+const AboutPage = lazy(() => import("@/pages/About.tsx"));
+const ContactPage = lazy(() => import("@/pages/Contact.tsx"));
+const HelplinePage = lazy(() => import("@/pages/Helpline.tsx"));
+const LegalPage = lazy(() => import("@/pages/Legal.tsx"));
 const NotFoundPage = lazy(() => import("@/pages/NotFound.tsx"));
 
 /** Scrolls to the top on every navigation, so a deep link never lands mid-page. */
@@ -71,6 +75,10 @@ export default function App() {
               <Route path="/complaints/mine" element={<ComplaintsMinePage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/helpline" element={<HelplinePage />} />
+              <Route path="/legal" element={<LegalPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>

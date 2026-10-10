@@ -10,6 +10,8 @@
 import type { Complaint } from "@/domain/types.ts";
 import { callRpc, DEMO_MODE } from "@/lib/supabase.ts";
 
+export type { Complaint };
+
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export interface ComplaintInput {

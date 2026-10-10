@@ -245,6 +245,7 @@ export default function Login() {
             data-active={step === 1 ? "true" : "false"}
             hidden={step !== 1}
             aria-label={t("auth.phone")}
+            className="reveal-init"
           >
             <div className="rounded-2xl border border-line bg-surface p-6 sm:p-8">
               <label className="block text-sm font-semibold text-ink" htmlFor="login-phone">
@@ -290,6 +291,7 @@ export default function Login() {
             data-active={step === 2 ? "true" : "false"}
             hidden={step !== 2}
             aria-label={t("auth.otp")}
+            className="reveal-init"
           >
             <div className="rounded-2xl border border-line bg-surface p-6 sm:p-8">
               {/* The number comes back masked, and the line under it says why

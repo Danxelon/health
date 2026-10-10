@@ -231,7 +231,7 @@ export default function Donors() {
                         {d.can_give_now ? t("donors.readyNow") : t("donors.unavailable")}
                       </Badge>
                       {d.blood_group_verified && (
-                        <Badge tone="brand" className="text-xs">
+                        <Badge tone="brand">
                           ✓ {t("donors.respects")}
                         </Badge>
                       )}
@@ -240,7 +240,7 @@ export default function Donors() {
                     {d.soft_warnings && d.soft_warnings.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {d.soft_warnings.map((w) => (
-                          <Badge key={w} tone="warning" className="text-[10px]">
+                          <Badge key={w} tone="warning">
                             {w}
                           </Badge>
                         ))}
@@ -298,7 +298,7 @@ export default function Donors() {
                       {lang === "bn" ? doctor.specialty_bn : doctor.specialty_en}
                     </span>
                   </span>
-                  <ArrowUpRight className="ml-auto h-4 w-4 text-muted group-hover:text-brand transition-colors" aria-hidden="true" />
+                  <ArrowRight className="ml-auto h-4 w-4 text-muted group-hover:text-brand transition-colors" aria-hidden="true" />
                 </Link>
               </li>
             ))}

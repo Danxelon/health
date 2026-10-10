@@ -25,6 +25,9 @@ export interface SearchDonorsArgs {
   component?: BloodComponent | null;
 }
 
+/** `metres` rides along for ranking only and is never rendered on a card. */
+type RankedDonorCard = DonorCard & { metres: number | null };
+
 export interface SearchResults {
   donors: DonorCard[];
   counts: DonorCounts;
@@ -55,7 +58,7 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
   const originUpazila =
     args.upazilaId !== null ? DEMO_UPAZILAS.find((u) => u.id === args.upazilaId) : undefined;
 
-  const donors: DonorCard[] = DEMO_DONORS.filter((d) => compatible.has(d.blood_group)).map((d) => {
+  const donors: RankedDonorCard[] = DEMO_DONORS.filter((d) => compatible.has(d.blood_group)).map((d) => {
     // The demo donor is anchored to their upazila centre; the real RPC does
     // this against the caller's snapped point.
     const origin = originUpazila ?? {
@@ -86,7 +89,7 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
       today
     );
 
-    return { ...d, ring, score, distance_km: Math.round(metres / 100) / 10 };
+    return { ...d, ring, score, metres, distance_km: Math.round(metres / 100) / 10 };
   });
 
   const ranked = rankDonors(donors);
@@ -98,7 +101,7 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
       ready_now: ranked.filter((d) => d.can_give_now).length,
       radius_km: maxRingFor(args.urgency) === 6 ? 50 : [3, 10, 25, 50][maxRingFor(args.urgency) - 1] ?? 10,
       for_group: args.recipientGroup,
-      accepts_from: compatible,
+      accepts_from: [...compatible],
     },
     groups: groupByRing(ranked),
     searchedAt: new Date().toISOString(),
@@ -122,7 +125,13 @@ export async function searchDonors(args: SearchDonorsArgs): Promise<SearchResult
     p_component: args.component ?? "whole_blood",
   });
 
-  const ranked = rankDonors(rows);
+  // The RPC already returns donors in the documented order; re-ranking
+  // here would require `metres` the projection does not expose.
+  const ranked: DonorCard[] = [...rows].sort((a, b) => {
+    if (a.ring !== b.ring) return a.ring - b.ring;
+    if (b.score !== a.score) return b.score - a.score;
+    return a.donor_id < b.donor_id ? -1 : a.donor_id > b.donor_id ? 1 : 0;
+  });
   return {
     donors: ranked,
     counts: {

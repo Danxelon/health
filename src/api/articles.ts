@@ -37,7 +37,7 @@ export async function fetchArticle(slug: string): Promise<ArticleDetail | null> 
     if (!item) return null;
     const bodies = DEMO_ARTICLE_BODIES[slug] ?? {
       body_en: item.excerpt ?? "",
-      body_bn: item.excerpt_bn ?? "",
+      body_bn: item.excerpt ?? "",
     };
     return { item, bodyEn: bodies.body_en, bodyBn: bodies.body_bn };
   }

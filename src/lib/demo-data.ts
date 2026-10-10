@@ -12,7 +12,7 @@
 
 import { acceptableDonorsFor, groupBadge, GROUP_PREVALENCE_BD } from "@/domain/blood.ts";
 import { maxRingFor, scoreDonor } from "@/domain/matching.ts";
-import { expiresAtISO, URGENCY_META } from "@/domain/requests.ts";
+import { expiresAtISO } from "@/domain/requests.ts";
 import { maskName, maskPhone } from "@/domain/profile.ts";
 import type {
   ArticleFeedItem,

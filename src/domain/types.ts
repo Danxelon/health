@@ -362,6 +362,7 @@ export interface ArticleFeedItem {
   title: string;
   title_bn: string | null;
   excerpt: string | null;
+  excerpt_bn: string | null;
   cover_image_path: string | null;
   tags: string[] | null;
   published_at: string | null;
