@@ -1,0 +1,2 @@
+var e=[`A+`,`A-`,`B+`,`B-`,`AB+`,`AB-`,`O+`,`O-`],t=class extends Error{code;message_bn;details;constructor(e){super(e.message_en),this.name=`DomainError`,this.code=e.code,this.message_bn=e.message_bn,this.details=e.details??{}}get bilingual(){return{en:this.message,bn:this.message_bn}}};export{t as n,e as t};
+//# sourceMappingURL=types-lPkWUYFh.js.map
