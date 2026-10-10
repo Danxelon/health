@@ -21,15 +21,11 @@ if (DEV_OTP_MODE && import.meta.env.MODE === "production") {
   );
 }
 
-if (import.meta.env.MODE === "production") {
-  const url = import.meta.env.VITE_SUPABASE_URL ?? "";
-  const anon = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
+const DEFAULT_ANON =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlY3BtZGVwb2ZyYWFmcXhicWRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NjExNjMsImV4cCI6MjEwNzAzNzE2M30.4T14S9cF_OvUriYprTGfOZzDvbzWvMw1uNqK03sD1xo";
 
-  if (!url || !anon) {
-    throw new Error(
-      "Refusing to start: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must both be set."
-    );
-  }
+if (import.meta.env.MODE === "production") {
+  const anon = import.meta.env.VITE_SUPABASE_ANON_KEY || DEFAULT_ANON;
 
   // The anon key is a JWT whose payload carries the role. A service_role key
   // shipped to the browser bypasses RLS entirely — this is the one mistake that
@@ -51,9 +47,11 @@ if (import.meta.env.MODE === "production") {
 const rootEl = document.getElementById("root");
 if (!rootEl) throw new Error("Missing #root element in index.html");
 
+const basename = window.location.pathname.startsWith("/health") ? "/health" : "/";
+
 createRoot(rootEl).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <App />
     </BrowserRouter>
   </StrictMode>

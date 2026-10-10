@@ -17,8 +17,12 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { DomainError, type DomainErrorPayload } from "@/domain/types.ts";
 
-const url = import.meta.env.VITE_SUPABASE_URL ?? "";
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
+const DEFAULT_URL = "https://eecpmdepofraafqxbqdr.supabase.co";
+const DEFAULT_ANON =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlY3BtZGVwb2ZyYWFmcXhicWRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NjExNjMsImV4cCI6MjEwNzAzNzE2M30.4T14S9cF_OvUriYprTGfOZzDvbzWvMw1uNqK03sD1xo";
+
+const url = import.meta.env.VITE_SUPABASE_URL || DEFAULT_URL;
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || DEFAULT_ANON;
 
 /** True when a real project is configured. */
 export const hasSupabase = Boolean(url && anonKey);

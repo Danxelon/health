@@ -50,8 +50,8 @@
   /* Cabinet Grotesk for display: wide, geometric, holds a 2-line H1 at
      5.25rem without collapsing. Satoshi for text: quiet, high x-height,
      excellent at 14-16px on a cheap Android screen in daylight.          */
-  --font-display: "Cabinet Grotesk", "Noto Sans Bengali", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Satoshi", "Noto Sans Bengali", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cabinet Grotesk", "Hind Siliguri", "Plus Jakarta Sans", "Noto Sans Bengali", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Satoshi", "Hind Siliguri", "Plus Jakarta Sans", "Noto Sans Bengali", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
 
   /* --- Motion ------------------------------------------------------------ */
@@ -187,7 +187,7 @@ p {
    it inherits a Latin 1.06 display leading. */
 [lang="bn"],
 .bn {
-  font-family: "Noto Sans Bengali", var(--font-sans);
+  font-family: "Hind Siliguri", "Noto Sans Bengali", var(--font-sans);
   line-height: 1.75;
 }
 

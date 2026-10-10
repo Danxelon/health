@@ -13,7 +13,12 @@
 -- -----------------------------------------------------------------------------
 -- ENUM
 -- -----------------------------------------------------------------------------
-create type national_update_kind as enum ('campaign', 'alert', 'notice');
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'national_update_kind') then
+    create type national_update_kind as enum ('campaign', 'alert', 'notice');
+  end if;
+end $$;
 
 -- -----------------------------------------------------------------------------
 -- NATIONAL UPDATES
@@ -21,7 +26,7 @@ create type national_update_kind as enum ('campaign', 'alert', 'notice');
 -- (the RLS policy is what grants row-level access; no update RPC exists).
 -- Inserts and edits are admin-only via public.is_admin().
 -- -----------------------------------------------------------------------------
-create table national_updates (
+create table if not exists national_updates (
   id             uuid primary key default gen_random_uuid(),
   title          text not null,
   title_bn       text,
@@ -37,16 +42,22 @@ create table national_updates (
 
 alter table national_updates enable row level security;
 
+drop policy if exists national_updates_select_public on national_updates;
 create policy national_updates_select_public on national_updates
   for select to anon, authenticated using (true);
+
+drop policy if exists national_updates_insert_admin on national_updates;
 create policy national_updates_insert_admin on national_updates
   for insert to authenticated with check (public.is_admin());
+
+drop policy if exists national_updates_update_admin on national_updates;
 create policy national_updates_update_admin on national_updates
   for update to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- -----------------------------------------------------------------------------
 -- updated_at maintenance, mirroring 0003_triggers.sql for other tables
 -- -----------------------------------------------------------------------------
+drop trigger if exists trg_national_updates_touch on national_updates;
 create trigger trg_national_updates_touch before update on national_updates
   for each row execute function public.touch_updated_at();
 
@@ -57,7 +68,9 @@ alter table articles add column if not exists excerpt_bn text;
 
 -- Re-issue the curated feed with the new column. security_invoker = false keeps
 -- the view owner's rights, exactly as in 0002_rls.sql.
-create or replace view public.article_feed
+drop view if exists public.article_feed;
+
+create view public.article_feed
 with (security_invoker = false) as
 select
   a.id, a.slug, a.title, a.title_bn, a.excerpt, a.excerpt_bn, a.cover_image_path,
