@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
+import { useAuth } from "@/state/auth-context.tsx";
 import { isValidPhoneBD, maskPhone, normalisePhoneBD } from "@/domain/profile.ts";
 
 gsap.registerPlugin(useGSAP);
@@ -120,6 +121,7 @@ function sentLine(lang: "bn" | "en", masked: string): string {
 
 export default function Login() {
   const { t, lang } = useAppShell();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const [step, setStep] = useState<Step>(1);
@@ -161,6 +163,7 @@ export default function Login() {
     window.setTimeout(() => {
       setSubmitting(false);
       if (otp === DEMO_CODE) {
+        login(phone || "01711000000");
         const next = new URLSearchParams(window.location.search).get("next") || "/donors";
         navigate(next, { replace: true });
       } else {
@@ -277,6 +280,20 @@ export default function Login() {
                 {t("auth.sendOtp")}
                 <ArrowRight className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
               </button>
+
+              <div className="mt-4 pt-4 border-t border-line text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    login("01711000000", "Demo User");
+                    const next = new URLSearchParams(window.location.search).get("next") || "/donors";
+                    navigate(next, { replace: true });
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline cursor-pointer"
+                >
+                  <span>✨ {lang === "bn" ? "১-ক্লিকে তাৎক্ষণিক ডেমো লগ ইন করুন" : "One-Click Instant Demo Login"}</span>
+                </button>
+              </div>
             </div>
           </section>
 

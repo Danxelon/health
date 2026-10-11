@@ -10,6 +10,7 @@ import { Route, Routes, useLocation } from "react-router-dom";
 import { Suspense, lazy, useEffect } from "react";
 
 import { AppShellProvider, useAppShell } from "@/state/app-shell.tsx";
+import { AuthProvider } from "@/state/auth-context.tsx";
 import { Layout } from "@/components/layout.tsx";
 
 /* Pages lazy-load so the first paint is the shell, not the world. */
@@ -57,8 +58,9 @@ export default function App() {
   return (
     <AppShellProvider>
       <ScrollToTop>
-        <Layout>
-          <Suspense fallback={<PageFallback />}>
+        <AuthProvider>
+          <Layout>
+            <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/donors" element={<DonorsPage />} />
@@ -83,7 +85,8 @@ export default function App() {
             </Routes>
           </Suspense>
         </Layout>
-      </ScrollToTop>
-    </AppShellProvider>
-  );
+      </AuthProvider>
+    </ScrollToTop>
+  </AppShellProvider>
+);
 }

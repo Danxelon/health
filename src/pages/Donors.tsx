@@ -1,29 +1,44 @@
 /**
- * Donors — search with blood group picker, area filter, and ranking.
+ * Donors — find blood donors with interactive blood group picker,
+ * comprehensive area sort-out filters, and ranking.
+ *
+ * Rules:
+ * - Blood groups must be an interactive button picker (NOT a dropdown menu).
+ * - "What is needed" option is excluded.
+ * - Area sort-out filter provided without live location/GPS.
+ * - Requires citizen to be logged in to access search.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Droplet, Search } from "lucide-react";
+import { ArrowRight, Droplet, Filter, MapPin, Search } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
+import { useAuth } from "@/state/auth-context.tsx";
 import { Badge, DistanceChip, SectionHeader } from "@/components/ui.tsx";
 import { searchDonors, type SearchDonorsArgs, type SearchResults } from "@/api/donors.ts";
 import { fetchDoctors } from "@/api/doctors.ts";
 import type { BloodGroup, DoctorCard, RequestUrgency } from "@/domain/types.ts";
 import { URGENCY_LABELS } from "@/lib/strings.ts";
 import { DEMO_UPAZILAS } from "@/lib/demo-data.ts";
-import { supabase } from "@/lib/supabase.ts";
 
 const BLOOD_GROUPS: BloodGroup[] = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
+type AreaSortOption = "match" | "ready" | "name";
+
 export default function Donors() {
   const { t, lang } = useAppShell();
+  const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
 
   const [selectedGroup, setSelectedGroup] = useState<BloodGroup | "">("");
   const [selectedUrgency, setSelectedUrgency] = useState<RequestUrgency>("routine");
+
+  // Area sort-out options (without live location)
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
   const [selectedUpazila, setSelectedUpazila] = useState<number | "">("");
+  const [areaSearchQuery, setAreaSearchQuery] = useState<string>("");
+  const [sortBy, setSortBy] = useState<AreaSortOption>("match");
 
   const [results, setResults] = useState<SearchResults | null>(null);
   const [loading, setLoading] = useState(false);
@@ -31,14 +46,36 @@ export default function Donors() {
   const [doctors, setDoctors] = useState<DoctorCard[]>([]);
   const [doctorsLoading, setDoctorsLoading] = useState(true);
 
-  // Require auth on page load or action
+  // Require login on page load: redirect unauthenticated users
   useEffect(() => {
-    supabase?.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        navigate("/login?next=/donors", { replace: true });
+    if (!isLoggedIn) {
+      navigate("/login?next=/donors", { replace: true });
+    }
+  }, [isLoggedIn, navigate]);
+
+  // Extract unique divisions for area sorting
+  const divisions = useMemo(() => {
+    const set = new Set<string>();
+    DEMO_UPAZILAS.forEach((u) => set.add(u.division_en));
+    return Array.from(set).sort();
+  }, []);
+
+  // Filter upazilas based on division and text search
+  const filteredUpazilas = useMemo(() => {
+    return DEMO_UPAZILAS.filter((u) => {
+      if (selectedDivision && u.division_en !== selectedDivision) return false;
+      if (areaSearchQuery.trim()) {
+        const q = areaSearchQuery.toLowerCase();
+        const matchesName =
+          u.name_en.toLowerCase().includes(q) ||
+          u.name_bn.includes(q) ||
+          u.district_en.toLowerCase().includes(q) ||
+          u.district_bn.includes(q);
+        if (!matchesName) return false;
       }
+      return true;
     });
-  }, [navigate]);
+  }, [selectedDivision, areaSearchQuery]);
 
   const doSearch = async (args: SearchDonorsArgs) => {
     setLoading(true);
@@ -66,7 +103,7 @@ export default function Donors() {
       lng: upazila ? upazila.lng : null,
       upazilaId: selectedUpazila ? Number(selectedUpazila) : null,
       urgency: selectedUrgency,
-      component: null,
+      component: null, // "what is needed" option is explicitly excluded
     });
   };
 
@@ -77,6 +114,20 @@ export default function Donors() {
     });
   }, []);
 
+  // Sort displayed donors according to user preference
+  const sortedDonors = useMemo(() => {
+    if (!results?.donors) return [];
+    const list = [...results.donors];
+
+    if (sortBy === "ready") {
+      list.sort((a, b) => (b.can_give_now ? 1 : 0) - (a.can_give_now ? 1 : 0));
+    } else if (sortBy === "name") {
+      list.sort((a, b) => a.display_name.localeCompare(b.display_name));
+    }
+    // "match" uses default ranked order from backend/domain
+    return list;
+  }, [results, sortBy]);
+
   return (
     <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 pb-24 pt-8">
       <SectionHeader
@@ -85,15 +136,24 @@ export default function Donors() {
         body={t("donors.subtitle")}
       />
 
-      {/* Search Form with Picker */}
-      <form onSubmit={handleSearchSubmit} className="mt-8 rounded-3xl border border-line bg-surface p-6 sm:p-8 shadow-xs">
+      {/* Main Find Search Form */}
+      <form
+        onSubmit={handleSearchSubmit}
+        className="mt-8 rounded-3xl border border-line bg-surface p-6 sm:p-8 shadow-xs"
+      >
         <div className="space-y-6">
-          {/* Blood Group Picker */}
+          {/* Blood Group Picker - interactive pills, NEVER a dropdown menu */}
           <div>
-            <label className="block text-sm font-bold text-ink mb-3">
-              {t("donors.patientGroup")} <span className="text-brand">*</span>
-            </label>
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2.5">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-sm font-bold text-ink">
+                {t("donors.patientGroup")} <span className="text-brand">*</span>
+              </label>
+              <span className="text-xs text-muted">
+                {lang === "bn" ? "রক্তের গ্রুপ বেছে নিন" : "Click to pick blood group"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2.5 sm:gap-3">
               {BLOOD_GROUPS.map((g) => {
                 const isSelected = selectedGroup === g;
                 return (
@@ -101,74 +161,134 @@ export default function Donors() {
                     key={g}
                     type="button"
                     onClick={() => setSelectedGroup(g)}
-                    className={`h-13 flex flex-col items-center justify-center rounded-2xl border font-bold transition-all cursor-pointer ${
+                    className={`h-14 sm:h-16 flex flex-col items-center justify-center rounded-2xl border font-black transition-all cursor-pointer ${
                       isSelected
-                        ? "border-brand bg-brand text-white shadow-md scale-105"
-                        : "border-line bg-elevated text-ink hover:border-brand/40 hover:bg-brand-soft/50"
+                        ? "border-brand bg-brand text-white shadow-md scale-105 ring-2 ring-brand ring-offset-2 ring-offset-surface"
+                        : "border-line bg-surface text-ink hover:border-brand/50 hover:bg-brand-soft/30 hover:scale-102"
                     }`}
+                    aria-pressed={isSelected}
                   >
-                    <span className="text-lg leading-none tnum">{g}</span>
+                    <span className="text-xs opacity-75 font-semibold">
+                      <Droplet className={`h-3 w-3 ${isSelected ? "fill-white" : "text-brand"}`} />
+                    </span>
+                    <span className="text-lg sm:text-xl leading-tight tnum mt-0.5">{g}</span>
                   </button>
                 );
               })}
             </div>
+            {!selectedGroup && (
+              <p className="mt-2 text-xs text-muted">
+                {lang === "bn"
+                  ? "অনুসন্ধান শুরু করতে রক্তের গ্রুপে চাপ দিন"
+                  : "Select a blood group above to begin searching"}
+              </p>
+            )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-end">
-            {/* Area Sort out without live location */}
-            <div>
-              <label className="block text-sm font-semibold text-ink mb-2">
-                {lang === "bn" ? "উপজেলা/এলাকা বেছে নিন" : "Select Area / Upazila"}
-              </label>
-              <select
-                value={selectedUpazila}
-                onChange={(e) => setSelectedUpazila(e.target.value ? Number(e.target.value) : "")}
-                className="w-full h-12 rounded-xl border border-line bg-surface px-4 text-ink outline-none focus:border-brand font-medium"
-              >
-                <option value="">{lang === "bn" ? "সব এলাকা (সমগ্র বাংলাদেশ)" : "All Areas (Nationwide)"}</option>
-                {DEMO_UPAZILAS.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {lang === "bn" ? `${u.name_bn}, ${u.district_bn}` : `${u.name_en}, ${u.district_en}`}
-                  </option>
-                ))}
-              </select>
+          {/* Area Sort-Out Filter & Urgency (without live location) */}
+          <div className="pt-4 border-t border-line">
+            <div className="flex items-center gap-2 mb-3 text-xs font-bold uppercase tracking-wider text-muted">
+              <Filter className="h-3.5 w-3.5" />
+              <span>{lang === "bn" ? "এলাকা ও অগ্রাধিকার ফিল্টার" : "Area & Urgency Filters"}</span>
             </div>
 
-            {/* Urgency */}
-            <div>
-              <label className="block text-sm font-semibold text-ink mb-2">
-                {t("donors.urgency")}
-              </label>
-              <select
-                value={selectedUrgency}
-                onChange={(e) => setSelectedUrgency(e.target.value as RequestUrgency)}
-                className="w-full h-12 rounded-xl border border-line bg-surface px-4 text-ink outline-none focus:border-brand font-medium"
-              >
-                {(["routine", "urgent", "critical"] as RequestUrgency[]).map((u) => (
-                  <option key={u} value={u}>
-                    {URGENCY_LABELS[u][lang]}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 items-end">
+              {/* Division Sort Option */}
+              <div>
+                <label className="block text-xs font-bold text-ink mb-1.5">
+                  {lang === "bn" ? "বিভাগ" : "Division"}
+                </label>
+                <select
+                  value={selectedDivision}
+                  onChange={(e) => {
+                    setSelectedDivision(e.target.value);
+                    setSelectedUpazila("");
+                  }}
+                  className="w-full h-11 rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand font-medium"
+                >
+                  <option value="">{lang === "bn" ? "সকল বিভাগ" : "All Divisions"}</option>
+                  {divisions.map((div) => (
+                    <option key={div} value={div}>
+                      {div}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Search CTA */}
-            <div>
-              <button
-                type="submit"
-                disabled={loading || !selectedGroup}
-                className="w-full inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-sm font-bold text-white disabled:opacity-40 hover:bg-brand-deep transition-all shadow-xs cursor-pointer"
-              >
-                <Search className="h-4 w-4" aria-hidden="true" />
-                {loading ? t("common.loading") : t("common.search")}
-              </button>
+              {/* Area Quick Search */}
+              <div>
+                <label className="block text-xs font-bold text-ink mb-1.5">
+                  {lang === "bn" ? "এলাকার নাম খুঁজুন" : "Filter by Name"}
+                </label>
+                <input
+                  type="text"
+                  value={areaSearchQuery}
+                  onChange={(e) => setAreaSearchQuery(e.target.value)}
+                  placeholder={lang === "bn" ? "যেমন: ধানমন্ডি, মিরপুর..." : "e.g. Mirpur, Sylhet..."}
+                  className="w-full h-11 rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand font-medium placeholder:text-muted/60"
+                />
+              </div>
+
+              {/* Area / Upazila Selection */}
+              <div>
+                <label className="block text-xs font-bold text-ink mb-1.5">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5 text-brand" />
+                    <span>{lang === "bn" ? "নির্দিষ্ট এলাকা / উপজেলা" : "Area / Upazila"}</span>
+                  </span>
+                </label>
+                <select
+                  value={selectedUpazila}
+                  onChange={(e) => setSelectedUpazila(e.target.value ? Number(e.target.value) : "")}
+                  className="w-full h-11 rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand font-medium"
+                >
+                  <option value="">
+                    {lang === "bn" ? "সমগ্র বাংলাদেশ (সকল এলাকা)" : "All Areas (Nationwide)"}
+                  </option>
+                  {filteredUpazilas.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {lang === "bn" ? `${u.name_bn}, ${u.district_bn}` : `${u.name_en}, ${u.district_en}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Urgency Level */}
+              <div>
+                <label className="block text-xs font-bold text-ink mb-1.5">
+                  {t("donors.urgency")}
+                </label>
+                <select
+                  value={selectedUrgency}
+                  onChange={(e) => setSelectedUrgency(e.target.value as RequestUrgency)}
+                  className="w-full h-11 rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand font-medium"
+                >
+                  {(["routine", "urgent", "critical"] as RequestUrgency[]).map((u) => (
+                    <option key={u} value={u}>
+                      {URGENCY_LABELS[u][lang]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Search Submit CTA */}
+              <div>
+                <button
+                  type="submit"
+                  disabled={loading || !selectedGroup}
+                  className="w-full inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-sm font-bold text-white disabled:opacity-40 hover:bg-brand-deep transition-all shadow-xs cursor-pointer active:scale-98"
+                >
+                  <Search className="h-4 w-4" aria-hidden="true" />
+                  {loading ? t("common.loading") : t("common.search")}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </form>
 
-      {/* Results */}
-      <div className="mt-12" role="status" aria-live="polite">
+      {/* Results View */}
+      <div className="mt-10" role="status" aria-live="polite">
         {loading && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4" aria-label={t("common.loading")}>
             {[...Array(4)].map((_, i) => (
@@ -189,42 +309,102 @@ export default function Donors() {
 
         {results && !loading && (
           <>
-            <p className="text-sm text-muted mb-4 font-medium">
-              {t("donors.resultsFor")} {results.counts.total} · {t("donors.readyNow")} {results.counts.ready_now}
-            </p>
+            {/* Results header with sort options */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-line">
+              <p className="text-sm text-muted font-semibold">
+                {t("donors.resultsFor")}{" "}
+                <span className="text-ink font-bold">{results.counts.total}</span> ·{" "}
+                {t("donors.readyNow")}{" "}
+                <span className="text-brand font-bold">{results.counts.ready_now}</span>
+              </p>
 
-            {results.donors.length === 0 ? (
+              {/* Sort By controls */}
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted font-medium">{lang === "bn" ? "সাজান:" : "Sort:"}</span>
+                <div className="inline-flex rounded-xl border border-line bg-surface p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setSortBy("match")}
+                    className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                      sortBy === "match" ? "bg-brand text-white shadow-2xs" : "text-muted hover:text-ink"
+                    }`}
+                  >
+                    {lang === "bn" ? "সেরা মিল" : "Best Match"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSortBy("ready")}
+                    className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                      sortBy === "ready" ? "bg-brand text-white shadow-2xs" : "text-muted hover:text-ink"
+                    }`}
+                  >
+                    {lang === "bn" ? "প্রস্তুত রক্তদাতা" : "Ready First"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSortBy("name")}
+                    className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                      sortBy === "name" ? "bg-brand text-white shadow-2xs" : "text-muted hover:text-ink"
+                    }`}
+                  >
+                    {lang === "bn" ? "নাম অনুযায়ী" : "By Name"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {sortedDonors.length === 0 ? (
               <div className="rounded-3xl border border-line bg-surface p-12 text-center text-muted">
-                <p className="font-semibold text-ink mb-2">{t("donors.noneTitle")}</p>
-                <p>{t("donors.noneBody")}</p>
+                <p className="font-bold text-ink text-lg mb-2">{t("donors.noneTitle")}</p>
+                <p className="max-w-md mx-auto">{t("donors.noneBody")}</p>
+                <div className="mt-6 flex gap-3 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUpazila("")}
+                    className="inline-flex h-10 items-center gap-2 rounded-full bg-brand px-5 text-xs font-bold text-white hover:bg-brand-deep cursor-pointer"
+                  >
+                    {lang === "bn" ? "সকল এলাকার রক্তদাতা দেখুন" : "View Nationwide Donors"}
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                {results.donors.map((d) => (
+                {sortedDonors.map((d) => (
                   <div
                     key={d.donor_id}
                     className="group flex flex-col gap-4 p-6 rounded-3xl border border-line bg-surface hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-soft text-brand-deep font-extrabold text-sm tnum">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-soft text-brand-deep font-black text-base tnum shadow-2xs">
                         {d.blood_group}
                       </span>
-                      <span className="font-bold text-ink">{d.display_name}</span>
+                      <div className="min-w-0">
+                        <span className="block truncate font-bold text-ink">{d.display_name}</span>
+                        <span className="block truncate text-xs text-muted">
+                          {d.distance_km != null ? `${d.distance_km} km` : "Bangladesh"}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <DistanceChip km={d.distance_km} band={d.distance_band} />
                       <Badge tone={d.can_give_now ? "success" : "muted"}>
                         {d.can_give_now ? t("donors.readyNow") : t("donors.unavailable")}
                       </Badge>
+                      {d.blood_group_verified && (
+                        <Badge tone="brand">
+                          ✓ {t("donors.respects")}
+                        </Badge>
+                      )}
                     </div>
 
                     <div className="mt-auto pt-3 border-t border-line">
                       <button
                         type="button"
-                        className="w-full inline-flex h-10 items-center justify-center gap-2 rounded-full bg-brand px-4 text-xs font-bold text-white hover:bg-brand-deep transition-colors cursor-pointer"
+                        onClick={() => navigate(`/requests/new?group=${d.blood_group}&donor=${d.donor_id}`)}
+                        className="w-full inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-xs font-bold text-white hover:bg-brand-deep transition-colors cursor-pointer shadow-2xs active:scale-98"
                       >
-                        <Droplet className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
+                        <Droplet className="h-3.5 w-3.5 fill-white" strokeWidth={2} aria-hidden="true" />
                         {t("request.express")}
                       </button>
                     </div>
@@ -236,7 +416,7 @@ export default function Donors() {
         )}
       </div>
 
-      {/* Doctors section */}
+      {/* Verified Doctors Section */}
       {!doctorsLoading && doctors.length > 0 && (
         <div className="mt-16 pt-12 border-t border-line">
           <SectionHeader
@@ -246,21 +426,21 @@ export default function Donors() {
             action={
               <Link
                 to="/doctors"
-                className="inline-flex items-center gap-1 text-sm font-semibold text-brand-deep hover:text-brand transition-colors"
+                className="inline-flex items-center gap-1 text-sm font-bold text-ink-brand hover:opacity-80 transition-colors"
               >
                 {t("common.seeAll")}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             }
           />
-          <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {doctors.slice(0, 3).map((doctor) => (
               <li key={doctor.user_id}>
                 <Link
                   to="/doctors"
                   className="group flex items-center gap-4 rounded-3xl border border-line bg-surface p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
                 >
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-ink-brand-soft text-ink-brand font-bold text-lg">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-ink-brand-soft text-ink-brand font-bold text-lg">
                     {doctor.display_name.charAt(0)}
                   </span>
                   <span className="min-w-0">
@@ -270,7 +450,7 @@ export default function Donors() {
                       {lang === "bn" ? doctor.specialty_bn : doctor.specialty_en}
                     </span>
                   </span>
-                  <ArrowRight className="ml-auto h-4 w-4 text-muted group-hover:text-brand transition-colors" aria-hidden="true" />
+                  <ArrowRight className="ml-auto h-4 w-4 text-muted group-hover:text-ink-brand transition-colors" aria-hidden="true" />
                 </Link>
               </li>
             ))}

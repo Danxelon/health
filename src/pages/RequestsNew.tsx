@@ -8,11 +8,12 @@
  * landing place afterwards.
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Droplet, HeartPulse } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
+import { useAuth } from "@/state/auth-context.tsx";
 import { type BloodComponent, type BloodGroup } from "@/domain/types.ts";
 import { COMPONENT_LABELS, URGENCY_LABELS } from "@/lib/strings.ts";
 import { createBloodRequest } from "@/api/requests.ts";
@@ -21,7 +22,15 @@ import { todayISO } from "@/domain/eligibility.ts";
 
 export default function RequestsNew() {
   const { t, lang } = useAppShell();
+  const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate("/login?next=/requests/new", { replace: true });
+    }
+  }, [isLoggedIn, navigate]);
+
   const [mode, setMode] = useState<"express" | "full">("express");
 
   // Shared core

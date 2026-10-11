@@ -10,6 +10,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, ShieldCheck, Smartphone } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
+import { useAuth } from "@/state/auth-context.tsx";
 import { acceptableDonorsFor, isRareGroup } from "@/domain/blood.ts";
 import { nidIssue, normalisePhoneBD } from "@/domain/profile.ts";
 import { DEMO_UPAZILAS, districtsOf, upazilasOf } from "@/lib/demo-data.ts";
@@ -26,6 +27,7 @@ function acceptsText(group: BloodGroup, lang: "bn" | "en"): string {
 
 export default function Register() {
   const { t, lang } = useAppShell();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const [step, setStep] = useState<Step>(1);
@@ -67,6 +69,7 @@ export default function Register() {
 
   const verifyOtp = () => {
     if (otp === "123456") {
+      login(phone || "01711000000", fullName || "Registered Citizen");
       navigate("/donors", { replace: true });
     } else {
       setOtpError(

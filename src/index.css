@@ -8,48 +8,42 @@
 
 @theme {
   /* --- Brand ------------------------------------------------------------- */
-  /* Deep wine is the primary voice: warmth, urgency, the mark. Every primary
-     CTA and headline accent resolves here.                             */
-  --color-brand: #4c061d;
-  --color-brand-deep: #380715;
-  --color-brand-soft: #f3d9dc;
+  /* Vibrant, life-affirming crimson/rose is the primary brand voice.      */
+  --color-brand: #e11d48;
+  --color-brand-deep: #be123c;
+  --color-brand-soft: #ffe4e6;
 
-  /* Teal is the supporting accent — the calm counterpart to wine. It
-     carries secondary actions and institution panels.                  */
-  --color-ink-brand: #006d6f;
-  --color-ink-brand-soft: #e2f1f0;
+  /* Medical Teal is the supporting calm counterpart.                     */
+  --color-ink-brand: #0d9488;
+  --color-ink-brand-soft: #ccfbf1;
 
-  /* Crimson for blood marks and urgency only — kept inside the wine
-     family so the palette stays wine / teal / blush.                 */
-  --color-blood: #c22a3a;
-  --color-blood-deep: #9c1e2c;
-  --color-blood-soft: #fbe8ea;
+  /* Blood crimson for blood groups and immediate urgency.                */
+  --color-blood: #dc2626;
+  --color-blood-deep: #b91c1c;
+  --color-blood-soft: #fee2e2;
 
   /* --- Surfaces ---------------------------------------------------------- */
-  /* Clean white-first: a touch of warmth, never green-tinted.           */
-  --color-bg: #fafaf8;
+  /* Clean, crisp white & slate surfaces for a modern, airy healthcare feel. */
+  --color-bg: #f8fafc;
   --color-surface: #ffffff;
-  --color-elevated: #f1f1ee;
-  --color-line: #e4e4df;
-  --color-line-strong: #cccccc;
+  --color-elevated: #f1f5f9;
+  --color-line: #e2e8f0;
+  --color-line-strong: #cbd5e1;
 
   /* --- Text -------------------------------------------------------------- */
-  --color-ink: #171214;
-  --color-muted: #5c5558;
-  --color-subtle: #867b7f;
+  --color-ink: #0f172a;
+  --color-muted: #475569;
+  --color-subtle: #64748b;
 
   /* --- Semantic ---------------------------------------------------------- */
-  --color-warning: #c77700;
-  --color-warning-soft: #fdf3e2;
-  --color-success: #1b9c6b;
-  --color-success-soft: #e6f6ef;
-  --color-info: #1f6c9f;
-  --color-info-soft: #e7f2f9;
+  --color-warning: #d97706;
+  --color-warning-soft: #fef3c7;
+  --color-success: #16a34a;
+  --color-success-soft: #dcfce7;
+  --color-info: #0284c7;
+  --color-info-soft: #e0f2fe;
 
   /* --- Type -------------------------------------------------------------- */
-  /* Cabinet Grotesk for display: wide, geometric, holds a 2-line H1 at
-     5.25rem without collapsing. Satoshi for text: quiet, high x-height,
-     excellent at 14-16px on a cheap Android screen in daylight.          */
   --font-display: "Cabinet Grotesk", "Hind Siliguri", "Plus Jakarta Sans", "Noto Sans Bengali", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Satoshi", "Hind Siliguri", "Plus Jakarta Sans", "Noto Sans Bengali", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -65,70 +59,35 @@
   --radius-panel: 24px;
 }
 
-/* -----------------------------------------------------------------------------
-   Dark theme. Redefined on :root under the media query, guarded so an explicit
-   data-theme="light" still wins, and again for an explicit data-theme="dark".
-   -------------------------------------------------------------------------- */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-brand: #d96a7c;
-    --color-brand-deep: #b34e5f;
-    --color-brand-soft: #401a24;
-
-    --color-ink-brand: #359f9b;
-    --color-ink-brand-soft: #12322f;
-
-    --color-blood: #f2687a;
-    --color-blood-deep: #d5475a;
-    --color-blood-soft: #3d1520;
-
-    --color-bg: #140e10;
-    --color-surface: #1d1519;
-    --color-elevated: #2a1f23;
-    --color-line: #3b3034;
-    --color-line-strong: #524348;
-
-    --color-ink: #f5eef0;
-    --color-muted: #c0b0b4;
-    --color-subtle: #8d7c81;
-
-    --color-warning: #e8a33d;
-    --color-warning-soft: #33260f;
-    --color-success: #38b98a;
-    --color-success-soft: #0d2b22;
-    --color-info: #58a6d8;
-    --color-info-soft: #0e2635;
-  }
-}
-
+/* Explicit dark theme only if activated by the user in settings */
 :root[data-theme="dark"] {
-  --color-brand: #d96a7c;
-  --color-brand-deep: #b34e5f;
-  --color-brand-soft: #401a24;
+  --color-brand: #f43f5e;
+  --color-brand-deep: #e11d48;
+  --color-brand-soft: #4c0519;
 
-  --color-ink-brand: #359f9b;
-  --color-ink-brand-soft: #12322f;
+  --color-ink-brand: #2dd4bf;
+  --color-ink-brand-soft: #134e4a;
 
-  --color-blood: #f2687a;
-  --color-blood-deep: #d5475a;
-  --color-blood-soft: #3d1520;
+  --color-blood: #f87171;
+  --color-blood-deep: #ef4444;
+  --color-blood-soft: #450a0a;
 
-  --color-bg: #140e10;
-  --color-surface: #1d1519;
-  --color-elevated: #2a1f23;
-  --color-line: #3b3034;
-  --color-line-strong: #524348;
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-elevated: #334155;
+  --color-line: #334155;
+  --color-line-strong: #475569;
 
-  --color-ink: #f5eef0;
-  --color-muted: #c0b0b4;
-  --color-subtle: #8d7c81;
+  --color-ink: #f8fafc;
+  --color-muted: #cbd5e1;
+  --color-subtle: #94a3b8;
 
-  --color-warning: #e8a33d;
-  --color-warning-soft: #33260f;
-  --color-success: #38b98a;
-  --color-success-soft: #0d2b22;
-  --color-info: #58a6d8;
-  --color-info-soft: #0e2635;
+  --color-warning: #fbbf24;
+  --color-warning-soft: #451a03;
+  --color-success: #4ade80;
+  --color-success-soft: #052e16;
+  --color-info: #38bdf8;
+  --color-info-soft: #082f49;
 }
 
 /* =============================================================================

@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, ArrowRight, CalendarCheck } from "lucide-react";
 import { useAppShell } from "@/state/app-shell.tsx";
+import { useAuth } from "@/state/auth-context.tsx";
 import { Badge, DistanceChip, CardSkeleton, ErrorBanner } from "@/components/ui.tsx";
 import { fetchDoctors, type DoctorFilters } from "@/api/doctors.ts";
 import { requestConsultation } from "@/api/consultations.ts";
@@ -41,7 +42,15 @@ const COPY = {
 
 export default function Doctors() {
   const { t, lang } = useAppShell();
+  const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate("/login?next=/doctors", { replace: true });
+    }
+  }, [isLoggedIn, navigate]);
+
   const [doctors, setDoctors] = useState<DoctorCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

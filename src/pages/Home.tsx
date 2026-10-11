@@ -3,17 +3,17 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { ArrowRight, Droplet, Megaphone, Stethoscope, ShieldCheck, HeartPulse } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
+import { useAuth } from "@/state/auth-context.tsx";
 import { fetchArticles } from "@/api/articles.ts";
 import { fetchNationalUpdates } from "@/api/health-updates.ts";
 import type { ArticleFeedItem, NationalHealthUpdate } from "@/domain/types.ts";
-import { supabase } from "@/lib/supabase.ts";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -23,18 +23,8 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 function Hero() {
   const { t } = useAppShell();
-  const navigate = useNavigate();
+  const { requireAuth } = useAuth();
   const ref = useRef<HTMLDivElement>(null);
-
-  const handleProtectedAction = (path: string) => {
-    supabase?.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        navigate(path);
-      } else {
-        navigate(`/login?next=${path}`);
-      }
-    });
-  };
 
   useGSAP(
     () => {
@@ -55,7 +45,7 @@ function Hero() {
       <div className="aurora absolute inset-0 -z-10 opacity-70" aria-hidden="true" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 text-center">
-        <div data-hero-reveal className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-soft/60 px-4 py-1.5 text-xs font-bold text-brand-deep mb-4">
+        <div data-hero-reveal className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-soft px-4 py-1.5 text-xs font-bold text-brand-deep mb-4 shadow-2xs">
           <ShieldCheck className="h-4 w-4" />
           <span>{t("app.gov")}</span>
         </div>
@@ -74,7 +64,7 @@ function Hero() {
 
         <div data-hero-reveal className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <button
-            onClick={() => handleProtectedAction("/donors")}
+            onClick={() => requireAuth("/donors")}
             className="w-full sm:w-auto inline-flex h-14 items-center justify-center gap-3 rounded-full bg-brand px-8 text-base font-bold text-white shadow-lg hover:bg-brand-deep hover:shadow-xl transition-all cursor-pointer active:scale-95"
           >
             <Droplet className="h-5 w-5 fill-current" />
@@ -83,7 +73,7 @@ function Hero() {
           </button>
 
           <button
-            onClick={() => handleProtectedAction("/doctors")}
+            onClick={() => requireAuth("/doctors")}
             className="w-full sm:w-auto inline-flex h-14 items-center justify-center gap-3 rounded-full border-2 border-ink-brand bg-surface px-8 text-base font-bold text-ink-brand hover:bg-ink-brand-soft transition-all cursor-pointer active:scale-95"
           >
             <Stethoscope className="h-5 w-5" />
@@ -101,18 +91,8 @@ function Hero() {
 
 function ActionOptions() {
   const { t } = useAppShell();
-  const navigate = useNavigate();
+  const { requireAuth } = useAuth();
   const ref = useRef<HTMLDivElement>(null);
-
-  const handleProtectedAction = (path: string) => {
-    supabase?.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        navigate(path);
-      } else {
-        navigate(`/login?next=${path}`);
-      }
-    });
-  };
 
   useGSAP(
     () => {
@@ -144,26 +124,26 @@ function ActionOptions() {
       <div className="grid gap-6 md:grid-cols-2 grid-flow-dense">
         {/* Option 1 — matched donor */}
         <div
-          onClick={() => handleProtectedAction("/donors")}
+          onClick={() => requireAuth("/donors")}
           data-option
-          className="group relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-brand to-brand-deep p-8 sm:p-12 text-white flex flex-col justify-between min-h-[20rem] shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+          className="group relative overflow-hidden rounded-[2.5rem] border border-brand/20 bg-gradient-to-br from-white via-rose-50/50 to-rose-100/40 p-8 sm:p-12 text-ink flex flex-col justify-between min-h-[20rem] shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
         >
-          <div className="pointer-events-none absolute -right-16 -bottom-16 h-64 w-64 rounded-full bg-white/10 blur-xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute -right-16 -bottom-16 h-64 w-64 rounded-full bg-brand/10 blur-2xl" aria-hidden="true" />
           <div className="flex items-center justify-between">
-            <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md">
-              <Droplet className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
+            <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-white shadow-xs">
+              <Droplet className="h-7 w-7 fill-current" strokeWidth={2} aria-hidden="true" />
             </span>
-            <span className="text-xs font-bold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full backdrop-blur-md">
+            <span className="text-xs font-bold uppercase tracking-wider bg-brand-soft text-brand-deep px-3.5 py-1.5 rounded-full border border-brand/20">
               Emergency Match
             </span>
           </div>
 
           <div className="relative mt-12">
-            <h3 className="text-3xl sm:text-4xl font-extrabold leading-tight">
+            <h3 className="text-3xl sm:text-4xl font-extrabold leading-tight text-ink">
               {t("home.ctaPrimary")}
             </h3>
-            <p className="mt-3 text-base text-white/80 max-w-md">{t("donors.subtitle")}</p>
-            <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-white bg-white/10 hover:bg-white/20 px-5 py-2.5 rounded-full transition-colors backdrop-blur-md">
+            <p className="mt-3 text-base text-muted max-w-md">{t("donors.subtitle")}</p>
+            <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-white bg-brand hover:bg-brand-deep px-5 py-2.5 rounded-full transition-colors shadow-xs">
               {t("common.search")}
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
             </span>
@@ -172,26 +152,26 @@ function ActionOptions() {
 
         {/* Option 2 — consult a doctor */}
         <div
-          onClick={() => handleProtectedAction("/doctors")}
+          onClick={() => requireAuth("/doctors")}
           data-option
-          className="group relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-ink-brand to-[#004e50] p-8 sm:p-12 text-white flex flex-col justify-between min-h-[20rem] shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+          className="group relative overflow-hidden rounded-[2.5rem] border border-ink-brand/20 bg-gradient-to-br from-white via-teal-50/50 to-teal-100/40 p-8 sm:p-12 text-ink flex flex-col justify-between min-h-[20rem] shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
         >
-          <div className="pointer-events-none absolute -right-16 -bottom-16 h-64 w-64 rounded-full bg-white/10 blur-xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute -right-16 -bottom-16 h-64 w-64 rounded-full bg-ink-brand/10 blur-2xl" aria-hidden="true" />
           <div className="flex items-center justify-between">
-            <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md">
+            <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-ink-brand text-white shadow-xs">
               <Stethoscope className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
             </span>
-            <span className="text-xs font-bold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full backdrop-blur-md">
+            <span className="text-xs font-bold uppercase tracking-wider bg-ink-brand-soft text-ink-brand px-3.5 py-1.5 rounded-full border border-ink-brand/20">
               Telemedicine
             </span>
           </div>
 
           <div className="relative mt-12">
-            <h3 className="text-3xl sm:text-4xl font-extrabold leading-tight">
+            <h3 className="text-3xl sm:text-4xl font-extrabold leading-tight text-ink">
               {t("home.ctaSecondary")}
             </h3>
-            <p className="mt-3 text-base text-white/80 max-w-md">{t("doctors.subtitle")}</p>
-            <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-white bg-white/10 hover:bg-white/20 px-5 py-2.5 rounded-full transition-colors backdrop-blur-md">
+            <p className="mt-3 text-base text-muted max-w-md">{t("doctors.subtitle")}</p>
+            <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-white bg-ink-brand hover:opacity-90 px-5 py-2.5 rounded-full transition-colors shadow-xs">
               {t("doctors.book")}
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
             </span>

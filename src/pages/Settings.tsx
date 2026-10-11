@@ -35,7 +35,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -45,11 +45,13 @@ import {
   Droplet,
   HeartPulse,
   Languages,
+  LogOut,
   Palette,
   ShieldCheck,
 } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
+import { useAuth } from "@/state/auth-context.tsx";
 import { ErrorBanner, SectionHeader } from "@/components/ui.tsx";
 import {
   fetchMyProfile,
@@ -283,7 +285,16 @@ function SaveStatus({ state, savingLabel, savedLabel }: { state: SaveState; savi
 
 export default function Settings() {
   const { t, lang, theme, setTheme, setLang } = useAppShell();
+  const { isLoggedIn, logout } = useAuth();
+  const navigate = useNavigate();
   const rootRef = useRef<HTMLDivElement>(null);
+
+  // Auth gate: redirect to login if unauthenticated
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate("/login?next=/settings", { replace: true });
+    }
+  }, [isLoggedIn, navigate]);
 
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -731,6 +742,14 @@ export default function Settings() {
                 >
                   {t("nav.request")}
                 </Link>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="inline-flex h-11 items-center gap-2 rounded-full bg-blood px-6 text-sm font-bold text-white transition-colors hover:bg-blood-deep cursor-pointer"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>{lang === "bn" ? "লগ আউট" : "Log out"}</span>
+                </button>
               </div>
             </div>
           </div>
