@@ -146,18 +146,10 @@ export default function Doctors() {
           >
             {COPY.availableToday[lang]}
           </button>
-          <button
-            type="button"
-            onClick={() => set({ freeOnly: !filters.freeOnly })}
-            aria-pressed={Boolean(filters.freeOnly)}
-            className={`inline-flex h-11 items-center rounded-full border px-4 text-sm font-semibold cursor-pointer transition-colors ${
-              filters.freeOnly
-                ? "border-brand bg-brand-soft text-brand-deep"
-                : "border-line bg-surface text-ink"
-            }`}
-          >
-            {COPY.freeOnly[lang]}
-          </button>
+          <div className="inline-flex h-11 items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/80 px-4 text-xs font-bold text-emerald-800 shadow-2xs">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{lang === "bn" ? "সকল ডাক্তারের পরামর্শ ১০০% বিনামূল্যে" : "All Consultations 100% Free"}</span>
+          </div>
           <button
             type="button"
             onClick={() => setFilters({})}
@@ -228,11 +220,15 @@ export default function Doctors() {
                   )}
                 </div>
 
-                <p className="mt-2 text-sm font-semibold text-ink tnum">
-                  {d.consult_fee === null || d.consult_fee === 0
-                    ? t("doctors.free")
-                    : `${toBengaliDigits(d.consult_fee)}`}
-                </p>
+                <div className="mt-2.5 flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    {lang === "bn" ? "বিনামূল্যে (সরকারি সেবা)" : "Free (Govt. Service)"}
+                  </span>
+                  <span className="text-[11px] font-semibold text-muted">
+                    {lang === "bn" ? "ফি: ৳০" : "Fee: ৳0"}
+                  </span>
+                </div>
 
                 {composerFor === d.user_id && (
                   <div className="mt-3">

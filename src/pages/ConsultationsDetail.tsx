@@ -336,13 +336,8 @@ export default function ConsultationsDetail() {
   const status = STATUS_COPY[consultation.status];
   const doctorName = doctor ? doctor.display_name || doctor.full_name : COPY.doctorFallback[lang];
   const specialty = doctor ? (lang === "bn" ? doctor.specialty_bn : doctor.specialty_en) : null;
-  const feeAmount = consultation.fee ?? doctor?.consult_fee ?? null;
-  const feeText =
-    feeAmount === null
-      ? "—"
-      : feeAmount === 0
-        ? t("doctors.free")
-        : `৳${isBn ? toBengaliDigits(feeAmount) : feeAmount}`;
+  const feeAmount = consultation.fee ?? doctor?.consult_fee ?? 0;
+  const feeText = t("doctors.free");
   const scheduledAt = consultation.scheduled_at;
   const canSend = state === "ready" && !sending && input.trim().length > 0;
 

@@ -28,7 +28,7 @@ const specialtySorter = (a: DoctorCard, b: DoctorCard): number => {
 export async function fetchDoctors(filters: DoctorFilters = {}): Promise<DoctorCard[]> {
   if (DEMO_MODE) {
     await new Promise((resolve) => setTimeout(resolve, 300));
-    const list = DEMO_DOCTORS.filter((d) => {
+    const list = DEMO_DOCTORS.map((d) => ({ ...d, consult_fee: 0 })).filter((d) => {
       if (filters.specialtySlug && d.specialty_slug !== filters.specialtySlug) return false;
       if (filters.district_en && d.district_en !== filters.district_en) return false;
       if (filters.freeOnly && (d.consult_fee ?? 0) > 0) return false;
@@ -44,7 +44,7 @@ export async function fetchDoctors(filters: DoctorFilters = {}): Promise<DoctorC
   if (error) throw toDomainError(error);
   if (data === null) return [];
 
-  const rows = (data as DoctorCard[]).filter((d) => {
+  const rows = (data as DoctorCard[]).map((d) => ({ ...d, consult_fee: 0 })).filter((d) => {
     if (filters.specialtySlug && d.specialty_slug !== filters.specialtySlug) return false;
     if (filters.district_en && d.district_en !== filters.district_en) return false;
     if (filters.freeOnly && (d.consult_fee ?? 0) > 0) return false;

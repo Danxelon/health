@@ -35,7 +35,7 @@ const demoConsultations: Consultation[] = [
     status: "accepted",
     symptom_summary: "তিন দিন ধরে জ্বর ও মাথাব্যথা।",
     scheduled_at: new Date(Date.now() - 3600_000).toISOString(),
-    fee: 500,
+    fee: 0,
     prescription: null,
     created_at: new Date(Date.now() - 7200_000).toISOString(),
     updated_at: new Date(Date.now() - 1800_000).toISOString(),

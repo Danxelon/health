@@ -200,7 +200,7 @@ export const STRINGS = {
     experience: { bn: "অভিজ্ঞতা", en: "Experience" },
     years: { bn: "বছর", en: "years" },
     fee: { bn: "ফি", en: "Fee" },
-    free: { bn: "ফ্রি", en: "Free" },
+    free: { bn: "বিনামূল্যে (সরকারি স্বাস্থ্যসেবা)", en: "Free (Govt. Healthcare)" },
     verified: { bn: "যাচাইকৃত", en: "Verified" },
     book: { bn: "সাক্ষাৎ নিন", en: "Book a consultation" },
     message: { bn: "বার্তা", en: "Message" },

@@ -300,7 +300,7 @@ function makeDoctor(index: number): DoctorCard & { _phone: string } {
   const last = pick(SURNAMES);
   const fullName = `Dr. ${first} ${last}`;
   const degrees = pick(DEGREES);
-  const fee = pick([0, 300, 500, 500, 800, 1000]);
+  const fee = 0; // Government health service: 100% free
   const verified = rng() < 0.82;
 
   return {
