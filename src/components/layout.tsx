@@ -40,18 +40,12 @@ type NavItem = {
   requiresAuth?: boolean;
 };
 
-const baseNav: NavItem[] = [
-  { to: "/", key: "nav.home", icon: Home },
-  { to: "/donors", key: "nav.donors", icon: Droplet, requiresAuth: true },
-  { to: "/doctors", key: "nav.consultations", icon: Stethoscope, requiresAuth: true },
-  { to: "/articles", key: "nav.articles", icon: Newspaper },
-];
 
 /** Bilingual wordmark under the logo. */
 function Wordmark() {
   const { t } = useAppShell();
   return (
-    <span className="flex items-baseline gap-2">
+    <span className="flex items-baseline gap-2 whitespace-nowrap shrink-0 select-none">
       <span className="font-display text-[1.125rem] font-800 tracking-tight text-ink leading-none">
         {t("app.name")}
       </span>
@@ -183,6 +177,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
 
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(() =>
+    typeof window !== "undefined" ? window.scrollY > 140 : false
+  );
+
+  // Scroll listener for sticky header state (threshold: 140px)
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 140);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Close mobile drawer on navigation
   useEffect(() => setMobileOpen(false), [pathname]);
@@ -194,9 +201,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Build active navigation items: Settings only appears if isLoggedIn is true!
-  const navItems = [
-    ...baseNav,
+  // Primary navigation links shown when unscrolled at top (scrollY <= 140)
+  // Settings strictly hidden until logged in!
+  const primaryNavItems: NavItem[] = [
+    { to: "/", key: "nav.home", icon: Home },
+    { to: "/articles", key: "nav.articles", icon: Newspaper },
+    ...(isLoggedIn
+      ? [{ to: "/settings", key: "nav.settings", icon: Settings, requiresAuth: true }]
+      : []),
+  ];
+
+  // Full navigation links for mobile drawer
+  // Settings strictly hidden until logged in!
+  const mobileNavItems: NavItem[] = [
+    { to: "/", key: "nav.home", icon: Home },
+    { to: "/donors", key: "nav.donors", icon: Droplet, requiresAuth: true },
+    { to: "/doctors", key: "nav.consultations", icon: Stethoscope, requiresAuth: true },
+    { to: "/articles", key: "nav.articles", icon: Newspaper },
     ...(isLoggedIn
       ? [{ to: "/settings", key: "nav.settings", icon: Settings, requiresAuth: true }]
       : []),
@@ -217,43 +238,94 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Modern, clean top navigation bar */}
       <header className="sticky top-0 z-50 border-b border-line bg-surface/95 backdrop-blur-md transition-shadow">
         <nav aria-label="Primary" className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="flex items-center justify-between h-[4.5rem] gap-2 sm:gap-4">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2.5 shrink-0" aria-label={t("app.name")}>
-              <img src="/logo.svg" alt="" className="h-8 w-8" width={32} height={32} />
+          <div className="flex items-center justify-between h-[4.5rem] gap-3 sm:gap-6">
+            {/* Logo: shrink-0 min-w-max prevents squishing/overlapping */}
+            <Link
+              to="/"
+              className="flex items-center gap-2.5 shrink-0 min-w-max"
+              aria-label={t("app.name")}
+            >
+              <img src="/logo.svg" alt="" className="h-8 w-8 shrink-0" width={32} height={32} />
               <Wordmark />
             </Link>
 
-            {/* Center Area: Permanent, clean desktop navigation links */}
+            {/* Center Area: Primary NavLinks when at top, Quick Action buttons when scrolled */}
             <div className="flex-1 flex items-center justify-center px-2 min-w-0">
-              <nav aria-label="Desktop Primary" className="hidden md:flex items-center gap-1">
-                <ul className="flex items-center gap-1">
-                  {navItems.map((item) => {
-                    const Icon = item.icon;
-                    const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
-                    return (
-                      <li key={item.to}>
-                        <NavLink
-                          to={item.to}
-                          onClick={(e) => handleNavClick(item, e)}
-                          className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all cursor-pointer ${
-                            active
-                              ? "text-white bg-brand shadow-xs"
-                              : "text-muted hover:text-ink hover:bg-elevated"
-                          }`}
-                        >
-                          <Icon className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-                          {t(item.key)}
-                        </NavLink>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </nav>
+              <div className="relative flex items-center justify-center w-full max-w-lg h-10">
+                {/* Clean primary navigation links (Home, Articles/Health, and Settings if logged in) */}
+                <div
+                  className={`absolute inset-0 hidden md:flex items-center justify-center gap-1 transition-all duration-300 ease-out ${
+                    isScrolled
+                      ? "opacity-0 pointer-events-none -translate-y-2 scale-95 invisible"
+                      : "opacity-100 pointer-events-auto translate-y-0 scale-100 visible"
+                  }`}
+                  aria-hidden={isScrolled}
+                >
+                  <nav aria-label="Desktop Primary" className="flex items-center gap-1">
+                    <ul className="flex items-center gap-1">
+                      {primaryNavItems.map((item) => {
+                        const Icon = item.icon;
+                        const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+                        return (
+                          <li key={item.to}>
+                            <NavLink
+                              to={item.to}
+                              onClick={(e) => handleNavClick(item, e)}
+                              tabIndex={isScrolled ? -1 : 0}
+                              className={`flex items-center gap-2 rounded-full px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                                active
+                                  ? "text-white bg-brand shadow-xs"
+                                  : "text-muted hover:text-ink hover:bg-elevated"
+                              }`}
+                            >
+                              <Icon className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+                              {t(item.key)}
+                            </NavLink>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </nav>
+                </div>
+
+                {/* Scrolled Quick Action Buttons: "Find a donor" & "Consult a doctor" */}
+                <div
+                  className={`absolute inset-0 flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 ease-out ${
+                    isScrolled
+                      ? "opacity-100 pointer-events-auto translate-y-0 scale-100 visible"
+                      : "opacity-0 pointer-events-none translate-y-2 scale-95 invisible"
+                  }`}
+                  aria-hidden={!isScrolled}
+                >
+                  <button
+                    type="button"
+                    onClick={() => requireAuth("/donors")}
+                    tabIndex={isScrolled ? 0 : -1}
+                    className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#4c061d] text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold shadow-xs hover:bg-[#380715] hover:shadow-md transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95"
+                    aria-label={t("nav.donors")}
+                  >
+                    <Droplet className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 fill-current" strokeWidth={1.8} aria-hidden="true" />
+                    <span className="hidden sm:inline">{t("nav.donors")}</span>
+                    <span className="sm:hidden">{lang === "bn" ? "রক্তদাতা" : "Donor"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => requireAuth("/doctors")}
+                    tabIndex={isScrolled ? 0 : -1}
+                    className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#006d6f] text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold shadow-xs hover:bg-[#005759] hover:shadow-md transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95"
+                    aria-label={t("nav.consultations")}
+                  >
+                    <Stethoscope className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+                    <span className="hidden sm:inline">{t("nav.consultations")}</span>
+                    <span className="sm:hidden">{lang === "bn" ? "ডাক্তার" : "Doctor"}</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Right controls */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 min-w-max">
               <LanguageToggle />
 
               {/* Emergency Hotline 999 */}
@@ -305,7 +377,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={() => setMobileOpen((open) => !open)}
-                className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-ink cursor-pointer hover:bg-elevated transition-colors"
+                className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-ink cursor-pointer hover:bg-elevated transition-colors"
                 aria-expanded={mobileOpen}
                 aria-label={mobileOpen ? t("nav.close") : t("nav.menu")}
               >
@@ -317,9 +389,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Mobile drawer */}
         {mobileOpen && (
-          <div className="lg:hidden mx-4 mb-3 rounded-2xl border border-line bg-surface/98 backdrop-blur-md p-4 shadow-xl">
+          <div className="md:hidden mx-4 mb-3 rounded-2xl border border-line bg-surface/98 backdrop-blur-md p-4 shadow-xl">
             <ul className="flex flex-col gap-1.5">
-              {navItems.map((item) => {
+              {mobileNavItems.map((item) => {
                 const Icon = item.icon;
                 const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
                 return (

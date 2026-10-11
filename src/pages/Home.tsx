@@ -64,8 +64,9 @@ function Hero() {
 
         <div data-hero-reveal className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <button
+            type="button"
             onClick={() => requireAuth("/donors")}
-            className="w-full sm:w-auto inline-flex h-14 items-center justify-center gap-3 rounded-full bg-brand px-8 text-base font-bold text-white shadow-lg hover:bg-brand-deep hover:shadow-xl transition-all cursor-pointer active:scale-95"
+            className="w-full sm:w-auto inline-flex h-14 items-center justify-center gap-3 rounded-full bg-brand px-8 text-base font-bold text-white shadow-lg hover:bg-brand-deep hover:shadow-xl transition-all cursor-pointer active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-brand focus:ring-offset-2"
           >
             <Droplet className="h-5 w-5 fill-current" />
             <span>{t("home.ctaPrimary")}</span>
@@ -73,8 +74,9 @@ function Hero() {
           </button>
 
           <button
+            type="button"
             onClick={() => requireAuth("/doctors")}
-            className="w-full sm:w-auto inline-flex h-14 items-center justify-center gap-3 rounded-full border-2 border-ink-brand bg-surface px-8 text-base font-bold text-ink-brand hover:bg-ink-brand-soft transition-all cursor-pointer active:scale-95"
+            className="w-full sm:w-auto inline-flex h-14 items-center justify-center gap-3 rounded-full border-2 border-ink-brand bg-surface px-8 text-base font-bold text-ink-brand hover:bg-ink-brand-soft transition-all cursor-pointer active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-ink-brand focus:ring-offset-2"
           >
             <Stethoscope className="h-5 w-5" />
             <span>{t("home.ctaSecondary")}</span>
@@ -90,7 +92,7 @@ function Hero() {
 /* -------------------------------------------------------------------------- */
 
 function ActionOptions() {
-  const { t } = useAppShell();
+  const { t, lang } = useAppShell();
   const { requireAuth } = useAuth();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -124,9 +126,17 @@ function ActionOptions() {
       <div className="grid gap-6 md:grid-cols-2 grid-flow-dense">
         {/* Option 1 — matched donor */}
         <div
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              requireAuth("/donors");
+            }
+          }}
           onClick={() => requireAuth("/donors")}
           data-option
-          className="group relative overflow-hidden rounded-[2.5rem] border border-brand/20 bg-gradient-to-br from-white via-rose-50/50 to-rose-100/40 p-8 sm:p-12 text-ink flex flex-col justify-between min-h-[20rem] shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+          className="group relative overflow-hidden rounded-[2.5rem] border border-brand/20 bg-gradient-to-br from-white via-rose-50/50 to-rose-100/40 p-8 sm:p-12 text-ink flex flex-col justify-between min-h-[20rem] shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-brand"
         >
           <div className="pointer-events-none absolute -right-16 -bottom-16 h-64 w-64 rounded-full bg-brand/10 blur-2xl" aria-hidden="true" />
           <div className="flex items-center justify-between">
@@ -134,7 +144,7 @@ function ActionOptions() {
               <Droplet className="h-7 w-7 fill-current" strokeWidth={2} aria-hidden="true" />
             </span>
             <span className="text-xs font-bold uppercase tracking-wider bg-brand-soft text-brand-deep px-3.5 py-1.5 rounded-full border border-brand/20">
-              Emergency Match
+              {lang === "bn" ? "জরুরি ম্যাচ" : "Emergency Match"}
             </span>
           </div>
 
@@ -152,9 +162,17 @@ function ActionOptions() {
 
         {/* Option 2 — consult a doctor */}
         <div
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              requireAuth("/doctors");
+            }
+          }}
           onClick={() => requireAuth("/doctors")}
           data-option
-          className="group relative overflow-hidden rounded-[2.5rem] border border-ink-brand/20 bg-gradient-to-br from-white via-teal-50/50 to-teal-100/40 p-8 sm:p-12 text-ink flex flex-col justify-between min-h-[20rem] shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+          className="group relative overflow-hidden rounded-[2.5rem] border border-ink-brand/20 bg-gradient-to-br from-white via-teal-50/50 to-teal-100/40 p-8 sm:p-12 text-ink flex flex-col justify-between min-h-[20rem] shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-ink-brand"
         >
           <div className="pointer-events-none absolute -right-16 -bottom-16 h-64 w-64 rounded-full bg-ink-brand/10 blur-2xl" aria-hidden="true" />
           <div className="flex items-center justify-between">
@@ -162,7 +180,7 @@ function ActionOptions() {
               <Stethoscope className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
             </span>
             <span className="text-xs font-bold uppercase tracking-wider bg-ink-brand-soft text-ink-brand px-3.5 py-1.5 rounded-full border border-ink-brand/20">
-              Telemedicine
+              {lang === "bn" ? "টেলিমেডিসিন" : "Telemedicine"}
             </span>
           </div>
 
