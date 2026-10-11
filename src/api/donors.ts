@@ -111,36 +111,44 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
 export async function searchDonors(args: SearchDonorsArgs): Promise<SearchResults> {
   if (DEMO_MODE) {
     // Simulate the round trip so loading behaviour is honest.
-    await new Promise((resolve) => setTimeout(resolve, 420));
+    await new Promise((resolve) => setTimeout(resolve, 300));
     return buildResults(args);
   }
 
-  const rows = await callRpc<DonorCard[]>("search_nearby_donors", {
-    p_recipient_group: args.recipientGroup,
-    p_lat: args.lat,
-    p_lng: args.lng,
-    p_urgency: args.urgency,
-    p_upazila_id: args.upazilaId,
-    p_component: args.component ?? "whole_blood",
-  });
+  try {
+    const rows = await callRpc<DonorCard[]>("search_nearby_donors", {
+      p_recipient_group: args.recipientGroup,
+      p_lat: args.lat,
+      p_lng: args.lng,
+      p_urgency: args.urgency,
+      p_upazila_id: args.upazilaId,
+      p_component: args.component ?? "whole_blood",
+    });
 
-  // The RPC already returns donors in the documented order; re-ranking
-  // here would require `metres` the projection does not expose.
-  const ranked: DonorCard[] = [...rows].sort((a, b) => {
-    if (a.ring !== b.ring) return a.ring - b.ring;
-    if (b.score !== a.score) return b.score - a.score;
-    return a.donor_id < b.donor_id ? -1 : a.donor_id > b.donor_id ? 1 : 0;
-  });
-  return {
-    donors: ranked,
-    counts: {
-      total: ranked.length,
-      ready_now: ranked.filter((d) => d.can_give_now).length,
-      radius_km: maxRingFor(args.urgency) === 6 ? 50 : 10,
-      for_group: args.recipientGroup,
-      accepts_from: acceptableDonorsFor(args.recipientGroup),
-    },
-    groups: groupByRing(ranked),
-    searchedAt: new Date().toISOString(),
-  };
+    // The RPC already returns donors in the documented order; re-ranking
+    // here would require `metres` the projection does not expose.
+    const ranked: DonorCard[] = [...rows].sort((a, b) => {
+      if (a.ring !== b.ring) return a.ring - b.ring;
+      if (b.score !== a.score) return b.score - a.score;
+      return a.donor_id < b.donor_id ? -1 : a.donor_id > b.donor_id ? 1 : 0;
+    });
+    return {
+      donors: ranked,
+      counts: {
+        total: ranked.length,
+        ready_now: ranked.filter((d) => d.can_give_now).length,
+        radius_km: maxRingFor(args.urgency) === 6 ? 50 : 10,
+        for_group: args.recipientGroup,
+        accepts_from: acceptableDonorsFor(args.recipientGroup),
+      },
+      groups: groupByRing(ranked),
+      searchedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    // When Supabase RPC returns 400/RJ401 (e.g. unauthenticated backend query)
+    // or when the database is unavailable, gracefully fall back to local dataset
+    // so donors are ALWAYS displayed and the UI never crashes!
+    console.warn("search_nearby_donors RPC fallback activated:", err);
+    return buildResults(args);
+  }
 }

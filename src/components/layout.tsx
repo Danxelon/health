@@ -183,22 +183,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
 
   // Close mobile drawer on navigation
   useEffect(() => setMobileOpen(false), [pathname]);
-
-  // Track window scroll for quick sticky action buttons
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrolled = window.scrollY > 160;
-      setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
-    };
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const handleNavClick = (item: NavItem, e: React.MouseEvent) => {
     if (item.requiresAuth && !isLoggedIn) {
@@ -237,74 +224,32 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Wordmark />
             </Link>
 
-            {/* Center Area: Navigation Links or Scrolled Action Buttons */}
+            {/* Center Area: Permanent, clean desktop navigation links */}
             <div className="flex-1 flex items-center justify-center px-2 min-w-0">
-              <div className="relative flex items-center justify-center w-full max-w-lg h-10">
-                {/* Desktop links when at top */}
-                <div
-                  className={`hidden md:flex items-center gap-1 transition-all duration-300 ease-out ${
-                    isScrolled
-                      ? "opacity-0 pointer-events-none -translate-y-2 scale-95 invisible"
-                      : "opacity-100 pointer-events-auto translate-y-0 scale-100 visible"
-                  }`}
-                >
-                  <ul className="flex items-center gap-1">
-                    {navItems.map((item) => {
-                      const Icon = item.icon;
-                      const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
-                      return (
-                        <li key={item.to}>
-                          <NavLink
-                            to={item.to}
-                            onClick={(e) => handleNavClick(item, e)}
-                            className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all cursor-pointer ${
-                              active
-                                ? "text-white bg-brand shadow-xs"
-                                : "text-muted hover:text-ink hover:bg-elevated"
-                            }`}
-                          >
-                            <Icon className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-                            {t(item.key)}
-                          </NavLink>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-
-                {/* Scrolled Action Buttons: "Find Donor" & "Consult Doctor" */}
-                <div
-                  className={`flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 ease-out ${
-                    isScrolled
-                      ? "opacity-100 pointer-events-auto translate-y-0 scale-100 visible"
-                      : "opacity-0 pointer-events-none translate-y-2 scale-95 invisible"
-                  }`}
-                  aria-hidden={!isScrolled}
-                >
-                  <button
-                    type="button"
-                    onClick={() => requireAuth("/donors")}
-                    tabIndex={isScrolled ? 0 : -1}
-                    className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-brand text-white px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold shadow-xs hover:bg-brand-deep hover:shadow-md transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95"
-                    aria-label={t("donors.title")}
-                  >
-                    <Droplet className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 fill-current" strokeWidth={1.8} aria-hidden="true" />
-                    <span className="hidden sm:inline">{t("donors.title")}</span>
-                    <span className="sm:hidden">{lang === "bn" ? "রক্তদাতা" : "Donor"}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => requireAuth("/doctors")}
-                    tabIndex={isScrolled ? 0 : -1}
-                    className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-ink-brand text-white px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold shadow-xs hover:opacity-90 hover:shadow-md transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95"
-                    aria-label={t("doctors.title")}
-                  >
-                    <Stethoscope className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-                    <span className="hidden sm:inline">{t("doctors.title")}</span>
-                    <span className="sm:hidden">{lang === "bn" ? "ডাক্তার" : "Doctor"}</span>
-                  </button>
-                </div>
-              </div>
+              <nav aria-label="Desktop Primary" className="hidden md:flex items-center gap-1">
+                <ul className="flex items-center gap-1">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+                    return (
+                      <li key={item.to}>
+                        <NavLink
+                          to={item.to}
+                          onClick={(e) => handleNavClick(item, e)}
+                          className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all cursor-pointer ${
+                            active
+                              ? "text-white bg-brand shadow-xs"
+                              : "text-muted hover:text-ink hover:bg-elevated"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+                          {t(item.key)}
+                        </NavLink>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </nav>
             </div>
 
             {/* Right controls */}

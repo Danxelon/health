@@ -31,7 +31,7 @@ export default function Donors() {
   const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
 
-  const [selectedGroup, setSelectedGroup] = useState<BloodGroup | "">("");
+  const [selectedGroup, setSelectedGroup] = useState<BloodGroup | "">("O+");
   const [selectedUrgency, setSelectedUrgency] = useState<RequestUrgency>("routine");
 
   // Area sort-out options (without live location)
@@ -90,6 +90,21 @@ export default function Donors() {
       setLoading(false);
     }
   };
+
+  // Auto-search whenever blood group, area or urgency changes
+  useEffect(() => {
+    if (!selectedGroup) return;
+
+    const upazila = DEMO_UPAZILAS.find((u) => u.id === Number(selectedUpazila));
+    doSearch({
+      recipientGroup: selectedGroup,
+      lat: upazila ? upazila.lat : null,
+      lng: upazila ? upazila.lng : null,
+      upazilaId: selectedUpazila ? Number(selectedUpazila) : null,
+      urgency: selectedUrgency,
+      component: null, // "what is needed" option is explicitly excluded
+    });
+  }, [selectedGroup, selectedUpazila, selectedUrgency]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
