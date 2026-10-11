@@ -162,6 +162,7 @@ export interface DonorCard {
   last_donation_band: "never" | "recent" | "long_ago";
   score: number;
   contact_mode: ContactVisibility;
+  phone?: string | null;
 }
 
 export interface DonorCounts {

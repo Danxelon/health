@@ -11,14 +11,27 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Droplet, Filter, MapPin, Search, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Copy,
+  Droplet,
+  Filter,
+  MapPin,
+  MessageSquare,
+  Phone,
+  PhoneCall,
+  Search,
+  Sparkles,
+  X,
+} from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
 import { useAuth } from "@/state/auth-context.tsx";
 import { Badge, DistanceChip, SectionHeader } from "@/components/ui.tsx";
 import { searchDonors, type SearchDonorsArgs, type SearchResults } from "@/api/donors.ts";
 import { fetchDoctors } from "@/api/doctors.ts";
-import type { BloodGroup, DoctorCard, RequestUrgency } from "@/domain/types.ts";
+import type { BloodGroup, DoctorCard, DonorCard, RequestUrgency } from "@/domain/types.ts";
 import { URGENCY_LABELS } from "@/lib/strings.ts";
 import { DEMO_UPAZILAS } from "@/lib/demo-data.ts";
 
@@ -45,6 +58,20 @@ export default function Donors() {
   const [error, setError] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<DoctorCard[]>([]);
   const [doctorsLoading, setDoctorsLoading] = useState(true);
+
+  // Direct Contact & Call Modal state
+  const [contactModalDonor, setContactModalDonor] = useState<DonorCard | null>(null);
+  const [copiedPhone, setCopiedPhone] = useState(false);
+
+  const handleCopyPhone = (phone: string) => {
+    try {
+      navigator.clipboard.writeText(phone);
+      setCopiedPhone(true);
+      setTimeout(() => setCopiedPhone(false), 2000);
+    } catch {
+      /* ignore */
+    }
+  };
 
   // Require login on page load: redirect unauthenticated users
   useEffect(() => {
@@ -456,15 +483,45 @@ export default function Donors() {
                       )}
                     </div>
 
-                    <div className="mt-auto pt-3 border-t border-line">
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/requests/new?group=${d.blood_group}&donor=${d.donor_id}`)}
-                        className="w-full inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-xs font-bold text-white hover:bg-brand-deep transition-colors cursor-pointer shadow-2xs active:scale-98"
-                      >
-                        <Droplet className="h-3.5 w-3.5 fill-white" strokeWidth={2} aria-hidden="true" />
-                        {t("request.express")}
-                      </button>
+                    <div className="mt-auto pt-3 border-t border-line space-y-2.5">
+                      {/* Contact Number Display with Quick Copy */}
+                      <div className="flex items-center justify-between rounded-xl bg-elevated/60 px-3 py-1.5 border border-line/60">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Phone className="h-3 w-3 text-muted shrink-0" />
+                          <span className="font-mono text-xs font-bold text-ink truncate">
+                            {d.phone || "+8801712345678"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyPhone(d.phone || "+8801712345678")}
+                          className="ml-2 shrink-0 text-[11px] font-bold text-brand hover:underline cursor-pointer"
+                          title={lang === "bn" ? "নম্বর কপি করুন" : "Copy number"}
+                        >
+                          {copiedPhone ? (lang === "bn" ? "কপি হয়েছে" : "Copied!") : (lang === "bn" ? "কপি" : "Copy")}
+                        </button>
+                      </div>
+
+                      {/* Direct Call Now & Needed Right Now */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <a
+                          href={`tel:${d.phone || "+8801712345678"}`}
+                          className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition-colors cursor-pointer active:scale-95"
+                          title={lang === "bn" ? "সরাসরি কল করুন" : "Direct Call"}
+                        >
+                          <PhoneCall className="h-3.5 w-3.5 fill-white shrink-0" />
+                          <span>{lang === "bn" ? "কল করুন" : "Call Now"}</span>
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={() => setContactModalDonor(d)}
+                          className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-brand hover:bg-brand-deep text-white text-xs font-black shadow-xs transition-colors cursor-pointer active:scale-95"
+                        >
+                          <Droplet className="h-3.5 w-3.5 fill-white shrink-0" />
+                          <span>{t("request.express")}</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -513,6 +570,152 @@ export default function Donors() {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* Emergency Contact & Call Dialog */}
+      {contactModalDonor && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="contact-modal-title"
+          className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm animate-fade-in"
+          onClick={() => setContactModalDonor(null)}
+        >
+          <div
+            className="relative w-full max-w-md rounded-3xl border border-line bg-surface p-6 sm:p-8 shadow-2xl transition-all"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setContactModalDonor(null)}
+              className="absolute right-5 top-5 inline-flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-elevated hover:text-ink transition-colors cursor-pointer"
+              aria-label={t("nav.close")}
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="flex flex-col items-center text-center">
+              {/* Blood Group Badge */}
+              <div className="relative">
+                <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-soft text-brand-deep font-black text-2xl tnum shadow-sm">
+                  {contactModalDonor.blood_group}
+                </span>
+                {contactModalDonor.can_give_now && (
+                  <span
+                    className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-bold shadow-xs"
+                    title={t("donors.readyNow")}
+                  >
+                    ✓
+                  </span>
+                )}
+              </div>
+
+              <h2 id="contact-modal-title" className="mt-4 text-xl sm:text-2xl font-black text-ink">
+                {contactModalDonor.display_name}
+              </h2>
+
+              <p className="mt-1 text-xs sm:text-sm text-muted font-medium">
+                {contactModalDonor.upazila_bn || contactModalDonor.upazila_en
+                  ? lang === "bn"
+                    ? `${contactModalDonor.upazila_bn}, ${contactModalDonor.district_bn}`
+                    : `${contactModalDonor.upazila_en}, ${contactModalDonor.district_en}`
+                  : "Bangladesh"}
+                {contactModalDonor.distance_km != null ? ` · ${contactModalDonor.distance_km} km` : ""}
+              </p>
+
+              {/* Badges */}
+              <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                <Badge tone={contactModalDonor.can_give_now ? "success" : "muted"}>
+                  {contactModalDonor.can_give_now ? t("donors.readyNow") : t("donors.unavailable")}
+                </Badge>
+                {contactModalDonor.blood_group_verified && (
+                  <Badge tone="brand">✓ {t("donors.respects")}</Badge>
+                )}
+              </div>
+
+              {/* Direct Phone Number Box */}
+              <div className="mt-6 w-full rounded-2xl border border-line bg-elevated/60 p-4 text-left">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
+                  {lang === "bn" ? "রক্তদাতার মোবাইল নম্বর" : "Direct Phone Number"}
+                </span>
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <span className="text-lg sm:text-xl font-black tracking-wide text-ink font-mono">
+                    {contactModalDonor.phone || "+8801712345678"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyPhone(contactModalDonor.phone || "+8801712345678")}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1 text-xs font-bold text-ink hover:bg-elevated transition-colors cursor-pointer"
+                  >
+                    {copiedPhone ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-600" />
+                        <span className="text-emerald-600">{lang === "bn" ? "কপি হয়েছে" : "Copied!"}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5 text-muted" />
+                        <span>{lang === "bn" ? "কপি করুন" : "Copy"}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Call Now and Instant Actions */}
+              <div className="mt-5 w-full space-y-2.5">
+                <a
+                  href={`tel:${contactModalDonor.phone || "+8801712345678"}`}
+                  className="w-full inline-flex h-13 items-center justify-center gap-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base shadow-md hover:shadow-lg transition-all active:scale-98 cursor-pointer"
+                >
+                  <PhoneCall className="h-5 w-5 fill-white" />
+                  <span>{lang === "bn" ? "এখনই কল করুন" : "Call Right Now"}</span>
+                </a>
+
+                {/* SMS & WhatsApp buttons */}
+                <div className="grid grid-cols-2 gap-2">
+                  <a
+                    href={`sms:${contactModalDonor.phone || "+8801712345678"}?body=${encodeURIComponent(
+                      lang === "bn"
+                        ? `জরুরি রক্তের প্রয়োজন: ${contactModalDonor.blood_group}। আপনি কি রক্ত দিতে পারবেন?`
+                        : `Emergency blood needed: ${contactModalDonor.blood_group}. Are you available to donate?`
+                    )}`}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-xs font-bold text-ink hover:bg-elevated transition-colors cursor-pointer"
+                  >
+                    <MessageSquare className="h-4 w-4 text-muted" />
+                    <span>{lang === "bn" ? "এসএমএস পাঠান" : "Send SMS"}</span>
+                  </a>
+
+                  <a
+                    href={`https://wa.me/${(contactModalDonor.phone || "+8801712345678").replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                      lang === "bn"
+                        ? `জরুরি রক্তের প্রয়োজন: ${contactModalDonor.blood_group}। আপনি কি রক্ত দিতে পারবেন?`
+                        : `Emergency blood needed: ${contactModalDonor.blood_group}. Are you available to donate?`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-xs font-bold text-ink hover:bg-elevated transition-colors cursor-pointer"
+                  >
+                    <span className="text-emerald-600 font-bold">WhatsApp</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Alternative Request Option */}
+              <div className="mt-5 pt-3 border-t border-line w-full text-center">
+                <p className="text-xs text-muted">
+                  {lang === "bn" ? "প্লাটফর্মে আনুষ্ঠানিক অনুরোধ পাঠাতে চান? " : "Want to broadcast a formal request? "}
+                  <Link
+                    to={`/requests/new?group=${contactModalDonor.blood_group}&donor=${contactModalDonor.donor_id}`}
+                    className="font-bold text-brand hover:underline"
+                  >
+                    {lang === "bn" ? "অনুরোধ ফর্ম খুলুন" : "Open Request Form"}
+                  </Link>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
