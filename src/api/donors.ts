@@ -13,7 +13,7 @@ import type { BloodComponent, BloodGroup, DonorCard, DonorCounts, RequestUrgency
 import { rankDonors, groupByRing, scoreDonor, maxRingFor } from "@/domain/matching.ts";
 import { acceptableDonorsFor } from "@/domain/blood.ts";
 import { DEMO_DONORS, DEMO_UPAZILAS, type DemoUpazila } from "@/lib/demo-data.ts";
-import { callRpc, DEMO_MODE } from "@/lib/supabase.ts";
+import { callRpc, DEMO_MODE, hasSupabaseAuthSession } from "@/lib/supabase.ts";
 
 export interface SearchDonorsArgs {
   recipientGroup: BloodGroup;
@@ -109,9 +109,11 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
 }
 
 export async function searchDonors(args: SearchDonorsArgs): Promise<SearchResults> {
-  if (DEMO_MODE) {
-    // Simulate the round trip so loading behaviour is honest.
-    await new Promise((resolve) => setTimeout(resolve, 300));
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
+    // When in demo mode or without an active Supabase JWT session, use the rich deterministic
+    // dataset directly without firing an unauthenticated network request that triggers HTTP 400.
+    await new Promise((resolve) => setTimeout(resolve, 200));
     return buildResults(args);
   }
 

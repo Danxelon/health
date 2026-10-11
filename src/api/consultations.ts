@@ -9,7 +9,7 @@
 
 import type { Consultation, ConsultationMessage, DoctorCard } from "@/domain/types.ts";
 import { DEMO_DOCTORS } from "@/lib/demo-data.ts";
-import { callRpc, DEMO_MODE } from "@/lib/supabase.ts";
+import { callRpc, DEMO_MODE, hasSupabaseAuthSession } from "@/lib/supabase.ts";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -66,7 +66,8 @@ const demoMessages: ConsultationMessage[] = [
 export async function requestConsultation(
   input: ConsultationRequestInput
 ): Promise<Consultation> {
-  if (DEMO_MODE) {
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
     await delay(560);
     const now = new Date().toISOString();
     const consultation: Consultation = {
@@ -93,7 +94,8 @@ export async function requestConsultation(
 }
 
 export async function fetchMyConsultations(): Promise<Consultation[]> {
-  if (DEMO_MODE) {
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
     await delay(280);
     return [...demoConsultations].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
   }
@@ -101,7 +103,8 @@ export async function fetchMyConsultations(): Promise<Consultation[]> {
 }
 
 export async function fetchConsultation(id: string): Promise<ConsultationThread | null> {
-  if (DEMO_MODE) {
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
     await delay(200);
     const consultation = demoConsultations.find((c) => c.id === id);
     if (!consultation) return null;
@@ -118,7 +121,8 @@ export async function sendConsultationMessage(
   id: string,
   body: string
 ): Promise<ConsultationMessage> {
-  if (DEMO_MODE) {
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
     await delay(180);
     const message: ConsultationMessage = {
       id: `demo-msg-${demoMessages.length + 1}`,
@@ -142,7 +146,8 @@ export async function respondConsultation(
   decision: "accepted" | "declined",
   scheduledAt?: string | null
 ): Promise<void> {
-  if (DEMO_MODE) {
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
     await delay(320);
     const consultation = demoConsultations.find((c) => c.id === id);
     if (consultation) {

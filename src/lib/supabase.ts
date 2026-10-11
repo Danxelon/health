@@ -30,6 +30,20 @@ export const hasSupabase = Boolean(url && anonKey);
 /** True when the app is rendering the in-memory dataset instead of a backend. */
 export const DEMO_MODE = !hasSupabase;
 
+/**
+ * Checks whether an active Supabase user session exists.
+ * Returns false if no Supabase client is configured, or if the user is unauthenticated.
+ */
+export async function hasSupabaseAuthSession(): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { data } = await supabase.auth.getSession();
+    return Boolean(data.session?.access_token);
+  } catch {
+    return false;
+  }
+}
+
 export const supabase: SupabaseClient | null = hasSupabase
   ? createClient(url, anonKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },

@@ -7,7 +7,7 @@
  * already-unlocked recipients (`my_unlock_history`), never a searchable list.
  */
 
-import { callRpc, DEMO_MODE } from "@/lib/supabase.ts";
+import { callRpc, DEMO_MODE, hasSupabaseAuthSession } from "@/lib/supabase.ts";
 
 export type ContactVisibility = "on_accept" | "private_admin";
 
@@ -58,16 +58,18 @@ const demoUnlockHistory: UnlockHistoryItem[] = [
 /* -------------------------------------------------------------------------- */
 
 export async function fetchMyProfile(): Promise<ProfileSummary> {
-  if (DEMO_MODE) {
-    await delay(360);
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
+    await delay(250);
     return { ...demoProfile };
   }
   return callRpc<ProfileSummary>("my_profile");
 }
 
 export async function setContactVisibility(v: ContactVisibility): Promise<void> {
-  if (DEMO_MODE) {
-    await delay(260);
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
+    await delay(200);
     demoProfile.contact_visibility = v;
     return;
   }
@@ -75,8 +77,9 @@ export async function setContactVisibility(v: ContactVisibility): Promise<void> 
 }
 
 export async function setDonorAvailability(status: string): Promise<void> {
-  if (DEMO_MODE) {
-    await delay(260);
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
+    await delay(200);
     demoProfile.donor_status = status;
     return;
   }
@@ -84,8 +87,9 @@ export async function setDonorAvailability(status: string): Promise<void> {
 }
 
 export async function fetchUnlockHistory(): Promise<UnlockHistoryItem[]> {
-  if (DEMO_MODE) {
-    await delay(300);
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
+    await delay(250);
     return [...demoUnlockHistory];
   }
   return callRpc<UnlockHistoryItem[]>("my_unlock_history");

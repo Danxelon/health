@@ -11,7 +11,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Droplet, Filter, MapPin, Search } from "lucide-react";
+import { ArrowRight, Droplet, Filter, MapPin, Search, Sparkles } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
 import { useAuth } from "@/state/auth-context.tsx";
@@ -28,7 +28,7 @@ type AreaSortOption = "match" | "ready" | "name";
 
 export default function Donors() {
   const { t, lang } = useAppShell();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, openLoginModal } = useAuth();
   const navigate = useNavigate();
 
   const [selectedGroup, setSelectedGroup] = useState<BloodGroup | "">("O+");
@@ -93,6 +93,7 @@ export default function Donors() {
 
   // Auto-search whenever blood group, area or urgency changes
   useEffect(() => {
+    if (!isLoggedIn) return;
     if (!selectedGroup) return;
 
     const upazila = DEMO_UPAZILAS.find((u) => u.id === Number(selectedUpazila));
@@ -104,10 +105,14 @@ export default function Donors() {
       urgency: selectedUrgency,
       component: null, // "what is needed" option is explicitly excluded
     });
-  }, [selectedGroup, selectedUpazila, selectedUrgency]);
+  }, [isLoggedIn, selectedGroup, selectedUpazila, selectedUrgency]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLoggedIn) {
+      openLoginModal("/donors");
+      return;
+    }
     if (!selectedGroup) return;
 
     const upazila = DEMO_UPAZILAS.find((u) => u.id === Number(selectedUpazila));
@@ -123,11 +128,12 @@ export default function Donors() {
   };
 
   useEffect(() => {
+    if (!isLoggedIn) return;
     fetchDoctors().then((d) => {
       setDoctors(d);
       setDoctorsLoading(false);
     });
-  }, []);
+  }, [isLoggedIn]);
 
   // Sort displayed donors according to user preference
   const sortedDonors = useMemo(() => {
@@ -142,6 +148,43 @@ export default function Donors() {
     // "match" uses default ranked order from backend/domain
     return list;
   }, [results, sortBy]);
+
+  // If not logged in, show auth gate prompt
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md rounded-3xl border border-line bg-surface p-8 text-center shadow-xl">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-soft text-brand shadow-sm">
+            <Droplet className="h-8 w-8 fill-brand" />
+          </div>
+          <h1 className="mt-5 text-2xl font-black text-ink">
+            {lang === "bn" ? "লগ ইন প্রয়োজন" : "Login Required"}
+          </h1>
+          <p className="mt-2 text-sm text-muted leading-relaxed">
+            {lang === "bn"
+              ? "রক্তদাতা অনুসন্ধান করতে অনুগ্রহ করে আপনার অ্যাকাউন্টে লগ ইন করুন।"
+              : "Please log in to your account to search and connect with blood donors."}
+          </p>
+          <div className="mt-6 flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => openLoginModal("/donors")}
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand px-6 text-sm font-bold text-white shadow-md hover:bg-brand-deep transition-all cursor-pointer"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>{lang === "bn" ? "১-ক্লিকে তাৎক্ষণিক লগ ইন" : "One-Click Instant Login"}</span>
+            </button>
+            <Link
+              to="/login?next=/donors"
+              className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-line bg-surface text-sm font-semibold text-ink hover:bg-elevated transition-colors"
+            >
+              {lang === "bn" ? "মোবাইল নম্বর দিয়ে লগ ইন" : "Log in with Mobile Number"}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 pb-24 pt-8">

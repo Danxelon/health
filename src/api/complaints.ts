@@ -8,7 +8,7 @@
  */
 
 import type { Complaint } from "@/domain/types.ts";
-import { callRpc, DEMO_MODE } from "@/lib/supabase.ts";
+import { callRpc, DEMO_MODE, hasSupabaseAuthSession } from "@/lib/supabase.ts";
 
 export type { Complaint };
 
@@ -44,7 +44,8 @@ const demoComplaints: Complaint[] = [
 ];
 
 export async function fileComplaint(input: ComplaintInput): Promise<Complaint> {
-  if (DEMO_MODE) {
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
     await delay(600);
     const now = new Date();
     const complaint: Complaint = {
@@ -76,7 +77,8 @@ export async function fileComplaint(input: ComplaintInput): Promise<Complaint> {
 }
 
 export async function fetchMyComplaints(): Promise<Complaint[]> {
-  if (DEMO_MODE) {
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
     await delay(260);
     return [...demoComplaints].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
   }

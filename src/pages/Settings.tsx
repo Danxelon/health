@@ -337,6 +337,7 @@ export default function Settings() {
   );
 
   useEffect(() => {
+    if (!isLoggedIn) return;
     let alive = true;
     setLoading(true);
     setLoadFailure(null);
@@ -357,9 +358,10 @@ export default function Settings() {
     return () => {
       alive = false;
     };
-  }, [reloadKey]);
+  }, [isLoggedIn, reloadKey]);
 
   useEffect(() => {
+    if (!isLoggedIn) return;
     let alive = true;
     setUnlocks(null);
     setUnlocksFailure(null);
@@ -373,7 +375,7 @@ export default function Settings() {
     return () => {
       alive = false;
     };
-  }, [reloadKey]);
+  }, [isLoggedIn, reloadKey]);
 
   // The "saved" chip is a confirmation, not a permanent state.
   useEffect(() => {
@@ -427,6 +429,34 @@ export default function Settings() {
   const completeness = profile ? Math.max(0, Math.min(100, Math.round(profile.completeness))) : 0;
   const completenessLabel =
     lang === "bn" ? toBengaliDigits(completeness) : String(completeness);
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md rounded-3xl border border-line bg-surface p-8 text-center shadow-xl">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-soft text-brand shadow-sm">
+            <ShieldCheck className="h-8 w-8 text-brand" />
+          </div>
+          <h1 className="mt-5 text-2xl font-black text-ink">
+            {lang === "bn" ? "লগ ইন প্রয়োজন" : "Login Required"}
+          </h1>
+          <p className="mt-2 text-sm text-muted leading-relaxed">
+            {lang === "bn"
+              ? "সেটিংস পরিবর্তন করতে অনুগ্রহ করে আপনার অ্যাকাউন্টে লগ ইন করুন।"
+              : "Please log in to your account to view and manage your profile settings."}
+          </p>
+          <div className="mt-6 flex flex-col gap-3">
+            <Link
+              to="/login?next=/settings"
+              className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-brand px-6 text-sm font-bold text-white shadow-md hover:bg-brand-deep transition-all"
+            >
+              {lang === "bn" ? "লগ ইন করুন" : "Log in to Continue"}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={rootRef} className="overflow-x-hidden w-full max-w-full">

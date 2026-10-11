@@ -18,7 +18,7 @@ import type {
 } from "@/domain/types.ts";
 import { expiresAtISO } from "@/domain/requests.ts";
 import { DEMO_EMERGENCIES } from "@/lib/demo-data.ts";
-import { callRpc, DEMO_MODE } from "@/lib/supabase.ts";
+import { callRpc, DEMO_MODE, hasSupabaseAuthSession } from "@/lib/supabase.ts";
 
 export interface RequestFormData {
   blood_group_needed: BloodGroup;
@@ -116,7 +116,8 @@ function demoTracking(requestId: string): {
 /* -------------------------------------------------------------------------- */
 
 export async function createBloodRequest(input: RequestFormData): Promise<BloodRequest> {
-  if (DEMO_MODE) {
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
     await delay(520);
     const now = new Date();
     const request: BloodRequest = {
@@ -174,7 +175,8 @@ export interface RequestTracking {
 }
 
 export async function fetchRequestTracking(requestId: string): Promise<RequestTracking> {
-  if (DEMO_MODE) {
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
     await delay(300);
     return demoTracking(requestId);
   }
@@ -182,7 +184,8 @@ export async function fetchRequestTracking(requestId: string): Promise<RequestTr
 }
 
 export async function fetchMyRequests(): Promise<BloodRequest[]> {
-  if (DEMO_MODE) {
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
     await delay(260);
     return demoStore;
   }
@@ -203,7 +206,8 @@ export async function unlockDonorContact(
   requestId: string,
   donorId: string
 ): Promise<UnlockResult> {
-  if (DEMO_MODE) {
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
     await delay(420);
     return {
       mode: "requestor",
@@ -226,7 +230,8 @@ export async function respondToRequest(
   response: "accepted" | "declined",
   note?: string | null
 ): Promise<void> {
-  if (DEMO_MODE) {
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
     await delay(340);
     const request = demoStore.find((r) => r.id === requestId);
     if (request && response === "accepted") {
@@ -243,7 +248,8 @@ export async function respondToRequest(
 }
 
 export async function confirmDonation(responseId: string, units: number): Promise<void> {
-  if (DEMO_MODE) {
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
     await delay(340);
     return;
   }
@@ -251,7 +257,8 @@ export async function confirmDonation(responseId: string, units: number): Promis
 }
 
 export async function cancelBloodRequest(requestId: string): Promise<void> {
-  if (DEMO_MODE) {
+  const hasSession = await hasSupabaseAuthSession();
+  if (DEMO_MODE || !hasSession) {
     await delay(260);
     const request = demoStore.find((r) => r.id === requestId);
     if (request) request.status = "cancelled";
