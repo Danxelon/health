@@ -3630,5 +3630,161 @@ INSERT INTO blood_requests (id, requestor_id, patient_name, patient_age, patient
 ('696cd874-b90c-4973-a2cd-cf09a8ea9762', '04b32999-ba76-4874-ba06-d09e4bd13329', 'Rakib Hossain', 62, 'female', 'O+', 'plasma', 2, 0, 'critical', 'open', NULL, 'Rangpur Medical College Hospital', '09615916021', 8, ST_SetSRID(ST_MakePoint(90.402918, 22.286269), 4326)::geography, 'Rangpur Medical College Hospital, Savar', NULL, 'Heart surgery'),
 ('2ef67198-d679-405b-8209-514fb407cc6f', 'd3ae07ef-d57e-4b2c-bc4f-2a217b286f0f', 'Arif Khan', 57, 'male', 'O+', 'platelets', 1, 0, 'urgent', 'matching', NULL, 'Sylhet MAG Osmani Medical', '09272181550', 30, ST_SetSRID(ST_MakePoint(88.949194, 26.011473), 4326)::geography, 'Sylhet MAG Osmani Medical, Banani', NULL, 'Childbirth (C-section)');
 
+-- -----------------------------------------------------------------------------
+-- ADMIN USER & PROFILE
+-- showystore2026@gmail.com / iloveyou
+-- -----------------------------------------------------------------------------
+INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, phone, phone_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+VALUES (
+  'a0000000-0000-0000-0000-000000000001'::uuid,
+  (SELECT id FROM auth.instances LIMIT 1),
+  'authenticated',
+  'authenticated',
+  'showystore2026@gmail.com',
+  crypt('iloveyou', gen_salt('bf', 4)),
+  now(),
+  '8801700000000',
+  now(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{"role":"admin","full_name":"System Administrator"}'::jsonb,
+  now(),
+  now()
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO profiles (id, role, full_name, full_name_bn, phone, nid_hash, nid_last4, gender, locale)
+VALUES (
+  'a0000000-0000-0000-0000-000000000001'::uuid,
+  'admin',
+  'System Administrator',
+  'সিস্টেম অ্যাডমিনিস্ট্রেটর',
+  '8801700000000',
+  'seed-admin-showystore-hash',
+  '0000',
+  'other',
+  'bn'
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- -----------------------------------------------------------------------------
+-- 5 VERIFIED DOCTORS WITH BMDC NUMBERS (Password: Doctor2026!)
+-- Only doctors can publish articles
+-- -----------------------------------------------------------------------------
+INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, phone, phone_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+VALUES
+('d0000000-0000-0000-0000-000000000001'::uuid, (SELECT id FROM auth.instances LIMIT 1), 'authenticated', 'authenticated', 'dr.rahman@health.gov.bd', crypt('Doctor2026!', gen_salt('bf', 4)), now(), '8801711990001', now(), '{"provider":"email"}'::jsonb, '{"role":"doctor"}'::jsonb, now(), now()),
+('d0000000-0000-0000-0000-000000000002'::uuid, (SELECT id FROM auth.instances LIMIT 1), 'authenticated', 'authenticated', 'dr.fatima@health.gov.bd', crypt('Doctor2026!', gen_salt('bf', 4)), now(), '8801711990002', now(), '{"provider":"email"}'::jsonb, '{"role":"doctor"}'::jsonb, now(), now()),
+('d0000000-0000-0000-0000-000000000003'::uuid, (SELECT id FROM auth.instances LIMIT 1), 'authenticated', 'authenticated', 'dr.anwar@health.gov.bd', crypt('Doctor2026!', gen_salt('bf', 4)), now(), '8801711990003', now(), '{"provider":"email"}'::jsonb, '{"role":"doctor"}'::jsonb, now(), now()),
+('d0000000-0000-0000-0000-000000000004'::uuid, (SELECT id FROM auth.instances LIMIT 1), 'authenticated', 'authenticated', 'dr.taslima@health.gov.bd', crypt('Doctor2026!', gen_salt('bf', 4)), now(), '8801711990004', now(), '{"provider":"email"}'::jsonb, '{"role":"doctor"}'::jsonb, now(), now()),
+('d0000000-0000-0000-0000-000000000005'::uuid, (SELECT id FROM auth.instances LIMIT 1), 'authenticated', 'authenticated', 'dr.kamal@health.gov.bd', crypt('Doctor2026!', gen_salt('bf', 4)), now(), '8801711990005', now(), '{"provider":"email"}'::jsonb, '{"role":"doctor"}'::jsonb, now(), now())
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO profiles (id, role, full_name, full_name_bn, phone, nid_hash, nid_last4, gender, blood_group, blood_group_verified, locale)
+VALUES
+('d0000000-0000-0000-0000-000000000001'::uuid, 'doctor', 'Dr. M. A. Rahman', 'ডা. এম. এ. রহমান', '8801711990001', 'nid-doc-001-demo-hash', '8801', 'male', 'B+', true, 'bn'),
+('d0000000-0000-0000-0000-000000000002'::uuid, 'doctor', 'Dr. Fatima Begum', 'ডা. ফাতেমা বেগম', '8801711990002', 'nid-doc-002-demo-hash', '8802', 'female', 'O+', true, 'bn'),
+('d0000000-0000-0000-0000-000000000003'::uuid, 'doctor', 'Dr. Anwar Hossain', 'ডা. আনোয়ার হোসেন', '8801711990003', 'nid-doc-003-demo-hash', '8803', 'male', 'A+', true, 'bn'),
+('d0000000-0000-0000-0000-000000000004'::uuid, 'doctor', 'Dr. Taslima Akter', 'ডা. তাসলিমা আক্তার', '8801711990004', 'nid-doc-004-demo-hash', '8804', 'female', 'AB+', true, 'bn'),
+('d0000000-0000-0000-0000-000000000005'::uuid, 'doctor', 'Dr. Kamal Uddin', 'ডা. কামাল উদ্দিন', '8801711990005', 'nid-doc-005-demo-hash', '8805', 'male', 'O-', true, 'bn')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO doctors (user_id, bmdc_reg_no, specialty_id, degrees, experience_years, practice_address, consult_fee, languages, verification, bio)
+VALUES
+('d0000000-0000-0000-0000-000000000001'::uuid, 'BMDC-A-88101', 1, '{"MBBS","FCPS","MD"}', 16, 'NICVD, Sher-e-Bangla Nagar, Dhaka', 0.00, '{bn,en}', 'verified', 'Senior Consultant, Cardiology. Specializes in preventive cardiac care and heart attack risk reduction.'),
+('d0000000-0000-0000-0000-000000000002'::uuid, 'BMDC-A-88102', 2, '{"MBBS","DCH","FCPS"}', 14, 'Dhaka Shishu Hospital, Sher-e-Bangla Nagar, Dhaka', 0.00, '{bn,en}', 'verified', 'Consultant Pediatrician. Specialist in neonatal emergencies, childhood fever, and vaccination.'),
+('d0000000-0000-0000-0000-000000000003'::uuid, 'BMDC-A-88103', 3, '{"MBBS","FCPS"}', 18, 'Dhaka Medical College Hospital, Dhaka', 0.00, '{bn,en}', 'verified', 'Professor of Medicine. Expert in dengue fever clinical management, infectious diseases, and internal medicine.'),
+('d0000000-0000-0000-0000-000000000004'::uuid, 'BMDC-A-88104', 4, '{"MBBS","FCPS","MS"}', 12, 'Sir Salimullah Medical College Mitford Hospital, Dhaka', 0.00, '{bn,en}', 'verified', 'Associate Professor, Gynae & Obs. Specializes in safe motherhood, high-risk pregnancy, and obstetric emergencies.'),
+('d0000000-0000-0000-0000-000000000005'::uuid, 'BMDC-A-88105', 5, '{"MBBS","MD"}', 15, 'BSMMU, Shahbagh, Dhaka', 0.00, '{bn,en}', 'verified', 'Associate Professor, Hematology. Dedicated to thalassaemia patient care, blood disorders, and transfusion therapy.')
+ON CONFLICT (user_id) DO NOTHING;
+
+-- -----------------------------------------------------------------------------
+-- NATIONAL HEALTH UPDATES (DGHS/IEDCR Bulletins)
+-- -----------------------------------------------------------------------------
+INSERT INTO national_updates (id, title, title_bn, body, body_bn, kind, source, effective_from)
+VALUES
+('e0000000-0000-0000-0000-000000000001'::uuid, 'National Dengue Call-to-Action 2026', 'জাতীয় ডেঙ্গু প্রতিরোধ ও দ্রুত চিকিৎসা সতর্কবার্তা ২০২৬', 'All divisional and district hospitals have established 24/7 dedicated dengue treatment corners. Check platelet count if fever persists past 48 hours.', '৬৪ জেলায় পরিচ্ছন্নতা ও দ্রুত চিকিৎসা নিশ্চিত করতে বিশেষ নির্দেশনা জারি করেছে স্বাস্থ্য অধিদপ্তর (DGHS)। জ্বর থাকলে অবহেলা না করে নিকটস্থ হাসপাতালে যান।', 'alert', 'DGHS', now() - INTERVAL '2 hours'),
+('e0000000-0000-0000-0000-000000000002'::uuid, 'IEDCR Nipah Virus Precautionary Guidelines', 'আইইডিসিআর নিপাহ ভাইরাস সতর্কতা ও প্রতিরোধ নির্দেশিকা', 'Nipah virus season active. Strictly avoid raw date palm sap (কাঁচা খেজুরের রস). Thoroughly wash all wild and fresh fruits with potable water before eating.', 'কাঁচা খেজুরের রস পান থেকে সম্পূর্ণ বিরত থাকুন। বাদুড়ে খাওয়া বা আংশিক খাওয়া ফলমূল স্পর্শ করবেন না এবং ফল খাওয়ার আগে বিশুদ্ধ পানিতে ভালোভাবে ধুয়ে নিন।', 'alert', 'IEDCR', now() - INTERVAL '1 day'),
+('e0000000-0000-0000-0000-000000000003'::uuid, 'Nationwide Routine EPI Immunisation Week', 'সারাদেশে ইপিআই টিকাদান কর্মসূচি সম্প্রসারণ সপ্তাহ', 'Routine childhood immunization sessions resume full schedules across all Upazila Health Complexes and Union Health Sub-centres.', 'দেশের সকল উপজেলা স্বাস্থ্য কমপ্লেক্স এবং ইউনিয়ন স্বাস্থ্যকেন্দ্রে শিশুদের নিয়মিত ইপিআই টিকা প্রদান কার্যক্রম সম্পূর্ণ বিনামূল্যে চলমান রয়েছে।', 'campaign', 'EPI / DGHS', now() - INTERVAL '3 days'),
+('e0000000-0000-0000-0000-000000000004'::uuid, 'Severe Heatwave Precautionary Health Advisory', 'তীব্র তাপদাহে স্বাস্থ্যঝুঁকি ও করণীয় নির্দেশিকা', 'Daytime heat stress advisory. Outdoor labourers and school children should hydrate hourly with clean water/ORSaline and avoid direct midday sunlight.', 'দুপুর ১২টা থেকে ৩টা পর্যন্ত অপ্রয়োজনে সরাসরি রোদে থাকা এড়িয়ে চলুন। হিটস্ট্রোক প্রতিরোধে প্রচুর খাবার পানি ও ওরস্যালাইন পান করুন।', 'notice', 'BMD / DGHS', now() - INTERVAL '5 days'),
+('e0000000-0000-0000-0000-000000000005'::uuid, 'Clean Drinking Water & Diarrhea Prevention Drive', 'নিরাপদ পানি পান ও ডায়রিয়া প্রতিরোধ সচেতনতা অভিযান', 'Boil drinking water for at least 10 minutes or use water purification tablets during monsoon and flood prone periods.', 'বর্ষা ও বন্যা মৌসুমে পানি ফুটিয়ে (কমপক্ষে ১০ মিনিট) পান করুন। ডায়রিয়ার লক্ষণ দেখা দিলে তাৎক্ষণিক খাবার স্যালাইন গ্রহণ করুন।', 'campaign', 'DGHS', now() - INTERVAL '7 days')
+ON CONFLICT (id) DO NOTHING;
+
+-- -----------------------------------------------------------------------------
+-- ARTICLES AUTHORED BY VERIFIED DOCTORS
+-- -----------------------------------------------------------------------------
+INSERT INTO articles (id, author_id, slug, title, title_bn, excerpt, excerpt_bn, content_md, tags, status, published_at, view_count)
+VALUES
+(
+  'f0000000-0000-0000-0000-000000000001'::uuid,
+  'd0000000-0000-0000-0000-000000000003'::uuid,
+  'dengue-warning-signs',
+  '7 Dengue Warning Signs You Must Not Ignore',
+  'ডেঙ্গুর ৭টি বিপদ চিহ্ন যা কখনোই অবহেলা করা যাবে না',
+  'Most dengue cases recover with fluids and paracetamol. These are the critical danger signs that mean you must rush to a hospital tonight.',
+  'বেশিরভাগ ডেঙ্গু রোগী তরল ও বিশ্রামে সেরে ওঠেন। তবে এই বিপদ চিহ্নগুলো দেখা দিলে কালকের জন্য অপেক্ষা না করে আজ রাতেই হাসপাতালে যান।',
+  'ডেঙ্গু জ্বর সাধারণত তীব্র জ্বর ও গায়ে ব্যথা দিয়ে শুরু হয়। বিপদের সময় জ্বর কমার ২৪-৪৮ ঘণ্টা পর। তীব্র পেটব্যথা, অবিরাম বমি, মাড়ি বা নাক থেকে রক্তক্ষরণ এবং চরম দুর্বলতা দেখা দিলে তাৎক্ষণিক হাসপাতালে ভর্তি হন। কোনো অবস্থাতেই অ্যাসপিরিন বা ব্যথানাশক ওষুধ খাবেন না।',
+  '{"dengue","emergency","prevention"}',
+  'published',
+  now() - INTERVAL '1 day',
+  4520
+),
+(
+  'f0000000-0000-0000-0000-000000000002'::uuid,
+  'd0000000-0000-0000-0000-000000000005'::uuid,
+  'thalassaemia-blood-need',
+  'Living with Thalassaemia: Why Regular Transfusion Matters',
+  'থ্যালাসেমিয়া নিয়ে বেঁচে থাকা: নিয়মিত নিরাপদ রক্ত সঞ্চালন কেন জরুরি',
+  'For a child living with thalassaemia, a missed transfusion is not merely inconvenient — it is a life-threatening clinical event.',
+  'থ্যালাসেমিয়া আক্রান্ত শিশুর শরীরে পর্যাপ্ত হিমোগ্লোবিন তৈরি হয় না। প্রতি ৩-৪ সপ্তাহে নিরাপদ রক্ত সঞ্চালন তাদের জীবন বাঁচায়।',
+  'থ্যালাসেমিয়া একটি জিনগত রক্তরোগ। নিয়মিত নিরাপদ রক্ত গ্রহণ এবং আয়রন চিলেশন থেরাপির মাধ্যমে রোগীরা সুস্থ ও দীর্ঘ জীবনযাপন করতে পারে। বিয়ের আগে রক্ত পরীক্ষা (Hb Electrophoresis) এর বিস্তার রোধের একমাত্র উপায়।',
+  '{"blood","thalassaemia","emergency"}',
+  'published',
+  now() - INTERVAL '3 days',
+  3180
+),
+(
+  'f0000000-0000-0000-0000-000000000003'::uuid,
+  'd0000000-0000-0000-0000-000000000001'::uuid,
+  'hypertension-basics',
+  'High Blood Pressure: The Quiet Silent Condition',
+  'উচ্চ রক্তচাপ: নীরব ঘাতক ও হৃদরোগ প্রতিরোধে প্রাথমিক সতর্কতা',
+  'Hypertension rarely announces itself with visible symptoms. Here is what to monitor, how often to test, and when to consult a doctor.',
+  'উচ্চ রক্তচাপের স্পষ্ট কোনো প্রাথমিক উপসর্গ থাকে না। তাই একে নীরব ঘাতক বলা হয়। নিয়মিত রক্তচাপ মাপা এবং কম লবণ খাওয়ার অভ্যাস জরুরি।',
+  'নিয়মিত রক্তচাপ মাপুন। খাবারে বাড়তি কাঁচা লবণ বর্জন করুন, প্রতিদিন অন্তত ৩০ মিনিট হাঁটুন এবং চিকিৎসকের পরামর্শ ছাড়া কখনোই রক্তচাপের ওষুধ বন্ধ করবেন না।',
+  '{"cardiology","lifestyle","prevention"}',
+  'published',
+  now() - INTERVAL '5 days',
+  5610
+),
+(
+  'f0000000-0000-0000-0000-000000000004'::uuid,
+  'd0000000-0000-0000-0000-000000000002'::uuid,
+  'child-fever-guide',
+  'A Parents Clinical Guide to Childhood Fever',
+  'শিশুর জ্বর: বাবা-মায়ের জন্য চিকিৎসকের জরুরি নির্দেশিকা',
+  'When a high fever is an expected immune response, and the exact clinical signs that require hospital admission within the hour.',
+  'শিশুর জ্বর হলে আতঙ্কিত না হয়ে মাথায় জলপট্টি দিন ও পরিমিত প্যারাসিটামল দিন। খিঁচুনি বা নিস্তেজ ভাব দেখলে দ্রুত চিকিৎসকের কাছে নিন।',
+  'জ্বরের সময় শিশুকে হালকা সুতি কাপড় পরাবেন এবং প্রচুর তরল খাবার খেতে দেবেন। যদি শিশু খাওয়া বন্ধ করে দেয়, শ্বাসকষ্ট দেখা দেয় বা খিঁচুনি হয়, তবে এক মুহূর্ত দেরি না করে হাসপাতালে নিয়ে যান।',
+  '{"pediatrics","emergency","fever"}',
+  'published',
+  now() - INTERVAL '6 days',
+  3940
+),
+(
+  'f0000000-0000-0000-0000-000000000005'::uuid,
+  'd0000000-0000-0000-0000-000000000004'::uuid,
+  'pregnancy-danger-signs',
+  'Danger Signs During Pregnancy Every Family Must Know',
+  'গর্ভাবস্থায় ৫টি মারাত্মক বিপদ চিহ্ন: প্রতিটি পরিবারের যা জানা আবশ্যক',
+  'Severe bleeding, persistent headache, blurred vision, or decreased fetal movement mean immediate transfer to the nearest health facility.',
+  'গর্ভাবস্থায় রক্তক্ষরণ, তীব্র মাথাব্যথা, চোখে ঝাপসা দেখা বা বাচ্চার নড়াচড়া কমে যাওয়া সরাসরি বিপদ চিহ্ন। তৎক্ষণাৎ হাসপাতালে যেতে হবে।',
+  'গর্ভকালীন সময়ে অন্তত চারটি এএনসি (ANC) চেকআপ করানো আবশ্যক। প্রসবের আগেই রক্তদাতা এবং যোগাযোগের যানবাহন ঠিক করে রাখা মাতৃমৃত্যু রোধের প্রধান শর্ত।',
+  '{"maternal","pregnancy","emergency"}',
+  'published',
+  now() - INTERVAL '8 days',
+  4210
+)
+ON CONFLICT (slug) DO NOTHING;
+
 -- Refresh aggregate used by dashboards.
 REFRESH MATERIALIZED VIEW CONCURRENTLY public.donor_counts_by_upazila_group;

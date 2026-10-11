@@ -10,7 +10,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShieldCheck, ArrowRight, CalendarCheck } from "lucide-react";
+import { ShieldCheck, CalendarCheck, MessageCircle, Loader2 } from "lucide-react";
 import { useAppShell } from "@/state/app-shell.tsx";
 import { useAuth } from "@/state/auth-context.tsx";
 import { Badge, DistanceChip, CardSkeleton, ErrorBanner } from "@/components/ui.tsx";
@@ -35,6 +35,9 @@ const COPY = {
   reset: { bn: "রিসেট", en: "Reset" },
   book: { bn: "সাক্ষাৎ নিন", en: "Book a visit" },
   message: { bn: "বার্তা", en: "Message" },
+  chat: { bn: "বার্তা পাঠান (Chat)", en: "Message (Chat)" },
+  chatLoading: { bn: "চ্যাট খোলা হচ্ছে…", en: "Opening chat…" },
+  bmdcLabel: { bn: "বিএমডিসি", en: "BMDC" },
   symptomPh: { bn: "সংক্ষেপে সমস্যা লিখুন…", en: "Briefly describe your issue…" },
   symptomLabel: { bn: "আপনার সমস্যা", en: "Your concern" },
   sending: { bn: "পাঠানো হচ্ছে…", en: "Sending…" },
@@ -56,6 +59,7 @@ export default function Doctors() {
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<DoctorFilters>({});
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [messagingId, setMessagingId] = useState<string | null>(null);
   const [symptomByDoctor, setSymptomByDoctor] = useState<Record<string, string>>({});
   const [composerFor, setComposerFor] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -90,17 +94,34 @@ export default function Doctors() {
   const set = (patch: Partial<DoctorFilters>) =>
     setFilters((f) => ({ ...f, ...patch }));
 
+  const handleMessageDoctor = async (doctor: DoctorCard) => {
+    setMessagingId(doctor.user_id);
+    setError(null);
+    try {
+      const c = await requestConsultation({
+        doctor_id: doctor.user_id,
+        symptom_summary: "প্রাথমিক অনলাইন স্বাস্থ্য পরামর্শ ও আলোচনা",
+        scheduled_at: null,
+      });
+      navigate(`/consultations/${c.id}`);
+    } catch (err) {
+      setError(err instanceof DomainError ? err.bilingual[lang] : t("errors.generic"));
+      setMessagingId(null);
+    }
+  };
+
   const handleBook = async (doctor: DoctorCard) => {
     const summary = symptomByDoctor[doctor.user_id]?.trim() ?? "";
-    if (!summary) {
+    if (!summary && composerFor !== doctor.user_id) {
       setComposerFor(doctor.user_id);
       return;
     }
+    const finalSummary = summary || (lang === "bn" ? "সাক্ষাতের জন্য পরামর্শ অনুরোধ" : "Appointment visit request");
     setBookingId(doctor.user_id);
     try {
       const c = await requestConsultation({
         doctor_id: doctor.user_id,
-        symptom_summary: summary,
+        symptom_summary: finalSummary,
         scheduled_at: null,
       });
       navigate(`/consultations/${c.id}`);
@@ -210,6 +231,16 @@ export default function Doctors() {
                     <ShieldCheck className="h-3 w-3" strokeWidth={1.8} aria-hidden="true" />
                     {t("doctors.verified")}
                   </Badge>
+                  {d.bmdc_reg_no && (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-elevated px-2 py-0.5 text-xs font-medium text-ink/85 border border-line/60">
+                      <span className="text-[10px] font-bold text-muted uppercase">
+                        {COPY.bmdcLabel[lang]}
+                      </span>
+                      <span className="tnum font-semibold">
+                        {d.bmdc_reg_no.startsWith("BMDC-") ? d.bmdc_reg_no.slice(5) : d.bmdc_reg_no}
+                      </span>
+                    </span>
+                  )}
                   {d.distance_km !== null && (
                     <DistanceChip km={d.distance_km} band={distanceBand(d.distance_km * 1000)} />
                   )}
@@ -246,28 +277,47 @@ export default function Doctors() {
                         setSymptomByDoctor((m) => ({ ...m, [d.user_id]: e.target.value }))
                       }
                       placeholder={COPY.symptomPh[lang]}
-                      className="mt-1 w-full rounded-2xl border border-line bg-bg px-3 py-2 text-sm text-ink placeholder:text-subtle"
+                      className="mt-1 w-full rounded-2xl border border-line bg-bg px-3 py-2 text-sm text-ink placeholder:text-subtle focus:border-brand focus:outline-none"
                     />
                   </div>
                 )}
 
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4 flex flex-col sm:flex-row gap-2">
                   <button
                     type="button"
-                    disabled={bookingId === d.user_id}
-                    onClick={() => handleBook(d)}
-                    className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-brand px-4 text-sm font-semibold text-white hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
+                    disabled={messagingId === d.user_id || bookingId === d.user_id}
+                    onClick={() => handleMessageDoctor(d)}
+                    className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-deep transition-all cursor-pointer disabled:opacity-60 shadow-xs"
                   >
-                    <CalendarCheck className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-                    {bookingId === d.user_id ? COPY.sending[lang] : COPY.book[lang]}
+                    {messagingId === d.user_id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        <span>{COPY.chatLoading[lang]}</span>
+                      </>
+                    ) : (
+                      <>
+                        <MessageCircle className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+                        <span>{COPY.chat[lang]}</span>
+                      </>
+                    )}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setComposerFor(d.user_id)}
-                    className="inline-flex h-11 items-center justify-center gap-1 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-ink hover:bg-elevated transition-colors cursor-pointer"
+                    disabled={bookingId === d.user_id || messagingId === d.user_id}
+                    onClick={() => handleBook(d)}
+                    className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-ink hover:bg-elevated transition-colors cursor-pointer disabled:opacity-60"
                   >
-                    {COPY.message[lang]}
-                    <ArrowRight className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+                    {bookingId === d.user_id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        <span>{COPY.sending[lang]}</span>
+                      </>
+                    ) : (
+                      <>
+                        <CalendarCheck className="h-4 w-4 text-brand-deep" strokeWidth={1.8} aria-hidden="true" />
+                        <span>{COPY.book[lang]}</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </article>

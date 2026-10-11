@@ -21,6 +21,7 @@ import type {
   DoctorCard,
   DonorCard,
   EmergencyFeedItem,
+  NationalHealthUpdate,
   RequestUrgency,
 } from "@/domain/types.ts";
 
@@ -287,13 +288,14 @@ const SPECIALTIES = [
   { id: 7, slug: "ent", en: "ENT", bn: "নাক-কান-গলা" },
   { id: 8, slug: "ophthalmology", en: "Ophthalmology", bn: "চোখ" },
   { id: 9, slug: "psychiatry", en: "Psychiatry", bn: "মানসিক রোগ" },
+  { id: 10, slug: "hematology", en: "Hematology & Blood Disorders", bn: "হেমাটোলজি ও রক্তরোগ" },
 ] as const;
 
 export const DEMO_SPECIALTIES = SPECIALTIES;
 
 const DEGREES = ["MBBS", "MBBS, FCPS", "MBBS, MD", "MBBS, MS", "MBBS, FCPS, MD"] as const;
 
-function makeDoctor(index: number): DoctorCard & { _phone: string } {
+function makeDoctor(index: number): DoctorCard & { _phone: string; phone: string } {
   const upazila = pick(DEMO_UPAZILAS);
   const specialty = pick(SPECIALTIES);
   const first = pick(GIVEN_NAMES);
@@ -302,6 +304,7 @@ function makeDoctor(index: number): DoctorCard & { _phone: string } {
   const degrees = pick(DEGREES);
   const fee = 0; // Government health service: 100% free
   const verified = rng() < 0.82;
+  const phone = `+8801${between(3, 9)}${String(between(10_000_000, 99_999_999))}`;
 
   return {
     user_id: `demo-doctor-${index}`,
@@ -332,14 +335,164 @@ function makeDoctor(index: number): DoctorCard & { _phone: string } {
     division_bn: upazila.division_bn,
     practice_address: `${upazila.name_en}, ${upazila.district_en}`,
     distance_km: Math.round(between(300, 40_000) / 100) / 10,
-    _phone: `+8801${between(3, 9)}${String(between(10_000_000, 99_999_999))}`,
+    _phone: phone,
+    phone,
   };
 }
 
-export const DEMO_DOCTORS: readonly (DoctorCard & { _phone: string })[] = Array.from(
-  { length: 42 },
-  (_, i) => makeDoctor(i)
-);
+/** Featured verified specialist doctors with BMDC credentials. */
+export const FEATURED_DOCTORS: readonly (DoctorCard & { _phone: string; phone: string })[] = [
+  {
+    user_id: "demo-doctor-0",
+    display_name: "Dr. M. A. Rahman",
+    full_name: "Dr. M. A. Rahman",
+    avatar_url: null,
+    bmdc_reg_no: "BMDC-A-88101",
+    degrees: "MBBS, FCPS, MD (Cardiology)",
+    experience_years: 18,
+    consult_fee: 0,
+    languages: ["bn", "en"],
+    bio: "জাতীয় হৃদরোগ ইনস্টিটিউটের জ্যেষ্ঠ হৃদরোগ বিশেষজ্ঞ। হৃদরোগ প্রতিরোধ, উচ্চ রক্তচাপ ও কার্ডিয়াক পরামর্শ।",
+    rating_avg: 4.9,
+    rating_count: 184,
+    follow_up_free_days: 7,
+    specialty_id: 4,
+    specialty_slug: "cardiology",
+    specialty_en: "Cardiology",
+    specialty_bn: "হৃদরোগ",
+    upazila_en: "Dhanmondi",
+    upazila_bn: "ধানমন্ডি",
+    district_en: "Dhaka",
+    district_bn: "ঢাকা",
+    division_en: "Dhaka",
+    division_bn: "ঢাকা",
+    practice_address: "National Institute of Cardiovascular Diseases (NICVD), Sher-e-Bangla Nagar, Dhaka",
+    distance_km: 1.2,
+    _phone: "01711990001",
+    phone: "01711990001",
+  },
+  {
+    user_id: "demo-doctor-1",
+    display_name: "Dr. Fatima Begum",
+    full_name: "Dr. Fatima Begum",
+    avatar_url: null,
+    bmdc_reg_no: "BMDC-A-88102",
+    degrees: "MBBS, DCH, FCPS (Pediatrics)",
+    experience_years: 15,
+    consult_fee: 0,
+    languages: ["bn", "en"],
+    bio: "শিশু বিশেষজ্ঞ, ঢাকা শিশু হাসপাতাল। নবজাতক ও শিশুদের রোগ প্রতিরোধ ও চিকিৎসায় অভিজ্ঞ।",
+    rating_avg: 4.9,
+    rating_count: 162,
+    follow_up_free_days: 7,
+    specialty_id: 2,
+    specialty_slug: "pediatrics",
+    specialty_en: "Paediatrics",
+    specialty_bn: "শিশু রোগ",
+    upazila_en: "Mirpur",
+    upazila_bn: "মিরপুর",
+    district_en: "Dhaka",
+    district_bn: "ঢাকা",
+    division_en: "Dhaka",
+    division_bn: "ঢাকা",
+    practice_address: "Dhaka Shishu Hospital, Sher-e-Bangla Nagar, Dhaka",
+    distance_km: 2.1,
+    _phone: "01711990002",
+    phone: "01711990002",
+  },
+  {
+    user_id: "demo-doctor-2",
+    display_name: "Dr. Anwar Hossain",
+    full_name: "Dr. Anwar Hossain",
+    avatar_url: null,
+    bmdc_reg_no: "BMDC-A-88103",
+    degrees: "MBBS, FCPS (Medicine), MACP",
+    experience_years: 20,
+    consult_fee: 0,
+    languages: ["bn", "en"],
+    bio: "মেডিসিন ও ডেঙ্গু বিশেষজ্ঞ, ঢাকা মেডিকেল কলেজ হাসপাতাল। ডেঙ্গু জ্বর ও সংক্রামক ব্যাধি ব্যবস্থাপনায় অভিজ্ঞ।",
+    rating_avg: 4.8,
+    rating_count: 215,
+    follow_up_free_days: 7,
+    specialty_id: 1,
+    specialty_slug: "medicine",
+    specialty_en: "Internal Medicine & Dengue",
+    specialty_bn: "মেডিসিন ও ডেঙ্গু",
+    upazila_en: "Dhanmondi",
+    upazila_bn: "ধানমন্ডি",
+    district_en: "Dhaka",
+    district_bn: "ঢাকা",
+    division_en: "Dhaka",
+    division_bn: "ঢাকা",
+    practice_address: "Dhaka Medical College Hospital (DMCH), Dhaka",
+    distance_km: 1.8,
+    _phone: "01711990003",
+    phone: "01711990003",
+  },
+  {
+    user_id: "demo-doctor-3",
+    display_name: "Dr. Taslima Akter",
+    full_name: "Dr. Taslima Akter",
+    avatar_url: null,
+    bmdc_reg_no: "BMDC-A-88104",
+    degrees: "MBBS, MS (Gynae & Obs), FCPS",
+    experience_years: 16,
+    consult_fee: 0,
+    languages: ["bn", "en"],
+    bio: "স্ত্রীরোগ ও প্রসূতি বিশেষজ্ঞ, মিটফোর্ড হাসপাতাল। নিরাপদ মাতৃত্ব ও জটিল প্রসব ব্যবস্থাপনায় অভিজ্ঞ।",
+    rating_avg: 4.9,
+    rating_count: 147,
+    follow_up_free_days: 7,
+    specialty_id: 3,
+    specialty_slug: "gynaecology",
+    specialty_en: "Gynaecology & Obstetrics",
+    specialty_bn: "স্ত্রীরোগ ও প্রসূতি",
+    upazila_en: "Keraniganj",
+    upazila_bn: "কেরানীগঞ্জ",
+    district_en: "Dhaka",
+    district_bn: "ঢাকা",
+    division_en: "Dhaka",
+    division_bn: "ঢাকা",
+    practice_address: "Sir Salimullah Medical College & Mitford Hospital, Dhaka",
+    distance_km: 2.8,
+    _phone: "01711990004",
+    phone: "01711990004",
+  },
+  {
+    user_id: "demo-doctor-4",
+    display_name: "Dr. Kamal Uddin",
+    full_name: "Dr. Kamal Uddin",
+    avatar_url: null,
+    bmdc_reg_no: "BMDC-A-88105",
+    degrees: "MBBS, FCPS (Hematology), MD",
+    experience_years: 22,
+    consult_fee: 0,
+    languages: ["bn", "en"],
+    bio: "রক্তরোগ বিশেষজ্ঞ, বিএসএমএমইউ। থ্যালাসেমিয়া ও জটিল রক্তরোগের চিকিৎসায় অভিজ্ঞ।",
+    rating_avg: 5.0,
+    rating_count: 198,
+    follow_up_free_days: 7,
+    specialty_id: 10,
+    specialty_slug: "hematology",
+    specialty_en: "Hematology & Blood Disorders",
+    specialty_bn: "হেমাটোলজি ও রক্তরোগ",
+    upazila_en: "Dhanmondi",
+    upazila_bn: "ধানমন্ডি",
+    district_en: "Dhaka",
+    district_bn: "ঢাকা",
+    division_en: "Dhaka",
+    division_bn: "ঢাকা",
+    practice_address: "Bangabandhu Sheikh Mujib Medical University (BSMMU), Shahbag, Dhaka",
+    distance_km: 0.9,
+    _phone: "01711990005",
+    phone: "01711990005",
+  },
+];
+
+export const DEMO_DOCTORS: readonly (DoctorCard & { _phone: string; phone?: string })[] = [
+  ...FEATURED_DOCTORS,
+  ...Array.from({ length: 37 }, (_, i) => makeDoctor(i + 5)),
+];
 
 /* -------------------------------------------------------------------------- */
 /* Articles                                                                    */
@@ -396,8 +549,60 @@ const ARTICLE_SEEDS = [
   },
 ] as const;
 
+const ARTICLE_DOC_DETAILS = [
+  {
+    name: "Dr. Anwar Hossain",
+    degrees: "MBBS, FCPS",
+    bmdc: "BMDC-A-88103",
+    specialty_en: "Internal Medicine & Dengue",
+    specialty_bn: "মেডিসিন ও ডেঙ্গু বিশেষজ্ঞ",
+    specialty_slug: "medicine",
+  },
+  {
+    name: "Dr. Kamal Uddin",
+    degrees: "MBBS, MD (Hematology)",
+    bmdc: "BMDC-A-88105",
+    specialty_en: "Hematology & Blood Disorders",
+    specialty_bn: "রক্তরোগ বিশেষজ্ঞ",
+    specialty_slug: "blood",
+  },
+  {
+    name: "Dr. Kamal Uddin",
+    degrees: "MBBS, MD (Hematology)",
+    bmdc: "BMDC-A-88105",
+    specialty_en: "Hematology & Blood Disorders",
+    specialty_bn: "রক্তরোগ বিশেষজ্ঞ",
+    specialty_slug: "blood",
+  },
+  {
+    name: "Dr. M. A. Rahman",
+    degrees: "MBBS, FCPS, MD",
+    bmdc: "BMDC-A-88101",
+    specialty_en: "Cardiology",
+    specialty_bn: "হৃদরোগ বিশেষজ্ঞ",
+    specialty_slug: "cardiology",
+  },
+  {
+    name: "Dr. Fatima Begum",
+    degrees: "MBBS, DCH, FCPS",
+    bmdc: "BMDC-A-88102",
+    specialty_en: "Paediatrics",
+    specialty_bn: "শিশু রোগ বিশেষজ্ঞ",
+    specialty_slug: "pediatrics",
+  },
+  {
+    name: "Dr. Taslima Akter",
+    degrees: "MBBS, FCPS, MS",
+    bmdc: "BMDC-A-88104",
+    specialty_en: "Gynaecology & Obstetrics",
+    specialty_bn: "স্ত্রী ও প্রসূতি রোগ বিশেষজ্ঞ",
+    specialty_slug: "gynaecology",
+  },
+];
+
 export const DEMO_ARTICLES: readonly ArticleFeedItem[] = ARTICLE_SEEDS.map((seed, i) => {
   const author = DEMO_DOCTORS[i % DEMO_DOCTORS.length]!;
+  const docMeta = ARTICLE_DOC_DETAILS[i % ARTICLE_DOC_DETAILS.length]!;
   const publishedAt = new Date(Date.now() - between(1, 45) * 86_400_000).toISOString();
   return {
     id: `demo-article-${i}`,
@@ -412,12 +617,14 @@ export const DEMO_ARTICLES: readonly ArticleFeedItem[] = ARTICLE_SEEDS.map((seed
     view_count: between(120, 9400),
     flagged_review: false,
     author_id: author.user_id,
-    author_name: author.full_name,
+    author_name: docMeta.name ?? author.full_name,
     author_avatar: null,
-    author_degrees: author.degrees,
-    specialty_en: author.specialty_en,
-    specialty_bn: author.specialty_bn,
-    specialty_slug: author.specialty_slug,
+    author_degrees: docMeta.degrees ?? author.degrees,
+    author_bmdc: docMeta.bmdc,
+    bmdc_reg_no: docMeta.bmdc,
+    specialty_en: docMeta.specialty_en ?? author.specialty_en,
+    specialty_bn: docMeta.specialty_bn ?? author.specialty_bn,
+    specialty_slug: docMeta.specialty_slug ?? author.specialty_slug,
     reaction_count: between(2, 380),
   };
 });
@@ -462,3 +669,66 @@ export function demoMaskedPhone(phone: string): string {
 
 export const DEMO_BADGE = groupBadge;
 export const DEMO_ACCEPTABLE = acceptableDonorsFor;
+
+/* -------------------------------------------------------------------------- */
+/* National Health Advisories & Updates                                       */
+/* -------------------------------------------------------------------------- */
+
+export const DEMO_UPDATES: readonly NationalHealthUpdate[] = [
+  {
+    id: "demo-upd-dengue",
+    title: "National Dengue Call-to-Action & Mosquito Prevention",
+    title_bn: "জাতীয় ডেঙ্গু সতর্কতা ও মশক নিধন সপ্তাহ",
+    body: "Environmental control and source reduction week across all 64 districts. Destroy Aedes breeding grounds in flower pots, roofs, and containers. Seek medical advice immediately if fever lasts over 48 hours or warning signs appear.",
+    body_bn: "দেশব্যাপী ৬৪ জেলায় এডিস মশা নিধন ও পরিচ্ছন্নতা অভিযান চলছে। ফুলের টব, ছাদ ও প্লাস্টিকের পাত্রে জমে থাকা পানি অবিলম্বে পরিষ্কার করুন। ২ দিনের বেশি তীব্র জ্বর বা বিপদচিহ্ন দেখা দিলে নিকটস্থ হাসপাতালে যান।",
+    kind: "alert",
+    source: "DGHS",
+    effective_from: new Date(Date.now() - 3_600_000).toISOString(),
+    expires_at: null,
+  },
+  {
+    id: "demo-upd-nipah",
+    title: "Nipah Virus Alert: Avoid Raw Date Palm Sap",
+    title_bn: "নিপাহ ভাইরাস সতর্কতা: কাঁচা খেজুরের রস পান করবেন না",
+    body: "Do not drink raw date palm sap (কাঁচা খেজুরের রস) or eat bird-bitten fruits. Nipah is a high-fatality zoonotic virus transmitted by fruit bats. Always boil palm juice thoroughly (70°C+) before consuming.",
+    body_bn: "কোনো অবস্থাতেই কাঁচা খেজুরের রস এবং বাদুড় বা পাখির খাওয়া আংশিক ফল খাবেন না। নিপাহ একটি প্রাণঘাতী ভাইরাস যা বাদুড়ের লালা ও মলমূত্র থেকে ছড়ায়। রস ফুটিয়ে বা গুড় তৈরি করে খেলে ঝুঁকি থাকে না।",
+    kind: "alert",
+    source: "IEDCR",
+    effective_from: new Date(Date.now() - 86_400_000).toISOString(),
+    expires_at: null,
+  },
+  {
+    id: "demo-upd-epi",
+    title: "EPI Routine Child Immunization Drive Nationwide",
+    title_bn: "ইপিআই নিয়মিত টিকাদান কর্মসূচি ও সুরক্ষা সপ্তাহ",
+    body: "Routine immunisation sessions for infants and mothers continue at all Upazila Health Complexes, Union Sub-Centres, and Ward EPI clinics. Ensure on-schedule vaccinations against measles, polio, and hepatitis B.",
+    body_bn: "সব উপজেলা স্বাস্থ্য কমপ্লেক্স, ইউনিয়ন উপস্বাস্থ্য কেন্দ্র ও ওয়ার্ড টিকাদান কেন্দ্রে শিশুদের ১০টি মারাত্মক রোগের প্রতিরোধে নিয়মিত টিকাদান সেশন চালু আছে। নির্ধারিত সময়ে আপনার শিশুকে বিনামূল্যে টিকা দিন।",
+    kind: "notice",
+    source: "EPI / DGHS",
+    effective_from: new Date(Date.now() - 2 * 86_400_000).toISOString(),
+    expires_at: null,
+  },
+  {
+    id: "demo-upd-heatwave",
+    title: "Severe Heatwave & Heatstroke Warning for Outdoor Workers",
+    title_bn: "তীব্র তাপপ্রবাহ ও হিটস্ট্রোক সতর্কতা — জরুরি স্বাস্থ্য পরামর্শ",
+    body: "Extreme heatwave warning in effect. Outdoor workers and elderly citizens must avoid midday sun (11am-3pm), drink safe water and oral rehydration solution (ORS) hourly, and rest in shaded areas.",
+    body_bn: "তীব্র তাপপ্রবাহের কারণে পানিশূন্যতা ও হিটস্ট্রোকের ঝুঁকি বৃদ্ধি পেয়েছে। দুপুর ১১টা থেকে বিকেল ৩টা পর্যন্ত তীব্র রোদ এড়িয়ে চলুন, প্রতি ঘণ্টায় বিশুদ্ধ পানি বা খাবার স্যালাইন পান করুন এবং ছায়াযুক্ত স্থানে বিশ্রাম নিন।",
+    kind: "alert",
+    source: "BMD & DGHS",
+    effective_from: new Date(Date.now() - 3 * 86_400_000).toISOString(),
+    expires_at: null,
+  },
+  {
+    id: "demo-upd-water",
+    title: "Safe Drinking Water & Waterborne Disease Prevention Campaign",
+    title_bn: "নিরাপদ খাবার পানি ও ডায়রিয়া-কলেরা প্রতিরোধ প্রচারণা",
+    body: "Boil drinking water for at least 30 minutes or treat with chlorine purification tablets. Wash hands with soap before meals and after sanitation to prevent cholera, typhoid, and acute watery diarrhea.",
+    body_bn: "পানিবাহিত রোগ, ডায়রিয়া ও কলেরা প্রতিরোধে খাওয়ার পানি অন্তত ৩০ মিনিট ফুটিয়ে অথবা ক্লোরিন ট্যাবলেট দিয়ে বিশুদ্ধ করে পান করুন। খাবার তৈরির পূর্বে এবং শৌচাগার ব্যবহারের পর সাবান দিয়ে হাত ধোয়ার অভ্যাস করুন।",
+    kind: "campaign",
+    source: "icddr,b & DGHS",
+    effective_from: new Date(Date.now() - 4 * 86_400_000).toISOString(),
+    expires_at: null,
+  },
+];
+

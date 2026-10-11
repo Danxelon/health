@@ -13,12 +13,14 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   Droplet,
+  FileText,
   Home,
   LogOut,
   Menu,
   Newspaper,
   Phone,
   Settings,
+  Shield,
   ShieldCheck,
   Sparkles,
   Stethoscope,
@@ -173,7 +175,7 @@ function LoginPromptModal() {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { t, lang } = useAppShell();
-  const { isLoggedIn, logout, requireAuth } = useAuth();
+  const { isLoggedIn, user, logout, requireAuth } = useAuth();
   const { pathname } = useLocation();
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -201,11 +203,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const isItemActive = (to: string) => {
+    if (to === "/") return pathname === "/";
+    if (to === "/articles") {
+      return (
+        pathname === "/articles" ||
+        (pathname.startsWith("/articles/") && !pathname.startsWith("/articles/new"))
+      );
+    }
+    return pathname.startsWith(to);
+  };
+
   // Primary navigation links shown when unscrolled at top (scrollY <= 140)
   // Settings strictly hidden until logged in!
   const primaryNavItems: NavItem[] = [
     { to: "/", key: "nav.home", icon: Home },
     { to: "/articles", key: "nav.articles", icon: Newspaper },
+    ...(user?.role === "admin"
+      ? [{ to: "/admin", key: "nav.admin", icon: Shield, requiresAuth: true }]
+      : []),
+    ...(user?.role === "doctor"
+      ? [{ to: "/articles/new", key: "nav.doctorPortal", icon: FileText, requiresAuth: true }]
+      : []),
     ...(isLoggedIn
       ? [{ to: "/settings", key: "nav.settings", icon: Settings, requiresAuth: true }]
       : []),
@@ -218,6 +237,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { to: "/donors", key: "nav.donors", icon: Droplet, requiresAuth: true },
     { to: "/doctors", key: "nav.consultations", icon: Stethoscope, requiresAuth: true },
     { to: "/articles", key: "nav.articles", icon: Newspaper },
+    ...(user?.role === "admin"
+      ? [{ to: "/admin", key: "nav.admin", icon: Shield, requiresAuth: true }]
+      : []),
+    ...(user?.role === "doctor"
+      ? [{ to: "/articles/new", key: "nav.doctorPortal", icon: FileText, requiresAuth: true }]
+      : []),
     ...(isLoggedIn
       ? [{ to: "/settings", key: "nav.settings", icon: Settings, requiresAuth: true }]
       : []),
@@ -265,7 +290,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <ul className="flex items-center gap-1">
                       {primaryNavItems.map((item) => {
                         const Icon = item.icon;
-                        const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+                        const active = isItemActive(item.to);
                         return (
                           <li key={item.to}>
                             <NavLink
@@ -340,6 +365,32 @@ export function Layout({ children }: { children: React.ReactNode }) {
               {/* Auth Controls */}
               {isLoggedIn ? (
                 <div className="hidden sm:flex items-center gap-1.5">
+                  {user?.role === "admin" && (
+                    <Link
+                      to="/admin"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 px-3 py-1.5 text-xs font-bold hover:bg-amber-500/20 transition-colors shadow-2xs whitespace-nowrap"
+                      title={lang === "bn" ? "অ্যাডমিন প্যানেল" : "Admin Panel"}
+                    >
+                      <Shield className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                      <span className="hidden md:inline">{lang === "bn" ? "অ্যাডমিন প্যানেল" : "Admin Panel"}</span>
+                      <span className="md:hidden">{lang === "bn" ? "অ্যাডমিন" : "Admin"}</span>
+                    </Link>
+                  )}
+                  {user?.role === "doctor" && (
+                    <Link
+                      to="/articles/new"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 px-3 py-1.5 text-xs font-bold hover:bg-emerald-500/20 transition-colors shadow-2xs whitespace-nowrap"
+                      title={user?.name || (lang === "bn" ? "ডাক্তার পোর্টাল" : "Dr. Portal")}
+                    >
+                      <Stethoscope className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                      <span className="hidden lg:inline truncate max-w-[130px]">
+                        {user?.name ? (user.name.split("(")[0]?.trim() || user.name) : (lang === "bn" ? "ডাক্তার পোর্টাল" : "Dr. Portal")}
+                      </span>
+                      <span className="lg:hidden">
+                        {lang === "bn" ? "ডাঃ পোর্টাল" : "Dr. Portal"}
+                      </span>
+                    </Link>
+                  )}
                   <Link
                     to="/settings"
                     className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-bold text-ink hover:bg-elevated transition-colors"
@@ -393,7 +444,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <ul className="flex flex-col gap-1.5">
               {mobileNavItems.map((item) => {
                 const Icon = item.icon;
-                const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+                const active = isItemActive(item.to);
                 return (
                   <li key={item.to}>
                     <NavLink
@@ -418,17 +469,37 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
             <div className="mt-4 pt-3 border-t border-line flex flex-col gap-2">
               {isLoggedIn ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    logout();
-                    setMobileOpen(false);
-                  }}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-line bg-surface py-2.5 text-sm font-bold text-blood hover:bg-blood-soft transition-colors cursor-pointer"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>{lang === "bn" ? "লগ আউট" : "Log out"}</span>
-                </button>
+                <>
+                  <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-elevated/60 text-xs">
+                    <div className="flex items-center gap-2 truncate">
+                      <User className="h-4 w-4 text-brand shrink-0" />
+                      <span className="font-bold text-ink truncate">
+                        {user?.name ? (user.name.split("(")[0]?.trim() || user.name) : (user?.phone || (lang === "bn" ? "ব্যবহারকারী" : "User"))}
+                      </span>
+                    </div>
+                    {user?.role === "admin" && (
+                      <span className="shrink-0 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 font-bold text-[10px]">
+                        {lang === "bn" ? "অ্যাডমিন" : "Admin"}
+                      </span>
+                    )}
+                    {user?.role === "doctor" && (
+                      <span className="shrink-0 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold text-[10px]">
+                        {lang === "bn" ? "ডাক্তার" : "Doctor"}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      setMobileOpen(false);
+                    }}
+                    className="flex items-center justify-center gap-2 rounded-xl border border-line bg-surface py-2.5 text-sm font-bold text-blood hover:bg-blood-soft transition-colors cursor-pointer"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>{lang === "bn" ? "লগ আউট" : "Log out"}</span>
+                  </button>
+                </>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
                   <Link

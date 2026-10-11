@@ -37,6 +37,8 @@ export const STRINGS = {
     articles: { bn: "স্বাস্থ্য", en: "Health" },
     complain: { bn: "অভিযোগ", en: "Complain" },
     settings: { bn: "সেটিংস", en: "Settings" },
+    admin: { bn: "অ্যাডমিন প্যানেল", en: "Admin Panel" },
+    doctorPortal: { bn: "ডাক্তার পোর্টাল", en: "Doctor Portal" },
     register: { bn: "নিবন্ধন", en: "Register" },
     menu: { bn: "মেনু", en: "Menu" },
     close: { bn: "বন্ধ করুন", en: "Close" },

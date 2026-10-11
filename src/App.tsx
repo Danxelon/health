@@ -24,6 +24,8 @@ const ConsultationsPage = lazy(() => import("@/pages/Consultations.tsx"));
 const ConsultationsDetailPage = lazy(() => import("@/pages/ConsultationsDetail.tsx"));
 const ArticlesPage = lazy(() => import("@/pages/Articles.tsx"));
 const ArticleDetailPage = lazy(() => import("@/pages/ArticleDetail.tsx"));
+const ArticleNewPage = lazy(() => import("@/pages/ArticleNew.tsx"));
+const AdminPage = lazy(() => import("@/pages/Admin.tsx"));
 const SettingsPage = lazy(() => import("@/pages/Settings.tsx"));
 const ComplainPage = lazy(() => import("@/pages/Complain.tsx"));
 const ComplaintsMinePage = lazy(() => import("@/pages/ComplaintsMine.tsx"));
@@ -71,7 +73,9 @@ export default function App() {
               <Route path="/consultations" element={<ConsultationsPage />} />
               <Route path="/consultations/:id" element={<ConsultationsDetailPage />} />
               <Route path="/articles" element={<ArticlesPage />} />
+              <Route path="/articles/new" element={<ArticleNewPage />} />
               <Route path="/articles/:slug" element={<ArticleDetailPage />} />
+              <Route path="/admin" element={<AdminPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/complain" element={<ComplainPage />} />
               <Route path="/complaints/mine" element={<ComplaintsMinePage />} />

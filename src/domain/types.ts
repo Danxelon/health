@@ -333,6 +333,7 @@ export interface DoctorCard {
   division_bn: string | null;
   practice_address: string | null;
   distance_km: number | null;
+  phone?: string | null;
 }
 
 export interface Consultation {
@@ -373,6 +374,8 @@ export interface ArticleFeedItem {
   author_name: string | null;
   author_avatar: string | null;
   author_degrees: string | null;
+  author_bmdc?: string | null;
+  bmdc_reg_no?: string | null;
   specialty_en: string | null;
   specialty_bn: string | null;
   specialty_slug: string | null;

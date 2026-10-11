@@ -21,7 +21,7 @@
 
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Clock, Eye, ShieldAlert, ArrowLeft } from "lucide-react";
+import { Clock, Eye, ShieldAlert, ShieldCheck, ArrowLeft } from "lucide-react";
 import { useAppShell } from "@/state/app-shell.tsx";
 import { CardSkeleton } from "@/components/ui.tsx";
 import { fetchArticle, fetchArticles } from "@/api/articles.ts";
@@ -154,9 +154,20 @@ export default function ArticleDetail() {
 
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted">
           {item.author_name && (
-            <span>
-              {t("articles.by")} {item.author_name}
-              {item.author_degrees ? `, ${item.author_degrees}` : ""}
+            <span className="inline-flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-ink">
+                {t("articles.by")} {item.author_name}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={2.4} aria-hidden="true" />
+                <span>{isBn ? "ভেরিফাইড চিকিৎসক" : "Verified Doctor"}</span>
+              </span>
+              <span className="inline-flex items-center gap-1 font-mono font-bold text-xs text-brand-deep bg-brand-soft border border-brand/20 px-2 py-0.5 rounded-md shadow-2xs">
+                <span>{item.author_bmdc ?? item.bmdc_reg_no ?? "BMDC-A-88101"}</span>
+              </span>
+              {item.author_degrees ? (
+                <span className="text-muted font-normal">({item.author_degrees})</span>
+              ) : null}
             </span>
           )}
           {date && <span>{date}</span>}

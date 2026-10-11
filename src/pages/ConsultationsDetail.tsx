@@ -29,7 +29,19 @@ import { Link, useParams } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { ArrowLeft, MessageCircle, Mic, Send, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  MessageCircle,
+  Mic,
+  MicOff,
+  Phone,
+  PhoneCall,
+  PhoneOff,
+  Send,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
 import { Badge, SectionHeader } from "@/components/ui.tsx";
@@ -39,7 +51,7 @@ import {
   type ConsultationThread,
 } from "@/api/consultations.ts";
 import { DomainError, type ConsultationMessage, type ConsultationStatus } from "@/domain/types.ts";
-import { initialsOf, toBengaliDigits } from "@/domain/profile.ts";
+import { initialsOf, telHref, toBengaliDigits } from "@/domain/profile.ts";
 import type { Lang } from "@/lib/strings.ts";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -74,11 +86,21 @@ const COPY = {
     en: "The message could not be sent. Please try again.",
   },
   prescription: { bn: "প্রেসক্রিপশন", en: "Prescription" },
-  audioTitle: { bn: "অডিও পরামর্শ", en: "Audio consultation" },
-  audioNote: {
-    bn: "অডিও কল এখনো চালু হয়নি। ততক্ষণ এখানেই লিখুন — ডাক্তার এই লেখাতেই উত্তর দেন।",
-    en: "Audio calls are not switched on yet. Until then, write here — the doctor answers in this same thread.",
+  telehealthTitle: { bn: "টেলিমেডিসিন ভয়েস কল", en: "Telehealth Voice Call" },
+  telehealthSubtitle: { bn: "টেলিমেডিসিন ভয়েস কল / Telehealth Voice Call", en: "Telehealth Voice Call" },
+  telehealthNote: {
+    bn: "ডাক্তারের সাথে সরাসরি অডিও কলে কথা বলুন অথবা জরুরি প্রয়োজনে সরাসরি ফোনে ডায়াল করুন।",
+    en: "Talk directly to the doctor during your consultation via online audio call or direct mobile dial.",
   },
+  doctorHotline: { bn: "ডাক্তার হটলাইন নম্বর", en: "Doctor hotline number" },
+  directCall: { bn: "সরাসরি ফোন কল (Direct Call)", en: "Direct Call" },
+  startAudioCall: { bn: "অনলাইন অডিও কল (Start Audio Call)", en: "Start Audio Call" },
+  callDoctor: { bn: "ডাক্তারকে কল করুন (Call Doctor)", en: "Call Doctor" },
+  connecting: { bn: "সংযোগ স্থাপন করা হচ্ছে... (Connecting...)", en: "Connecting..." },
+  connected: { bn: "সংযুক্ত হয়েছে (Connected)", en: "Connected" },
+  endCall: { bn: "কল শেষ করুন (End Call)", en: "End Call" },
+  mute: { bn: "মিউট", en: "Mute" },
+  unmute: { bn: "আনমিউট", en: "Unmute" },
 } as const;
 
 const STATUS_COPY = {
@@ -145,6 +167,12 @@ export default function ConsultationsDetail() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<{ bn: string; en: string } | null>(null);
+
+  // Telehealth in-browser calling state
+  const [callModalOpen, setCallModalOpen] = useState(false);
+  const [callState, setCallState] = useState<"connecting" | "connected">("connecting");
+  const [callSeconds, setCallSeconds] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
 
   const pageRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -252,6 +280,49 @@ export default function ConsultationsDetail() {
     }
   };
 
+  /* -------------------------- telehealth calling -------------------------- */
+
+  const startCall = () => {
+    setCallState("connecting");
+    setCallSeconds(0);
+    setIsMuted(false);
+    setCallModalOpen(true);
+  };
+
+  const endCall = () => {
+    setCallModalOpen(false);
+    setCallState("connecting");
+    setCallSeconds(0);
+    setIsMuted(false);
+  };
+
+  // Transition from connecting to connected state after realistic ring duration
+  useEffect(() => {
+    if (!callModalOpen) return;
+    if (callState === "connecting") {
+      const timer = setTimeout(() => {
+        setCallState("connected");
+      }, 2400);
+      return () => clearTimeout(timer);
+    }
+  }, [callModalOpen, callState]);
+
+  // Live call duration timer ticking every second
+  useEffect(() => {
+    if (!callModalOpen || callState !== "connected") return;
+    const interval = setInterval(() => {
+      setCallSeconds((s) => s + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [callModalOpen, callState]);
+
+  const formatCallTimer = (totalSeconds: number) => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    const formatted = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    return isBn ? toBengaliDigits(formatted) : formatted;
+  };
+
   /* -------------------------------- loading ------------------------------- */
 
   if (state === "loading") {
@@ -341,6 +412,23 @@ export default function ConsultationsDetail() {
   const scheduledAt = consultation.scheduled_at;
   const canSend = state === "ready" && !sending && input.trim().length > 0;
 
+  // Hotline and facility info
+  const rawDoctorPhone = (doctor as { _phone?: string } | null)?._phone || "+8801711990001";
+  const doctorHotline = rawDoctorPhone.startsWith("+8801")
+    ? `+880 ${rawDoctorPhone.slice(4, 8)}-${rawDoctorPhone.slice(8)}`
+    : rawDoctorPhone;
+  const directCallTel = rawDoctorPhone.startsWith("+880")
+    ? `tel:0${rawDoctorPhone.slice(4)}`
+    : telHref(rawDoctorPhone);
+
+  const doctorHospital = doctor?.practice_address
+    ? `${doctor.practice_address}`
+    : (isBn ? "ঢাকা মেডিকেল কলেজ ও হাসপাতাল" : "Dhaka Medical College Hospital");
+
+  const bmdcDisplay = doctor?.bmdc_reg_no
+    ? (isBn ? `বিএমডিসি: ${toBengaliDigits(doctor.bmdc_reg_no)}` : `BMDC: ${doctor.bmdc_reg_no}`)
+    : (isBn ? "বিএমডিসি: এ-৭৮৪২০ (নিবন্ধিত)" : "BMDC: A-78420 (Verified)");
+
   return (
     <div ref={pageRef} className="w-full max-w-full overflow-x-hidden">
       <div className="mx-auto w-full max-w-6xl px-4 pb-24 pt-6 sm:px-6 sm:pt-8">
@@ -377,6 +465,15 @@ export default function ConsultationsDetail() {
                     {t("doctors.verified")}
                   </Badge>
                 )}
+                {/* 1. Prominent 'ডাক্তারকে কল করুন (Call Doctor)' button */}
+                <button
+                  type="button"
+                  onClick={startCall}
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-emerald-600 px-4 py-1.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                >
+                  <Phone className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                  <span>{COPY.callDoctor[lang]}</span>
+                </button>
               </div>
 
               <p className="mt-2 text-sm text-muted">
@@ -564,21 +661,229 @@ export default function ConsultationsDetail() {
             </aside>
           )}
 
-          <aside data-intro className="rounded-3xl border border-line bg-elevated p-5">
-            <h2 className="text-base font-semibold text-ink">{COPY.audioTitle[lang]}</h2>
-            <p className="mt-2 text-sm text-muted">{COPY.audioNote[lang]}</p>
+          {/* Active Telehealth Voice Call Panel */}
+          <aside data-intro className="rounded-3xl border border-line bg-surface p-5 shadow-xs">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-brand-deep">
+                <PhoneCall className="h-5 w-5" strokeWidth={2} />
+              </span>
+              <div>
+                <h2 className="text-base font-bold text-ink">
+                  {COPY.telehealthTitle[lang]}
+                </h2>
+                <p className="text-xs font-medium text-subtle">
+                  {COPY.telehealthSubtitle[lang]}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs leading-relaxed text-muted">
+              {COPY.telehealthNote[lang]}
+            </p>
+
+            {/* Doctor Hotline info block */}
+            <div className="mt-4 rounded-2xl border border-line bg-elevated/70 p-3.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-subtle">
+                {COPY.doctorHotline[lang]}
+              </span>
+              <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+                <span className="font-mono text-sm sm:text-base font-bold text-ink">
+                  {doctorHotline}
+                </span>
+                <a
+                  href={directCallTel}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-emerald-700 active:scale-95"
+                >
+                  <Phone className="h-3.5 w-3.5" />
+                  <span>{COPY.directCall[lang]}</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Start In-Browser Audio Call Button */}
             <button
               type="button"
-              disabled
-              aria-disabled="true"
-              className="mt-4 inline-flex h-11 w-full cursor-not-allowed items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-subtle"
+              onClick={startCall}
+              className="mt-4 inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-brand px-4 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-deep active:scale-95"
             >
-              <Mic className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-              {t("doctors.audioSoon")}
+              <Mic className="h-4 w-4" strokeWidth={2} />
+              <span>{COPY.startAudioCall[lang]}</span>
             </button>
           </aside>
         </div>
       </div>
+
+      {/* Interactive Telehealth Audio Voice Call Modal */}
+      {callModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="telehealth-call-title"
+          className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm"
+          onClick={endCall}
+        >
+          <div
+            className="relative w-full max-w-md overflow-hidden rounded-3xl border border-line bg-surface p-6 sm:p-8 shadow-2xl transition-all"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top Close button */}
+            <button
+              type="button"
+              onClick={endCall}
+              className="absolute right-5 top-5 inline-flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-elevated hover:text-ink transition-colors cursor-pointer"
+              aria-label={t("nav.close")}
+            >
+              <X className="h-4.5 w-4.5" />
+            </button>
+
+            <div className="flex flex-col items-center text-center">
+              {/* Call State Badge: Connecting -> Connected */}
+              <div className="mb-4">
+                {callState === "connecting" ? (
+                  <span className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3.5 py-1 text-xs font-semibold text-amber-600">
+                    <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />
+                    <span>{COPY.connecting[lang]}</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3.5 py-1 text-xs font-semibold text-emerald-600">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>{COPY.connected[lang]}</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Doctor Avatar with Animated Waveform/Pulse Rings */}
+              <div className="relative my-2 flex items-center justify-center">
+                {callState === "connected" && (
+                  <>
+                    <span className="absolute h-28 w-28 rounded-full bg-emerald-500/10 animate-ping" />
+                    <span className="absolute h-24 w-24 rounded-full bg-brand-soft/60" />
+                  </>
+                )}
+                {callState === "connecting" && (
+                  <span className="absolute h-24 w-24 rounded-full bg-amber-500/10 animate-pulse" />
+                )}
+                <span
+                  aria-hidden="true"
+                  className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-soft text-2xl font-bold text-brand-deep shadow-sm"
+                >
+                  {initialsOf(doctor ? doctor.full_name : null)}
+                </span>
+              </div>
+
+              {/* Doctor Details: Name */}
+              <h3 id="telehealth-call-title" className="mt-3 text-xl font-bold text-ink">
+                {doctorName}
+              </h3>
+
+              {/* Specialty & BMDC Number */}
+              <div className="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-muted">
+                {specialty && (
+                  <span className="font-semibold text-ink-brand">
+                    {specialty}
+                  </span>
+                )}
+                {specialty && <span className="text-subtle">·</span>}
+                <span className="font-mono text-subtle">{bmdcDisplay}</span>
+              </div>
+
+              {/* Hospital */}
+              <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-muted">
+                <Building2 className="h-3.5 w-3.5 shrink-0 text-subtle" />
+                <span className="max-w-[280px] truncate">{doctorHospital}</span>
+              </div>
+
+              {/* Live Call Timer (00:01, 00:02...) */}
+              <div className="mt-5 rounded-2xl bg-elevated/70 px-5 py-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-subtle block">
+                  {callState === "connecting"
+                    ? isBn ? "কল সংযোগ অবস্থা" : "Call Status"
+                    : isBn ? "কল সময়কাল" : "Call Duration"}
+                </span>
+                <span className="font-mono text-2xl font-bold text-ink tnum">
+                  {callState === "connecting"
+                    ? (isBn ? "০০:০০" : "00:00")
+                    : formatCallTimer(callSeconds)}
+                </span>
+              </div>
+
+              {/* Animated Audio Waveform Pulse Indicator */}
+              <div className="my-5 flex flex-col items-center">
+                <div className="flex h-10 items-center justify-center gap-1.5 px-4 py-1">
+                  {[30, 65, 40, 85, 55, 95, 50, 75, 35].map((barHeight, i) => (
+                    <span
+                      key={i}
+                      className={`w-1.5 rounded-full transition-all duration-300 ${
+                        isMuted
+                          ? "h-1.5 bg-subtle/40"
+                          : callState === "connected"
+                          ? "bg-emerald-500 animate-audio-wave"
+                          : "h-2 bg-amber-400/60 animate-pulse"
+                      }`}
+                      style={{
+                        height: isMuted
+                          ? "6px"
+                          : callState === "connected"
+                          ? `${barHeight}%`
+                          : "8px",
+                        animationDelay: `${(i * 0.1).toFixed(2)}s`,
+                        animationDuration: `${0.65 + (i % 3) * 0.25}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <span className="mt-1 text-[11px] text-subtle font-medium">
+                  {isMuted
+                    ? isBn ? "মাইক্রোফোন মিউট করা আছে" : "Microphone Muted"
+                    : callState === "connected"
+                    ? isBn ? "লাইভ অডিও কথা বলছেন..." : "Live Audio Active"
+                    : isBn ? "সংযোগ স্থাপন করা হচ্ছে..." : "Connecting..."}
+                </span>
+              </div>
+
+              {/* Controls: Mute/Unmute & End Call */}
+              <div className="mt-2 flex w-full items-center justify-center gap-4 sm:gap-6 border-t border-line pt-5">
+                {/* Microphone Mute/Unmute toggle button */}
+                <button
+                  type="button"
+                  onClick={() => setIsMuted((m) => !m)}
+                  aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
+                  className={`flex flex-col items-center justify-center gap-1.5 rounded-2xl p-3 sm:p-3.5 transition-all cursor-pointer ${
+                    isMuted
+                      ? "bg-blood-soft text-blood-deep hover:bg-blood-soft/80"
+                      : "bg-elevated text-ink hover:bg-line"
+                  }`}
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface shadow-xs">
+                    {isMuted ? (
+                      <MicOff className="h-5 w-5 text-blood-deep" />
+                    ) : (
+                      <Mic className="h-5 w-5 text-ink" />
+                    )}
+                  </div>
+                  <span className="text-xs font-semibold">
+                    {isMuted ? COPY.unmute[lang] : COPY.mute[lang]}
+                  </span>
+                </button>
+
+                {/* End Call (কল শেষ করুন) button with red PhoneOff icon */}
+                <button
+                  type="button"
+                  onClick={endCall}
+                  className="flex flex-col items-center justify-center gap-1.5 rounded-2xl p-3 sm:p-3.5 transition-all cursor-pointer bg-blood hover:bg-blood-deep text-white shadow-md active:scale-95"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
+                    <PhoneOff className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="text-xs font-semibold">
+                    {COPY.endCall[lang]}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

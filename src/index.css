@@ -225,3 +225,17 @@ p {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Audio wave equalizer bars for telehealth calls */
+@keyframes audio-wave {
+  0%, 100% {
+    transform: scaleY(0.25);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.animate-audio-wave {
+  animation: audio-wave 0.8s ease-in-out infinite alternate;
+  transform-origin: center;
+}
