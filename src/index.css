@@ -51,7 +51,8 @@
   /* --- Motion ------------------------------------------------------------ */
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
-  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-drawer: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-drawer-snappy: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* --- Geometry ---------------------------------------------------------- */
   --radius-control: 10px;
@@ -59,29 +60,42 @@
   --radius-panel: 24px;
 }
 
-/* Explicit dark theme only if activated by the user in settings */
+/* Base root color scheme */
+:root {
+  color-scheme: light;
+}
+
+/* Explicit dark theme activated by the user in settings or system */
 :root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Brand crimson / rose with enhanced dark-mode luminosity */
   --color-brand: #f43f5e;
-  --color-brand-deep: #e11d48;
+  --color-brand-deep: #fb7185;
   --color-brand-soft: #4c0519;
 
+  /* Medical Teal */
   --color-ink-brand: #2dd4bf;
   --color-ink-brand-soft: #134e4a;
 
+  /* Blood crimson */
   --color-blood: #f87171;
   --color-blood-deep: #ef4444;
   --color-blood-soft: #450a0a;
 
-  --color-bg: #0f172a;
-  --color-surface: #1e293b;
-  --color-elevated: #334155;
-  --color-line: #334155;
-  --color-line-strong: #475569;
+  /* Refined, high-contrast dark surfaces */
+  --color-bg: #090e1a;
+  --color-surface: #131c2e;
+  --color-elevated: #1e293f;
+  --color-line: #26354d;
+  --color-line-strong: #3b4e6d;
 
+  /* Text ink with AAA contrast */
   --color-ink: #f8fafc;
   --color-muted: #cbd5e1;
   --color-subtle: #94a3b8;
 
+  /* Semantic status indicators */
   --color-warning: #fbbf24;
   --color-warning-soft: #451a03;
   --color-success: #4ade80;
@@ -163,6 +177,25 @@ p {
   border-radius: 4px;
 }
 
+/* Ensure native input controls and selections conform to dark theme */
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea {
+  color-scheme: dark;
+}
+
+:root[data-theme="dark"] ::selection {
+  background: color-mix(in oklab, var(--color-brand) 45%, transparent);
+  color: #ffffff;
+}
+
+/* Elevated panels, cards, and dialogs in dark theme get crisp edge contrast */
+:root[data-theme="dark"] [data-settings-panel],
+:root[data-theme="dark"] .card-elevated {
+  border-color: var(--color-line);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
+}
+
 /* =============================================================================
    UTILITIES
    ========================================================================== */
@@ -239,3 +272,292 @@ p {
   animation: audio-wave 0.8s ease-in-out infinite alternate;
   transform-origin: center;
 }
+
+/* =============================================================================
+   ANIMATIONS & TRANSITIONS
+   ========================================================================== */
+
+/* -----------------------------------------------------------------------------
+   1. Language Slider Switch & Sliding Pill Thumb Transitions
+   Fluid, hardware-accelerated pill transitions for language toggles & segmented rails
+   -------------------------------------------------------------------------- */
+
+/* Slider track container */
+.lang-slider,
+.slider-pill-track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--color-elevated);
+  border: 1px solid var(--color-line);
+  border-radius: 9999px;
+  padding: 3px;
+  user-select: none;
+  isolation: isolate;
+  transition: border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
+}
+
+.lang-slider:hover,
+.slider-pill-track:hover {
+  border-color: var(--color-line-strong);
+}
+
+/* Sliding pill thumb - hardware accelerated with fluid easing */
+.lang-slider-thumb,
+.slider-pill-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  border-radius: 9999px;
+  background-color: var(--color-surface);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1), width 250ms ease, background-color 200ms ease, box-shadow 200ms ease;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Brand-colored sliding thumb */
+.lang-slider-thumb-brand,
+.slider-pill-thumb-brand {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  border-radius: 9999px;
+  background-color: var(--color-brand);
+  color: #ffffff;
+  box-shadow: 0 2px 6px -1px color-mix(in srgb, var(--color-brand) 40%, transparent);
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1), width 250ms ease, background-color 200ms ease;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+:root[data-theme="dark"] .lang-slider-thumb,
+:root[data-theme="dark"] .slider-pill-thumb {
+  background-color: var(--color-surface);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+:root[data-theme="dark"] .lang-slider-thumb-brand,
+:root[data-theme="dark"] .slider-pill-thumb-brand {
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-brand) 50%, transparent);
+}
+
+/* Automatic two-state position mapping based on data-lang attribute */
+.lang-slider[data-lang="bn"] .lang-slider-thumb,
+.lang-slider[data-lang="bn"] .lang-slider-thumb-brand,
+.lang-slider.is-bn .lang-slider-thumb,
+.lang-slider.is-bn .lang-slider-thumb-brand {
+  transform: translate3d(0, 0, 0);
+}
+
+.lang-slider[data-lang="en"] .lang-slider-thumb,
+.lang-slider[data-lang="en"] .lang-slider-thumb-brand,
+.lang-slider.is-en .lang-slider-thumb,
+.lang-slider.is-en .lang-slider-thumb-brand {
+  transform: translate3d(100%, 0, 0);
+}
+
+/* Language slider labels */
+.lang-slider-item {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-muted);
+  transition: color 200ms ease;
+  user-select: none;
+}
+
+.lang-slider-item:hover {
+  color: var(--color-ink);
+}
+
+.lang-slider-item.is-active,
+.lang-slider[data-lang="bn"] .lang-item-bn,
+.lang-slider[data-lang="en"] .lang-item-en {
+  color: var(--color-ink);
+  font-weight: 800;
+}
+
+.lang-slider-brand .lang-slider-item.is-active,
+.lang-slider-brand[data-lang="bn"] .lang-item-bn,
+.lang-slider-brand[data-lang="en"] .lang-item-en {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+/* Hardware accelerated transition utility for radio sliding pill indicators */
+[role="radiogroup"] [aria-hidden="true"].transition-transform {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* -----------------------------------------------------------------------------
+   2. Drawer Slide-in from Right (Snappy & Hardware-Accelerated)
+   -------------------------------------------------------------------------- */
+
+@keyframes drawer-slide-in-right {
+  from {
+    transform: translate3d(100%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes drawer-slide-out-right {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+@keyframes drawer-backdrop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes drawer-backdrop-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Backwards-compatible keyframes */
+@keyframes slide-in-right {
+  from {
+    transform: translate3d(100%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Hardware-accelerated drawer classes with snappy exponential curve */
+.drawer-right,
+.animate-drawer-in,
+.animate-slide-in-right,
+.slide-in-from-right {
+  animation: drawer-slide-in-right 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  transform-origin: right center;
+  box-shadow: -10px 0 35px -5px rgba(0, 0, 0, 0.2), -3px 0 10px -2px rgba(0, 0, 0, 0.1);
+}
+
+.animate-drawer-out,
+.slide-out-to-right {
+  animation: drawer-slide-out-right 240ms cubic-bezier(0.7, 0, 0.84, 0) both;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.drawer-overlay,
+.animate-fade-in,
+.animate-in.fade-in {
+  animation: drawer-backdrop-fade-in 220ms ease-out both;
+  will-change: opacity;
+}
+
+:root[data-theme="dark"] .drawer-right,
+:root[data-theme="dark"] .animate-drawer-in,
+:root[data-theme="dark"] .animate-slide-in-right,
+:root[data-theme="dark"] .slide-in-from-right {
+  box-shadow: -14px 0 45px -5px rgba(0, 0, 0, 0.75), -4px 0 16px -2px rgba(0, 0, 0, 0.55);
+  border-left-color: var(--color-line);
+}
+
+/* -----------------------------------------------------------------------------
+   3. Reduced-Motion Preferences
+   Ensures complete respect for prefers-reduced-motion across all animation primitives
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  .reveal-init {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .drawer-right,
+  .animate-drawer-in,
+  .animate-drawer-out,
+  .animate-slide-in-right,
+  .slide-in-from-right,
+  .slide-out-to-right {
+    animation: none !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+
+  .drawer-overlay,
+  .animate-fade-in,
+  .animate-in.fade-in {
+    animation: none !important;
+    opacity: 1 !important;
+    will-change: auto !important;
+  }
+
+  .lang-slider-thumb,
+  .lang-slider-thumb-brand,
+  .slider-pill-thumb,
+  .slider-pill-thumb-brand,
+  [role="radiogroup"] [aria-hidden="true"].transition-transform {
+    transition: none !important;
+    will-change: auto !important;
+  }
+
+  .animate-audio-wave {
+    animation: none !important;
+    transform: scaleY(0.6) !important;
+  }
+}
+
+

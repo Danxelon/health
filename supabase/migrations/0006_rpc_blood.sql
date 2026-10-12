@@ -168,6 +168,7 @@ begin
       select coalesce(jsonb_agg(jsonb_build_object(
         'response_id', rr.id,
         'donor_id',    rr.donor_id,
+        'display_name', coalesce(nullif(btrim(p.full_name_bn), ''), p.full_name),
         'name',        coalesce(nullif(btrim(p.full_name_bn), ''), p.full_name),
         'blood_group', p.blood_group,
         'state',       rr.state,
@@ -177,10 +178,16 @@ begin
           where cu.request_id = rr.request_id
             and cu.subject_id  = rr.donor_id
             and cu.unlocker_id = v_uid
-        )
+        ),
+        'upazila_en',   u.name_en,
+        'upazila_bn',   u.name_bn,
+        'district_en',  d.name_en,
+        'district_bn',  d.name_bn
       ) order by rr.respond_at desc nulls last), '[]'::jsonb)
       from request_responses rr
       join profiles p on p.id = rr.donor_id
+      left join upazilas u on u.id = p.home_upazila_id
+      left join districts d on d.id = u.district_id
       where rr.request_id = p_request_id
     ),
     'next_step', public.next_escalation_step(p_request_id)

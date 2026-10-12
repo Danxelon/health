@@ -147,7 +147,7 @@ export default function Consultations() {
           body={t("doctors.subtitle")}
           action={
             <Link
-              to="/doctors"
+              to="/doctors?guide=open"
               className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-deep transition-colors"
             >
               <Stethoscope className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
@@ -179,7 +179,7 @@ export default function Consultations() {
             <h2 className="mt-4 text-lg font-semibold text-ink">{COPY.emptyTitle[lang]}</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted">{COPY.emptyBody[lang]}</p>
             <Link
-              to="/doctors"
+              to="/doctors?guide=open"
               className="mt-8 inline-flex h-11 cursor-pointer items-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white hover:bg-brand-deep transition-colors"
             >
               {COPY.emptyCta[lang]}

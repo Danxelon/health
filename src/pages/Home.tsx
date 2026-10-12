@@ -75,7 +75,7 @@ function Hero() {
 
           <button
             type="button"
-            onClick={() => requireAuth("/doctors")}
+            onClick={() => requireAuth("/doctors?guide=open")}
             className="w-full sm:w-auto inline-flex h-14 items-center justify-center gap-3 rounded-full border-2 border-ink-brand bg-surface px-8 text-base font-bold text-ink-brand hover:bg-ink-brand-soft transition-all cursor-pointer active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-ink-brand focus:ring-offset-2"
           >
             <Stethoscope className="h-5 w-5" />
@@ -167,10 +167,10 @@ function ActionOptions() {
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
-              requireAuth("/doctors");
+              requireAuth("/doctors?guide=open");
             }
           }}
-          onClick={() => requireAuth("/doctors")}
+          onClick={() => requireAuth("/doctors?guide=open")}
           data-option
           className="group relative overflow-hidden rounded-[2.5rem] border border-ink-brand/20 bg-gradient-to-br from-white via-teal-50/50 to-teal-100/40 p-8 sm:p-12 text-ink flex flex-col justify-between min-h-[20rem] shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-ink-brand"
         >
@@ -411,11 +411,6 @@ export default function Home() {
   const [updatesLoading, setUpdatesLoading] = useState(true);
   const [articles, setArticles] = useState<ArticleFeedItem[]>([]);
   const [articlesLoading, setArticlesLoading] = useState(true);
-
-  // Force light theme on home page
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", "light");
-  }, []);
 
   const load = useMemo(
     () => async () => {

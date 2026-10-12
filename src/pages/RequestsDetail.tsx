@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Clock,
   MapPin,
+  Navigation,
   Phone,
   ShieldCheck,
 } from "lucide-react";
@@ -268,8 +269,41 @@ export default function RequestsDetail() {
                       {r.display_name.charAt(0)}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-ink">{r.display_name}</p>
-                      <p className="text-xs text-muted">{r.blood_group ?? ""}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-ink">{r.display_name}</p>
+                        {r.blood_group && (
+                          <span className="inline-flex items-center rounded-md bg-brand-soft px-1.5 py-0.5 text-xs font-bold text-brand-deep">
+                            {r.blood_group}
+                          </span>
+                        )}
+                      </div>
+                      {(r.upazila_en || r.upazila_bn || r.district_en || r.district_bn) && (
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted">
+                          <span className="inline-flex items-center gap-1 text-ink/80 font-medium">
+                            <MapPin className="h-3.5 w-3.5 text-brand shrink-0" aria-hidden="true" />
+                            {lang === "bn"
+                              ? [r.upazila_bn ?? r.upazila_en, r.district_bn ?? r.district_en].filter(Boolean).join(", ")
+                              : [r.upazila_en ?? r.upazila_bn, r.district_en ?? r.district_bn].filter(Boolean).join(", ")}
+                          </span>
+                          {r.distance_km != null && (
+                            <span className="text-subtle">
+                              · {lang === "bn" ? `${toBengaliDigits(r.distance_km)} কিমি দূরে` : `${r.distance_km} km away`}
+                            </span>
+                          )}
+                          {r.lat && r.lng && (
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lng}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-0.5 text-[11px] font-bold text-brand hover:underline"
+                              title={lang === "bn" ? "গুগল ম্যাপে অবস্থান দেখুন" : "View location on Google Maps"}
+                            >
+                              <Navigation className="h-3 w-3" aria-hidden="true" />
+                              <span>{lang === "bn" ? "ম্যাপ" : "Map"}</span>
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <Badge tone={STATE_TONE[r.state]}>{STATE_LABELS[r.state][lang]}</Badge>
 

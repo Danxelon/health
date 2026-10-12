@@ -17,6 +17,7 @@ import {
   Home,
   LogOut,
   Menu,
+  Moon,
   Newspaper,
   Phone,
   Settings,
@@ -24,6 +25,7 @@ import {
   ShieldCheck,
   Sparkles,
   Stethoscope,
+  Sun,
   User,
   X,
 } from "lucide-react";
@@ -53,7 +55,7 @@ function Wordmark() {
       </span>
       <span
         lang="bn"
-        className="font-display text-[1.125rem] font-800 tracking-tight text-brand leading-none"
+        className="font-display text-[1.125rem] font-800 tracking-tight text-brand leading-none hidden min-[400px]:inline"
       >
         জীবন রক্ষা
       </span>
@@ -61,16 +63,124 @@ function Wordmark() {
   );
 }
 
-function LanguageToggle() {
-  const { lang, toggleLang, t } = useAppShell();
+function LanguageToggle({ className = "" }: { className?: string }) {
+  const { lang, setLang, t } = useAppShell();
+  return (
+    <div
+      role="radiogroup"
+      aria-label={t("lang.toggle")}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          setLang("bn");
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          setLang("en");
+        }
+      }}
+      className={`relative inline-flex items-center rounded-full border border-line bg-surface p-1 shadow-2xs select-none shrink-0 ${className}`}
+    >
+      {/* Sliding thumb pill */}
+      <span
+        aria-hidden="true"
+        className={`absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full bg-brand text-white shadow-xs transition-transform duration-300 ease-out pointer-events-none ${
+          lang === "en" ? "translate-x-full" : "translate-x-0"
+        }`}
+      />
+
+      {/* Bangla option */}
+      <button
+        type="button"
+        role="radio"
+        aria-checked={lang === "bn"}
+        tabIndex={lang === "bn" ? 0 : -1}
+        onClick={() => setLang("bn")}
+        title="বাংলা"
+        aria-label="বাংলা"
+        className={`relative z-10 flex h-7 w-9 sm:w-10 items-center justify-center rounded-full text-xs font-bold transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+          lang === "bn" ? "text-white" : "text-muted hover:text-ink"
+        }`}
+      >
+        বাং
+      </button>
+
+      {/* English option */}
+      <button
+        type="button"
+        role="radio"
+        aria-checked={lang === "en"}
+        tabIndex={lang === "en" ? 0 : -1}
+        onClick={() => setLang("en")}
+        title="English"
+        aria-label="English"
+        className={`relative z-10 flex h-7 w-9 sm:w-10 items-center justify-center rounded-full text-xs font-bold transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+          lang === "en" ? "text-white" : "text-muted hover:text-ink"
+        }`}
+      >
+        EN
+      </button>
+    </div>
+  );
+}
+
+export function ThemeToggle({ className = "" }: { className?: string }) {
+  const { theme, setTheme, toggleTheme, lang } = useAppShell();
+  const isDark = theme === "dark";
+
+  const handleToggle = () => {
+    if (typeof toggleTheme === "function") {
+      toggleTheme();
+    } else {
+      setTheme(isDark ? "light" : "dark");
+    }
+  };
+
+  const label = isDark
+    ? lang === "bn"
+      ? "লাইট মোড চালু করুন"
+      : "Switch to light mode"
+    : lang === "bn"
+    ? "ডার্ক মোড চালু করুন"
+    : "Switch to dark mode";
+
+  const title = isDark
+    ? lang === "bn"
+      ? "লাইট মোড"
+      : "Light mode"
+    : lang === "bn"
+    ? "ডার্ক মোড"
+    : "Dark mode";
+
   return (
     <button
       type="button"
-      onClick={toggleLang}
-      className="h-9 min-w-10 rounded-full border border-line bg-surface px-3 text-xs font-bold text-ink hover:border-line-strong hover:bg-elevated transition-colors cursor-pointer"
-      aria-label={t("lang.toggle")}
+      onClick={handleToggle}
+      className={`relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-ink hover:border-line-strong hover:bg-elevated transition-colors cursor-pointer shrink-0 shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 overflow-hidden ${className}`}
+      aria-label={label}
+      title={title}
     >
-      <span aria-hidden="true">{lang === "bn" ? "EN" : "বাং"}</span>
+      <span className="relative flex h-4 w-4 items-center justify-center pointer-events-none">
+        {/* Sun icon for light mode */}
+        <Sun
+          className={`h-4 w-4 text-amber-500 absolute transition-all duration-300 ease-out transform ${
+            !isDark
+              ? "rotate-0 scale-100 opacity-100"
+              : "-rotate-90 scale-0 opacity-0"
+          }`}
+          strokeWidth={2}
+          aria-hidden="true"
+        />
+        {/* Moon icon for dark mode */}
+        <Moon
+          className={`h-4 w-4 text-brand dark:text-sky-300 absolute transition-all duration-300 ease-out transform ${
+            isDark
+              ? "rotate-0 scale-100 opacity-100"
+              : "rotate-90 scale-0 opacity-0"
+          }`}
+          strokeWidth={2}
+          aria-hidden="true"
+        />
+      </span>
     </button>
   );
 }
@@ -336,7 +446,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
                   <button
                     type="button"
-                    onClick={() => requireAuth("/doctors")}
+                    onClick={() => requireAuth("/doctors?guide=open")}
                     tabIndex={isScrolled ? 0 : -1}
                     className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#006d6f] text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold shadow-xs hover:bg-[#005759] hover:shadow-md transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95"
                     aria-label={t("nav.consultations")}
@@ -351,6 +461,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
             {/* Right controls */}
             <div className="flex items-center gap-2 shrink-0 min-w-max">
+              <ThemeToggle />
               <LanguageToggle />
 
               {/* Emergency Hotline 999 */}
@@ -467,7 +578,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
               })}
             </ul>
 
-            <div className="mt-4 pt-3 border-t border-line flex flex-col gap-2">
+            <div className="mt-4 pt-3 border-t border-line flex flex-col gap-2.5">
+              <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-elevated/40">
+                <span className="text-xs font-bold text-muted">
+                  {lang === "bn" ? "থিম ও ভাষা" : "Theme & Language"}
+                </span>
+                <div className="flex items-center gap-2">
+                  <ThemeToggle />
+                  <LanguageToggle />
+                </div>
+              </div>
+
               {isLoggedIn ? (
                 <>
                   <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-elevated/60 text-xs">

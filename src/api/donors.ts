@@ -91,6 +91,12 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
 
     return {
       ...d,
+      address_en: d.address_en ?? (d.upazila_en && d.district_en ? `${d.upazila_en}, ${d.district_en}` : null),
+      address_bn: d.address_bn ?? (d.upazila_bn && d.district_bn ? `${d.upazila_bn}, ${d.district_bn}` : null),
+      lat: d.lat ?? d._lat ?? null,
+      lng: d.lng ?? d._lng ?? null,
+      division_en: d.division_en ?? null,
+      division_bn: d.division_bn ?? null,
       ring,
       score,
       metres,
@@ -140,6 +146,12 @@ export async function searchDonors(args: SearchDonorsArgs): Promise<SearchResult
       .map((r, i) => ({
         ...r,
         phone: r.phone ?? `+88017${(10000000 + i * 24680) % 90000000}`,
+        division_en: r.division_en ?? null,
+        division_bn: r.division_bn ?? null,
+        address_en: r.address_en ?? (r.upazila_en && r.district_en ? `${r.upazila_en}, ${r.district_en}` : null),
+        address_bn: r.address_bn ?? (r.upazila_bn && r.district_bn ? `${r.upazila_bn}, ${r.district_bn}` : null),
+        lat: r.lat ?? null,
+        lng: r.lng ?? null,
       }))
       .sort((a, b) => {
       if (a.ring !== b.ring) return a.ring - b.ring;

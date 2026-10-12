@@ -219,6 +219,40 @@ describe("rankDonors", () => {
     const ranked = rankDonors(input);
     assert.equal(ranked[0]!.extra, "kept");
   });
+
+  it("preserves address_en, address_bn, lat, lng, division_en, and division_bn consistently", () => {
+    const donorWithAddress = {
+      ...mk("donor-addr-1", 0, 0.95, 800),
+      address_en: "House 12, Road 4, Dhanmondi, Dhaka",
+      address_bn: "বাসা ১২, রোড ৪, ধানমন্ডি, ঢাকা",
+      upazila_en: "Dhanmondi",
+      upazila_bn: "ধানমন্ডি",
+      district_en: "Dhaka",
+      district_bn: "ঢাকা",
+      division_en: "Dhaka",
+      division_bn: "ঢাকা",
+      lat: 23.7461,
+      lng: 90.3742,
+    };
+
+    const ranked = rankDonors([donorWithAddress]);
+    assert.equal(ranked.length, 1);
+    const first = ranked[0]!;
+    assert.equal(first.address_en, "House 12, Road 4, Dhanmondi, Dhaka");
+    assert.equal(first.address_bn, "বাসা ১২, রোড ৪, ধানমন্ডি, ঢাকা");
+    assert.equal(first.upazila_en, "Dhanmondi");
+    assert.equal(first.upazila_bn, "ধানমন্ডি");
+    assert.equal(first.district_en, "Dhaka");
+    assert.equal(first.district_bn, "ঢাকা");
+    assert.equal(first.division_en, "Dhaka");
+    assert.equal(first.division_bn, "ঢাকা");
+    assert.equal(first.lat, 23.7461);
+    assert.equal(first.lng, 90.3742);
+    // Explicit verification: private NID data is never part of the donor projection
+    assert.equal((first as Record<string, unknown>).nid, undefined);
+    assert.equal((first as Record<string, unknown>).nid_hash, undefined);
+    assert.equal((first as Record<string, unknown>).nid_last4, undefined);
+  });
 });
 
 describe("groupByRing", () => {

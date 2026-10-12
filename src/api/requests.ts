@@ -17,7 +17,7 @@ import type {
   ResponseState,
 } from "@/domain/types.ts";
 import { expiresAtISO } from "@/domain/requests.ts";
-import { DEMO_EMERGENCIES } from "@/lib/demo-data.ts";
+import { DEMO_DONORS, DEMO_EMERGENCIES } from "@/lib/demo-data.ts";
 import { callRpc, DEMO_MODE, hasSupabaseAuthSession } from "@/lib/supabase.ts";
 
 export interface RequestFormData {
@@ -70,15 +70,29 @@ const demoResponders = (requestId: string): RequestResponder[] => {
   // tracking screen shows the same people across reloads.
   const n = (request.id.charCodeAt(request.id.length - 1) % 3) + 1;
   const states: readonly ResponseState[] = (["invited", n > 1 ? "accepted" : "declined", "invited"] as const).slice(0, n);
-  return states.map((state, i) => ({
-    response_id: `${requestId}-r${i}`,
-    donor_id: `demo-donor-${i + 1}`,
-    display_name: ["রকিবুল হ.","তানভীর ই.","নুসরাত জ."][i] ?? "রক্তদাতা",
-    blood_group: ["A+", "O+", "B+"][i] as BloodGroup,
-    state,
-    invited_at: request.created_at,
-    responded_at: state === "invited" ? null : request.created_at,
-  }));
+  return states.map((state, i) => {
+    const demoDonor = DEMO_DONORS.find((d) => d.donor_id === `demo-donor-${i + 1}`) ?? DEMO_DONORS[i % DEMO_DONORS.length];
+    return {
+      response_id: `${requestId}-r${i}`,
+      donor_id: `demo-donor-${i + 1}`,
+      display_name: ["রকিবুল হ.", "তানভীর ই.", "নুসরাত জ."][i] ?? demoDonor?.display_name ?? "রক্তদাতা",
+      blood_group: (["A+", "O+", "B+"][i] ?? demoDonor?.blood_group ?? "A+") as BloodGroup,
+      state,
+      invited_at: request.created_at,
+      responded_at: state === "invited" ? null : request.created_at,
+      upazila_en: demoDonor?.upazila_en ?? "Dhanmondi",
+      upazila_bn: demoDonor?.upazila_bn ?? "ধানমন্ডি",
+      district_en: demoDonor?.district_en ?? "Dhaka",
+      district_bn: demoDonor?.district_bn ?? "ঢাকা",
+      division_en: demoDonor?.division_en ?? "Dhaka",
+      division_bn: demoDonor?.division_bn ?? "ঢাকা",
+      address_en: demoDonor?.address_en ?? null,
+      address_bn: demoDonor?.address_bn ?? null,
+      distance_km: demoDonor?.distance_km ?? Math.round((i + 1) * 2.4 * 10) / 10,
+      lat: demoDonor?.lat ?? null,
+      lng: demoDonor?.lng ?? null,
+    };
+  });
 };
 
 function demoTracking(requestId: string): {

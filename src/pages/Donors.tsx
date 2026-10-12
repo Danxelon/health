@@ -34,6 +34,7 @@ import { fetchDoctors } from "@/api/doctors.ts";
 import type { BloodGroup, DoctorCard, DonorCard, RequestUrgency } from "@/domain/types.ts";
 import { URGENCY_LABELS } from "@/lib/strings.ts";
 import { DEMO_UPAZILAS } from "@/lib/demo-data.ts";
+import DonorAddressMapDrawer from "@/components/DonorAddressMapDrawer.tsx";
 
 const BLOOD_GROUPS: BloodGroup[] = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -63,6 +64,9 @@ export default function Donors() {
   const [contactModalDonor, setContactModalDonor] = useState<DonorCard | null>(null);
   const [copiedPhone, setCopiedPhone] = useState(false);
 
+  // Right Horizontal Section (Map & Address Drawer) state
+  const [selectedMapDonor, setSelectedMapDonor] = useState<DonorCard | null>(null);
+
   const handleCopyPhone = (phone: string) => {
     try {
       navigator.clipboard.writeText(phone);
@@ -72,6 +76,18 @@ export default function Donors() {
       /* ignore */
     }
   };
+
+  // Close modals on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (selectedMapDonor) setSelectedMapDonor(null);
+        if (contactModalDonor) setContactModalDonor(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedMapDonor, contactModalDonor]);
 
   // Require login on page load: redirect unauthenticated users
   useEffect(() => {
@@ -483,6 +499,39 @@ export default function Donors() {
                       )}
                     </div>
 
+                    {/* Address Info on Card with Click to View Map */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setSelectedMapDonor(d)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedMapDonor(d);
+                        }
+                      }}
+                      className="flex items-start gap-2.5 rounded-2xl bg-brand-soft/25 hover:bg-brand-soft/60 p-3 border border-brand/20 hover:border-brand/40 transition-all cursor-pointer group/addr shadow-2xs"
+                      title={lang === "bn" ? "ম্যাপে বিস্তারিত ঠিকানা দেখতে ক্লিক করুন" : "Click to view map and full address"}
+                    >
+                      <MapPin className="h-4 w-4 text-brand shrink-0 mt-0.5 group-hover/addr:scale-110 group-hover/addr:text-brand-deep transition-all" />
+                      <div className="min-w-0 flex-1">
+                        <span className="block text-xs font-bold text-ink line-clamp-1 group-hover/addr:text-brand-deep transition-colors">
+                          {d.address_bn || `${d.upazila_bn}, ${d.district_bn}`}
+                        </span>
+                        <span className="block text-[11px] text-muted truncate mt-0.5">
+                          {d.address_en || `${d.upazila_en}, ${d.district_en}`}
+                        </span>
+                        <span className="block text-[10px] text-muted/80 truncate mt-0.5">
+                          {lang === "bn"
+                            ? `${d.upazila_bn}, ${d.district_bn}${d.division_bn ? `, ${d.division_bn}` : ""}`
+                            : `${d.upazila_en}, ${d.district_en}${d.division_en ? `, ${d.division_en}` : ""}`}
+                        </span>
+                      </div>
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-brand bg-surface px-2 py-1 rounded-lg border border-brand/20 shadow-2xs group-hover/addr:bg-brand group-hover/addr:text-white transition-all shrink-0">
+                        {lang === "bn" ? "ম্যাপ ↗" : "Map ↗"}
+                      </span>
+                    </div>
+
                     <div className="mt-auto pt-3 border-t border-line space-y-2.5">
                       {/* Contact Number Display with Quick Copy */}
                       <div className="flex items-center justify-between rounded-xl bg-elevated/60 px-3 py-1.5 border border-line/60">
@@ -540,7 +589,7 @@ export default function Donors() {
             body={t("doctors.subtitle")}
             action={
               <Link
-                to="/doctors"
+                to="/doctors?guide=open"
                 className="inline-flex items-center gap-1 text-sm font-bold text-ink-brand hover:opacity-80 transition-colors"
               >
                 {t("common.seeAll")}
@@ -718,6 +767,20 @@ export default function Donors() {
           </div>
         </div>
       )}
+
+      {/* Right Horizontal Map & Full Address Drawer */}
+      <DonorAddressMapDrawer
+        donor={selectedMapDonor}
+        onClose={() => setSelectedMapDonor(null)}
+        onCall={(donor: DonorCard) => {
+          setSelectedMapDonor(null);
+          setContactModalDonor(donor);
+        }}
+        onRequest={(donor: DonorCard) => {
+          setSelectedMapDonor(null);
+          navigate(`/requests/new?group=${donor.blood_group}&donor=${donor.donor_id}`);
+        }}
+      />
     </div>
   );
 }

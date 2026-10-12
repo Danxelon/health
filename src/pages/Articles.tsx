@@ -494,7 +494,7 @@ export default function Articles() {
             )}
             <div className="mt-6">
               <Link
-                to="/doctors"
+                to="/doctors?guide=open"
                 className="inline-flex h-11 items-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white transition-colors hover:bg-brand-deep cursor-pointer"
               >
                 <Stethoscope className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
@@ -516,7 +516,7 @@ export default function Articles() {
               <p className="mt-3 text-[15px] text-muted">{t("doctors.subtitle")}</p>
             </div>
             <Link
-              to="/doctors"
+              to="/doctors?guide=open"
               className="inline-flex h-12 shrink-0 items-center gap-2 self-start rounded-full bg-brand px-7 text-[15px] font-semibold text-white transition-colors hover:bg-brand-deep cursor-pointer md:self-auto"
             >
               <Stethoscope className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />

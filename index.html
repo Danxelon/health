@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#006d6f" />
+    <script>
+      (function() {
+        try {
+          var t = localStorage.getItem('jr.theme');
+          var theme = 'light';
+          if (t === 'dark' || t === 'light') {
+            theme = t;
+          } else if (t === 'system') {
+            theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
 
     <title>Jibon Rokkha — জীবন রক্ষা</title>
     <meta

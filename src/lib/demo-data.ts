@@ -23,6 +23,7 @@ import type {
   EmergencyFeedItem,
   NationalHealthUpdate,
   RequestUrgency,
+  Specialty,
 } from "@/domain/types.ts";
 
 /* -------------------------------------------------------------------------- */
@@ -190,6 +191,23 @@ function makeDonor(index: number): DonorCard & { _raw_name: string; _phone: stri
     ? [pick(["smoker", "on_medication", "chronic_condition"] as const)]
     : [];
 
+  const h = (index * 7 % 48) + 1;
+  const r = (index * 3 % 18) + 1;
+  const b = ["A", "B", "C", "D", "E", "F"][index % 6];
+  const streetVariants = [
+    { en: `House #${h}, Road #${r}, Block ${b}`, bn: `বাসা #${h}, রোড #${r}, ব্লক ${b}` },
+    { en: `Holding #${h}, Sector #${r}`, bn: `হোল্ডিং #${h}, সেক্টর #${r}` },
+    { en: `College Road, Ward #${r}`, bn: `কলেজ রোড, ${r} নং ওয়ার্ড` },
+    { en: `Hospital Road, Holding #${h}`, bn: `হাসপাতাল রোড, হোল্ডিং #${h}` },
+    { en: `Station Road, Near Rail Gate`, bn: `স্টেশন রোড, রেলগেটের কাছে` },
+    { en: `Main Bazar Road, House #${h}`, bn: `মেইন বাজার রোড, বাসা #${h}` },
+  ];
+  const street = streetVariants[index % streetVariants.length]!;
+  const addressEn = `${street.en}, ${upazila.name_en}, ${upazila.district_en}`;
+  const addressBn = `${street.bn}, ${upazila.name_bn}, ${upazila.district_bn}`;
+  const donorLat = Number((upazila.lat + (((index * 13) % 20) - 10) * 0.0015).toFixed(4));
+  const donorLng = Number((upazila.lng + (((index * 17) % 20) - 10) * 0.0015).toFixed(4));
+
   return {
     donor_id: `demo-donor-${index}`,
     display_name: maskName(fullName),
@@ -201,6 +219,12 @@ function makeDonor(index: number): DonorCard & { _raw_name: string; _phone: stri
     upazila_bn: upazila.name_bn,
     district_en: upazila.district_en,
     district_bn: upazila.district_bn,
+    division_en: upazila.division_en,
+    division_bn: upazila.division_bn,
+    address_en: addressEn,
+    address_bn: addressBn,
+    lat: donorLat,
+    lng: donorLng,
     ring: metres < 3_000 ? 0 : metres < 10_000 ? 1 : metres < 25_000 ? 2 : 3,
     available_now: availableNow,
     can_give_now: availableNow && warningCount === 0,
@@ -210,8 +234,8 @@ function makeDonor(index: number): DonorCard & { _raw_name: string; _phone: stri
     contact_mode: rng() < 0.85 ? "on_unlock" : "private_admin",
     _raw_name: fullName,
     _phone: `+8801${between(3, 9)}${String(between(10_000_000, 99_999_999))}`,
-    _lat: upazila.lat,
-    _lng: upazila.lng,
+    _lat: donorLat,
+    _lng: donorLng,
   };
 }
 
@@ -278,18 +302,140 @@ export function hospitalBn(nameEn: string | null): string | null {
 /* Doctors                                                                     */
 /* -------------------------------------------------------------------------- */
 
-const SPECIALTIES = [
-  { id: 1, slug: "medicine", en: "General Medicine", bn: "মেডিসিন" },
-  { id: 2, slug: "pediatrics", en: "Paediatrics", bn: "শিশু রোগ" },
-  { id: 3, slug: "gynaecology", en: "Gynaecology & Obstetrics", bn: "স্ত্রীরোগ ও প্রসূতি" },
-  { id: 4, slug: "cardiology", en: "Cardiology", bn: "হৃদরোগ" },
-  { id: 5, slug: "dermatology", en: "Dermatology", bn: "চর্মরোগ" },
-  { id: 6, slug: "orthopaedics", en: "Orthopaedics", bn: "অর্থোপেডিক" },
-  { id: 7, slug: "ent", en: "ENT", bn: "নাক-কান-গলা" },
-  { id: 8, slug: "ophthalmology", en: "Ophthalmology", bn: "চোখ" },
-  { id: 9, slug: "psychiatry", en: "Psychiatry", bn: "মানসিক রোগ" },
-  { id: 10, slug: "hematology", en: "Hematology & Blood Disorders", bn: "হেমাটোলজি ও রক্তরোগ" },
-] as const;
+const SPECIALTIES: readonly Specialty[] = [
+  {
+    id: 1,
+    slug: "medicine",
+    en: "General Medicine",
+    bn: "মেডিসিন",
+    symptoms_bn: "জ্বর, সর্দি, কাশি, ডেঙ্গু, মাথা ব্যথা, পেটের সমস্যা, শারীরিক দুর্বলতা, সংক্রমণ",
+    symptoms_en: "Fever, cold, cough, dengue, headache, stomach issues, physical weakness, infections",
+    description_bn: "সাধারণ রোগব্যাধি, সংক্রামক ব্যাধি ও প্রাথমিক চিকিৎসার বিশেষজ্ঞ পরামর্শ ও সেবা।",
+    description_en: "Diagnosis and treatment for common illnesses, infectious diseases, and internal medicine conditions.",
+    common_concerns_bn: ["জ্বর ও সর্দি", "ডেঙ্গু ও দুর্বলতা", "মাথা ও পেট ব্যথা"],
+    icon_name: "Stethoscope",
+  },
+  {
+    id: 2,
+    slug: "pediatrics",
+    en: "Paediatrics",
+    bn: "শিশু রোগ",
+    symptoms_bn: "নবজাতক ও শিশুর জ্বর, নিউমোনিয়া, পাতলা পায়খানা, টিকা, শিশুর সঠিক বিকাশ",
+    symptoms_en: "Infant and child fever, pneumonia, diarrhea, vaccination, healthy child growth and development",
+    description_bn: "নবজাতক ও শিশুদের রোগ প্রতিরোধ, শারীরিক ও মানসিক বিকাশ এবং জটিল রোগের সমন্বিত চিকিৎসা।",
+    description_en: "Comprehensive medical care, developmental assessment, and treatment for infants, children, and adolescents.",
+    common_concerns_bn: ["শিশুর জ্বর", "নিউমোনিয়া ও ঠান্ডা", "টিকা ও শিশুর বিকাশ"],
+    icon_name: "Baby",
+  },
+  {
+    id: 3,
+    slug: "gynaecology",
+    en: "Gynaecology & Obstetrics",
+    bn: "স্ত্রীরোগ ও প্রসূতি",
+    symptoms_bn: "গর্ভাবস্থা, প্রসবপূর্ব সেবা, অনিয়মিত ঋতুস্রাব, জরায়ুর সমস্যা, বন্ধ্যাত্ব",
+    symptoms_en: "Pregnancy, prenatal care, irregular menstruation, uterine complications, infertility",
+    description_bn: "নারীর প্রজনন স্বাস্থ্য, নিরাপদ মাতৃত্ব, গর্ভকালীন সেবা এবং জটিল স্ত্রীরোগের নির্ভরযোগ্য চিকিৎসা।",
+    description_en: "Compassionate women's health services covering prenatal care, safe maternity, and gynecological treatments.",
+    common_concerns_bn: ["গর্ভাবস্থা ও প্রসব", "অনিয়মিত মাসিক", "জরায়ু ও বন্ধ্যাত্ব"],
+    icon_name: "User",
+  },
+  {
+    id: 4,
+    slug: "cardiology",
+    en: "Cardiology",
+    bn: "হৃদরোগ",
+    symptoms_bn: "বুকে ব্যথা, বুক ধড়ফড়ানি, শ্বাসকষ্ট, উচ্চ রক্তচাপ, হার্ট অ্যাটাক পরবর্তী যত্ন",
+    symptoms_en: "Chest pain, shortness of breath, palpitations, high blood pressure, heart attack risk",
+    description_bn: "হৃদপিণ্ড, রক্তনালী ও রক্তচাপ সংক্রান্ত সকল জটিলতার বিশেষজ্ঞ পরামর্শ ও চিকিৎসা।",
+    description_en: "Diagnosis and treatment for heart, cardiovascular system, and hypertension issues.",
+    common_concerns_bn: ["বুকে চাপ", "উচ্চ প্রেশার", "দ্রুত শ্বাস"],
+    icon_name: "HeartPulse",
+  },
+  {
+    id: 5,
+    slug: "dermatology",
+    en: "Dermatology",
+    bn: "চর্মরোগ",
+    symptoms_bn: "ত্বকের চুলকানি, অ্যালার্জি, দাউদ, একজিমা, সোরায়াসিস, চুল পড়া, যৌন রোগ",
+    symptoms_en: "Skin itching, allergies, ringworm, eczema, psoriasis, hair fall, sexually transmitted infections",
+    description_bn: "ত্বক, চুল, নখ ও অ্যালার্জির নানা দীর্ঘমেয়াদী ও তাৎক্ষণিক সমস্যার বিশেষজ্ঞ চিকিৎসা ও সমাধান।",
+    description_en: "Specialist dermatological care for skin allergies, fungal infections, hair loss, and complex dermatoses.",
+    common_concerns_bn: ["ত্বকে চুলকানি ও অ্যালার্জি", "চুল পড়া", "দাউদ ও একজিমা"],
+    icon_name: "Sparkles",
+  },
+  {
+    id: 6,
+    slug: "orthopaedics",
+    en: "Orthopaedics",
+    bn: "অর্থোপেডিক",
+    symptoms_bn: "হাড় ভাঙা, মচকানো, জয়েন্টে বা হাঁটুতে তীব্র ব্যথা, বাত, মেরুদণ্ড ও কোমরে ব্যথা",
+    symptoms_en: "Bone fractures, sprains, severe joint or knee pain, arthritis, spinal and lower back pain",
+    description_bn: "হাড়, জোড়, মাংসপেশি, লিগামেন্ট ও মেরুদণ্ডের সকল প্রকার ব্যথা ও আঘাতের আধুনিক চিকিৎসা।",
+    description_en: "Advanced orthopedic care for bone fractures, joint problems, sports injuries, and spinal disorders.",
+    common_concerns_bn: ["কোমরে ও পিঠে ব্যথা", "হাঁটু ও জয়েন্টে ব্যথা", "হাড় ভাঙা ও মচকানো"],
+    icon_name: "Bone",
+  },
+  {
+    id: 7,
+    slug: "ent",
+    en: "ENT",
+    bn: "নাক-কান-গলা",
+    symptoms_bn: "কানে কম শোনা বা পুঁজ পড়া, টনসিল, সাইনাস, গলায় ব্যথা, নাক বন্ধ থাকা",
+    symptoms_en: "Hearing loss, ear discharge, tonsillitis, sinusitis, throat pain, nasal blockage",
+    description_bn: "নাক, কান ও গলার সংক্রমণ, টনসিল, অ্যালার্জি ও শ্রবণ সমস্যার আধুনিক ও কার্যকরী চিকিৎসা।",
+    description_en: "Expert diagnosis and surgical care for ear, nose, throat conditions, sinus problems, and hearing impairment.",
+    common_concerns_bn: ["কানে কম শোনা বা পুঁজ", "টনসিল ও গলাব্যথা", "সাইনাস ও নাক বন্ধ"],
+    icon_name: "Ear",
+  },
+  {
+    id: 8,
+    slug: "ophthalmology",
+    en: "Ophthalmology",
+    bn: "চোখ",
+    symptoms_bn: "চোখে ঝাপসা দেখা, চোখ লাল হওয়া বা পানি পড়া, ছানি, চোখের প্রেসার",
+    symptoms_en: "Blurred vision, red or watery eyes, cataracts, glaucoma, eye pressure",
+    description_bn: "দৃষ্টিশক্তির সমস্যা, চোখের ছানি, গ্লুকোমা ও চোখের সংক্রমণের বিশেষজ্ঞ পরীক্ষা ও চিকিৎসা।",
+    description_en: "Comprehensive eye care including vision correction, cataract evaluation, glaucoma management, and optical health.",
+    common_concerns_bn: ["চোখে ঝাপসা দেখা", "চোখ লাল ও পানি পড়া", "ছানি ও চোখের প্রেসার"],
+    icon_name: "Eye",
+  },
+  {
+    id: 9,
+    slug: "psychiatry",
+    en: "Psychiatry",
+    bn: "মানসিক রোগ",
+    symptoms_bn: "অতিরিক্ত দুশ্চিন্তা, বিষণ্ণতা, ঘুমের সমস্যা, প্যানিক অ্যাটাক, মানসিক চাপ",
+    symptoms_en: "Excessive anxiety, depression, insomnia, panic attacks, psychological stress",
+    description_bn: "মানসিক স্বাস্থ্য, উদ্বেগ, বিষণ্ণতা এবং মানসিক ভারসাম্য রক্ষায় সহমর্মিতাপূর্ণ কাউন্সেলিং ও চিকিৎসা।",
+    description_en: "Clinical psychiatric care, psychotherapeutic counseling, and management for mood and anxiety disorders.",
+    common_concerns_bn: ["অতিরিক্ত দুশ্চিন্তা", "ঘুমের সমস্যা ও অনিদ্রা", "বিষণ্ণতা ও প্যানিক অ্যাটাক"],
+    icon_name: "Brain",
+  },
+  {
+    id: 10,
+    slug: "hematology",
+    en: "Hematology & Blood Disorders",
+    bn: "হেমাটোলজি ও রক্তরোগ",
+    symptoms_bn: "থ্যালাসেমিয়া, রক্তস্বল্পতা/অ্যানিমিয়া, রক্তে প্লাটিলেট কমে যাওয়া, রক্তক্ষরণ সমস্যা",
+    symptoms_en: "Thalassemia, anemia, low platelet count, abnormal bleeding, clotting disorders",
+    description_bn: "রক্তস্বল্পতা, থ্যালাসেমিয়া, ব্লাড ক্যান্সার ও রক্তক্ষরণজনিত সকল জটিল রোগের নির্ভুল পরামর্শ ও সেবা।",
+    description_en: "Expert diagnosis and clinical care for thalassemia, anemia, platelet disorders, and hematologic malignancies.",
+    common_concerns_bn: ["রক্তস্বল্পতা ও অ্যানিমিয়া", "থ্যালাসেমিয়া", "প্লাটিলেট কমে যাওয়া"],
+    icon_name: "Droplet",
+  },
+  {
+    id: 11,
+    slug: "nephrology",
+    en: "Nephrology & Kidney Care",
+    bn: "কিডনি ও মূত্ররোগ",
+    symptoms_bn: "প্রস্রাবে জ্বালাপোড়া বা রক্ত, শরীর ও পা ফোলা, পিঠের পাশে তীব্র ব্যথা, কিডনিতে পাথর",
+    symptoms_en: "Burning urination, blood in urine, swelling in feet/body, flank pain, kidney stones",
+    description_bn: "কিডনি রোগ, প্রস্রাবের ইনফেকশন, ডায়ালাইসিস ও কিডনির পাথর সংক্রান্ত রোগের বিশেষায়িত চিকিৎসা।",
+    description_en: "Expert diagnosis and care for kidney disorders, urinary tract issues, stones, and renal health.",
+    common_concerns_bn: ["প্রস্রাবে জ্বালাপোড়া ও ইনফেকশন", "পা ও শরীর ফোলা", "কিডনিতে পাথর"],
+    icon_name: "Activity",
+  },
+];
 
 export const DEMO_SPECIALTIES = SPECIALTIES;
 

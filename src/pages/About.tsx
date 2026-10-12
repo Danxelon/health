@@ -295,7 +295,7 @@ function DoGrid() {
       tint: "text-ink-brand",
       title: COPY.doConsultDoc[lang],
       body: COPY.doConsultDocBody[lang],
-      to: "/doctors",
+      to: "/doctors?guide=open",
     },
     {
       icon: Megaphone,
@@ -424,7 +424,7 @@ function FinalCta() {
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
             <Link
-              to="/doctors"
+              to="/doctors?guide=open"
               className="inline-flex h-11 items-center gap-2 rounded-full border border-white/30 bg-white/5 px-7 text-[15px] font-semibold text-white hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
             >
               <Stethoscope className="h-4.5 w-4.5" strokeWidth={1.8} aria-hidden="true" />

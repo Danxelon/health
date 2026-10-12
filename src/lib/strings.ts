@@ -52,6 +52,12 @@ export const STRINGS = {
     toggle: { bn: "ভাষা পরিবর্তন করুন", en: "Switch language" },
   },
 
+  theme: {
+    toggle: { bn: "ডার্ক/লাইট থিম পরিবর্তন", en: "Toggle Dark/Light Theme" },
+    dark: { bn: "ডার্ক থিম", en: "Dark Theme" },
+    light: { bn: "লাইট থিম", en: "Light Theme" },
+  },
+
   common: {
     search: { bn: "খুঁজুন", en: "Search" },
     loading: { bn: "লোড হচ্ছে…", en: "Loading…" },
@@ -155,6 +161,10 @@ export const STRINGS = {
     asOf: { bn: "হালনাগাদ", en: "As of" },
     compatibleWith: { bn: "যাদের কাছ থেকে নেওয়া যায়", en: "Can receive from" },
     respects: { bn: "নিরাপদ মিল", en: "Safe match" },
+    mapTitle: { bn: "রক্তদাতার ঠিকানা ও অবস্থান ম্যাপ", en: "Donor Location & Address Map" },
+    copyAddress: { bn: "ঠিকানা কপি করুন", en: "Copy Address" },
+    openGoogleMaps: { bn: "গুগল ম্যাপে নেভিগেশন", en: "Open in Google Maps" },
+    transitTime: { bn: "আনুমানিক ট্রানজিট সময়", en: "Estimated Transit Time" },
   },
 
   request: {
@@ -209,6 +219,12 @@ export const STRINGS = {
     audioSoon: { bn: "অডিও কল (শীঘ্রই)", en: "Audio call (coming soon)" },
     bmdc: { bn: "বিএমডিসি", en: "BMDC" },
     noResults: { bn: "এই ফিল্টারে কোনো ডাক্তার নেই।", en: "No doctor matches these filters." },
+    guideTitle: { bn: "কোন ধরণের ডাক্তার আপনার প্রয়োজন?", en: "Which Doctor Do You Need?" },
+    guideSubtitle: { bn: "লক্ষণ ও শারীরিক সমস্যা অনুযায়ী বিশেষজ্ঞ নির্বাচন করুন", en: "Select a specialist based on symptoms and health concerns" },
+    searchSymptom: { bn: "লক্ষণ বা রোগ লিখুন (যেমন: জ্বর, বুকে ব্যথা)...", en: "Search symptoms or illness (e.g. fever, chest pain)..." },
+    viewAll: { bn: "সকল ডাক্তার সরাসরি দেখুন", en: "Browse All Doctors Directly" },
+    changeFilter: { bn: "বিশেষত্ব পরিবর্তন করুন", en: "Change Specialty Filter" },
+    showingFor: { bn: "নির্বাচিত বিশেষত্ব:", en: "Selected Specialty:" },
   },
 
   articles: {

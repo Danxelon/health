@@ -22,7 +22,31 @@ import { DEFAULT_LANG, LANGS, lookup, type Lang } from "@/lib/strings.ts";
 const LANG_KEY = "jr.lang";
 const THEME_KEY = "jr.theme";
 
-type Theme = "light" | "dark" | "system";
+export type Theme = "light" | "dark" | "system";
+
+function resolveTheme(t: Theme): "light" | "dark" {
+  if (t === "dark") return "dark";
+  if (t === "light") return "light";
+  if (t === "system") {
+    try {
+      if (
+        typeof window !== "undefined" &&
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+      ) {
+        return "dark";
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return "light";
+}
+
+function applyTheme(t: Theme): void {
+  const resolved = resolveTheme(t);
+  document.documentElement.setAttribute("data-theme", resolved);
+}
 
 function readStored<T extends string>(key: string, allowed: readonly T[]): T | null {
   try {
@@ -42,12 +66,13 @@ function writeStored(key: string, value: string): void {
   }
 }
 
-interface AppShellValue {
+export interface AppShellValue {
   lang: Lang;
   setLang: (lang: Lang) => void;
   toggleLang: () => void;
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
   /** Translate a dot-path key into the current language. */
   t: (path: string) => string;
   /** A bilingual pair, for `aria-label`s that must not be language-switched away. */
@@ -69,7 +94,10 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
     }
   });
 
-  const [theme, setThemeState] = useState<Theme>(() => readStored(THEME_KEY, ["light", "dark"] as const) ?? "light");
+  const [theme, setThemeState] = useState<Theme>(() => {
+    const stored = readStored(THEME_KEY, ["light", "dark", "system"] as const);
+    return stored ?? "light";
+  });
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -77,10 +105,31 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   }, [lang]);
 
   useEffect(() => {
-    const root = document.documentElement;
-    root.setAttribute("data-theme", theme);
+    applyTheme(theme);
     writeStored(THEME_KEY, theme);
+
+    if (theme === "system" && typeof window !== "undefined" && window.matchMedia) {
+      const media = window.matchMedia("(prefers-color-scheme: dark)");
+      const listener = () => applyTheme("system");
+      media.addEventListener("change", listener);
+      return () => media.removeEventListener("change", listener);
+    }
   }, [theme]);
+
+  const setTheme = useCallback((nextTheme: Theme) => {
+    setThemeState(nextTheme);
+    writeStored(THEME_KEY, nextTheme);
+    applyTheme(nextTheme);
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setThemeState((prev) => {
+      const next: Theme = resolveTheme(prev) === "dark" ? "light" : "dark";
+      writeStored(THEME_KEY, next);
+      applyTheme(next);
+      return next;
+    });
+  }, []);
 
   const t = useCallback((path: string) => lookup(path, lang), [lang]);
   const tb = useCallback((pair: { bn: string; en: string }) => pair[lang], [lang]);
@@ -91,12 +140,13 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
       setLang: setLangState,
       toggleLang: () => setLangState((prev) => (prev === "bn" ? "en" : "bn")),
       theme,
-      setTheme: setThemeState,
+      setTheme,
+      toggleTheme,
       t,
       tb,
       isBn: lang === "bn",
     }),
-    [lang, theme, t, tb]
+    [lang, theme, setTheme, toggleTheme, t, tb]
   );
 
   return <AppShellContext.Provider value={value}>{children}</AppShellContext.Provider>;

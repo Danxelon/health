@@ -163,6 +163,12 @@ export interface DonorCard {
   score: number;
   contact_mode: ContactVisibility;
   phone?: string | null;
+  division_en?: string | null;
+  division_bn?: string | null;
+  address_en?: string | null;
+  address_bn?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export interface DonorCounts {
@@ -272,6 +278,17 @@ export interface RequestResponder {
   state: ResponseState;
   invited_at: string;
   responded_at: string | null;
+  upazila_en?: string | null;
+  upazila_bn?: string | null;
+  district_en?: string | null;
+  district_bn?: string | null;
+  division_en?: string | null;
+  division_bn?: string | null;
+  address_en?: string | null;
+  address_bn?: string | null;
+  distance_km?: number | null;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export interface RequestTracking {
@@ -306,6 +323,19 @@ export interface EscalationStep {
 /* -------------------------------------------------------------------------- */
 /* Doctors, consultations, articles, complaints                                */
 /* -------------------------------------------------------------------------- */
+
+export interface Specialty {
+  id: number;
+  slug: string;
+  en: string;
+  bn: string;
+  symptoms_bn: string;
+  symptoms_en: string;
+  description_bn: string;
+  description_en: string;
+  common_concerns_bn: string[];
+  icon_name: string;
+}
 
 export interface DoctorCard {
   user_id: string;
