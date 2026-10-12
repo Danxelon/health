@@ -66,8 +66,8 @@ const COPY = {
     en: "Nothing on this platform is medical advice. For any diagnosis or treatment decision, always follow the advice of a registered physician.",
   },
   terms3: {
-    bn: "রক্ত দেওয়ার আগে যোগ্যতা যাচাই করা দাতা ও প্রাপক উভয়েরই দায়িত্ব। নিবন্ধনে দেওয়া তথ্য সঠিক রাখুন; জরুরি অবস্থায় সবার আগে জাতীয় হেল্পলাইনে ৯৯৯-এ কল করুন।",
-    en: "Both the donor and the patient are responsible for checking donation eligibility for themselves. Keep the information you register accurate, and in an emergency call the national helpline 999 first.",
+    bn: "রক্ত দেওয়ার আগে যোগ্যতা যাচাই করা দাতা ও প্রাপক উভয়েরই দায়িত্ব। নিবন্ধনে দেওয়া তথ্য সঠিক রাখুন; স্বাস্থ্য সহায়তা ও ডাক্তারের পরামর্শে সবার আগে ১৬২৬৩ (স্বাস্থ্য বাতায়ন)-এ কল করুন।",
+    en: "Both the donor and the patient are responsible for checking donation eligibility for themselves. Keep the information you register accurate, and for health help and doctor consultation call 16263 (Shasthyo Batayon) first.",
   },
   terms4: {
     bn: "ভুল তথ্য নিবন্ধন করলে অ্যাকাউন্ট সীমিত বা বাতিল হতে পারে। আইন যতটুকু অনুমতি দেয়, পরিষেবা ব্যবহারজনিত ক্ষতির জন্য প্ল্যাটফর্মের দায় সীমিত।",
@@ -162,7 +162,7 @@ const COPY = {
     en: "For privacy questions, a correction, or a deletion request, write to us. Your matter matters to us.",
   },
   aboutUs: { bn: "আমাদের সম্পর্কে", en: "About us" },
-  helpline: { bn: "জরুরি হেল্পলাইন: ৯৯৯", en: "Emergency helpline: 999" },
+  helpline: { bn: "স্বাস্থ্য বাতায়ন: ১৬২৬৩", en: "Shasthyo Batayon: 16263" },
 } as const satisfies Record<string, Line>;
 
 type CopyKey = keyof typeof COPY;

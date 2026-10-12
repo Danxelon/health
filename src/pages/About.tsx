@@ -85,8 +85,8 @@ const COPY = {
     en: "Government Digital Health Initiative",
   },
   pillarGovBody: {
-    bn: "স্বাস্থ্য সেবা বিভাগ ও সরকারি জরুরি হটলাইন ৯৯৯ এবং ১৬২৬৩-এর সাথে সংযুক্ত। চিকিৎসকদের দ্বারা প্রস্তুতকৃত নির্ভরযোগ্য স্বাস্থ্য নির্দেশনা।",
-    en: "Aligned with national health policies and integrated with emergency helplines 999 and Shastho Batayon 16263 for seamless citizen care.",
+    bn: "স্বাস্থ্য সেবা বিভাগ ও সরকারি স্বাস্থ্য হটলাইন ১৬২৬৩ (স্বাস্থ্য বাতায়ন)-এর সাথে সংযুক্ত। চিকিৎসকদের দ্বারা প্রস্তুতকৃত নির্ভরযোগ্য স্বাস্থ্য নির্দেশনা।",
+    en: "Aligned with national health policies and integrated with Shasthyo Batayon 16263 for seamless citizen care.",
   },
 
   // Stats

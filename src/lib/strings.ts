@@ -297,8 +297,8 @@ export const STRINGS = {
     helpline: { bn: "হেল্পলাইন", en: "Helpline" },
     legal: { bn: "শর্তাবলি ও গোপনীয়তা", en: "Terms and privacy" },
     notice: {
-      bn: "মেডিলিঙ্ক একটি সরকারি ডিজিটাল স্বাস্থ্য উদ্যোগ। জরুরি অবস্থায় সরাসরি ৯৯৯ বা ১৬২৬৩-এ কল করুন।",
-      en: "Medilink is a government digital health initiative. In a medical emergency, call 999 or 16263.",
+      bn: "মেডিলিঙ্ক একটি সরকারি ডিজিটাল স্বাস্থ্য উদ্যোগ। স্বাস্থ্য সহায়তা ও ডাক্তারের পরামর্শে ১৬২৬৩ (স্বাস্থ্য বাতায়ন)-এ কল করুন।",
+      en: "Medilink is a government digital health initiative. For health help and doctor consultation, call 16263 (Shasthyo Batayon).",
     },
     rights: { bn: "সর্বস্বত্ব সংরক্ষিত", en: "All rights reserved" },
   },

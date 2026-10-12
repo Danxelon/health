@@ -61,7 +61,7 @@ const COPY = {
     en: "999 reaches the police, the fire service and an ambulance. 16263 gives government medical advice, and 333 answers questions about government services. Which number to use, and when, is below.",
   },
   callNow: { bn: "এখনই কল করুন", en: "Call now" },
-  call999Aria: { bn: "৯৯৯ নম্বরে এখনই কল করুন", en: "Call 999 now" },
+  call999Aria: { bn: "১৬২৬৩ স্বাস্থ্য বাতায়নে এখনই কল করুন", en: "Call Shasthyo Batayon 16263 now" },
   heroNote: {
     bn: "ফোন করার আগে নিশ্চিত হওয়ার দরকার নেই — সন্দেহ হলে কল করুন।",
     en: "You do not have to be sure before you dial. If something feels wrong, call.",
@@ -145,25 +145,25 @@ interface NumberEntry {
 
 const NUMBERS: readonly NumberEntry[] = [
   {
+    digits: "16263",
+    tel: "tel:16263",
+    Icon: Stethoscope,
+    tone: "blood",
+    label: { bn: "স্বাস্থ্য বাতায়ন", en: "Shasthyo Batayon health helpline" },
+    use: {
+      bn: "সরকারি স্বাস্থ্য হেল্পলাইন — ফোনে ডাক্তারের পরামর্শ ও স্বাস্থ্য সহায়তা।",
+      en: "Government health helpline — doctor consultation and health help over the phone.",
+    },
+  },
+  {
     digits: "999",
     tel: "tel:999",
     Icon: Ambulance,
-    tone: "blood",
+    tone: "brand",
     label: { bn: "জাতীয় জরুরি সেবা", en: "National emergency service" },
     use: {
       bn: "পুলিশ, ফায়ার সার্ভিস ও অ্যাম্বুলেন্স। যখন জীবন সরাসরি বিপদে।",
       en: "Police, fire service and ambulance. For when a life is in immediate danger.",
-    },
-  },
-  {
-    digits: "16263",
-    tel: "tel:16263",
-    Icon: Stethoscope,
-    tone: "brand",
-    label: { bn: "স্বাস্থ্য বাতায়ন", en: "Government health helpline" },
-    use: {
-      bn: "সরকারি স্বাস্থ্য হেল্পলাইন — ফোনে চিকিৎসা পরামর্শ, জরুরি নয় এমন সমস্যায়।",
-      en: "Medical advice over the phone, for problems that are not an emergency.",
     },
   },
   {
@@ -368,12 +368,12 @@ export default function Helpline() {
             className="mt-8 rounded-3xl border border-blood-soft bg-blood-soft/50 p-4 sm:p-5"
           >
             <a
-              href="tel:999"
+              href="tel:16263"
               aria-label={COPY.call999Aria[lang]}
               className="group inline-flex h-12 sm:h-16 w-full sm:w-auto items-center justify-center gap-3 rounded-full bg-blood px-5 sm:px-9 font-bold text-white shadow-[0_14px_34px_-14px_rgba(215,38,61,0.7)] transition-colors duration-300 hover:bg-blood-deep cursor-pointer"
             >
               <PhoneCall className="h-6 w-6 sm:h-7 sm:w-7 shrink-0" strokeWidth={2.2} aria-hidden="true" />
-              <span className="display tnum text-[clamp(1.5rem,6vw,2.25rem)] leading-none">999</span>
+              <span className="display tnum text-[clamp(1.5rem,6vw,2.25rem)] leading-none">16263</span>
               <span className="text-lg sm:text-xl font-bold">{COPY.callNow[lang]}</span>
             </a>
 

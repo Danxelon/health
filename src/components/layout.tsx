@@ -343,6 +343,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Brand rule: the full wordmark (symbol + Medilink মেডিলিঙ্ক) lives in the
+  // navbar on the landing page. Other pages keep the navbar compact at the
+  // top (brand stays in the main screen content) until scrolled — then the
+  // same full navbar as before comes back.
+  const isHome = pathname === "/";
+  const showBrand = isHome || isScrolled;
+
   const isItemActive = (to: string) => {
     if (to === "/") return pathname === "/";
     if (to === "/articles") {
@@ -404,14 +411,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 border-b border-line bg-surface/95 backdrop-blur-md transition-shadow pt-[env(safe-area-inset-top)]">
         <nav aria-label="Primary" className="mx-auto max-w-7xl px-3 sm:px-6">
           <div className="flex items-center justify-between h-14 sm:h-[4.5rem] gap-2 sm:gap-6">
-            {/* Logo: shrink-0 min-w-max prevents squishing/overlapping */}
-            <Link
-              to="/"
-              className="flex items-center shrink-0 min-w-max"
-              aria-label={t("app.name")}
-            >
-              <Wordmark />
-            </Link>
+            {/* Logo: full wordmark on landing + whenever scrolled; hidden on
+                other pages at top (brand stays in main screen content) */}
+            {showBrand ? (
+              <Link
+                to="/"
+                className="flex items-center shrink-0 min-w-max"
+                aria-label={t("app.name")}
+              >
+                <Wordmark />
+              </Link>
+            ) : (
+              <span className="shrink-0 w-8 sm:w-10" aria-hidden="true" />
+            )}
 
             {/* Center Area: Primary NavLinks when at top, Quick Action buttons when scrolled */}
             <div className="flex-1 flex items-center justify-center px-2 min-w-0">
@@ -493,13 +505,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <ThemeToggle />
               <LanguageToggle className="hidden sm:inline-flex" />
 
-              {/* Emergency Hotline 999 */}
+              {/* Emergency Hotline 16263 (Shasthyo Batayon) */}
               <a
-                href="tel:999"
+                href="tel:16263"
                 className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-blood text-white px-3.5 py-2 text-xs sm:text-sm font-bold hover:bg-blood-deep transition-colors shadow-xs"
               >
                 <Phone className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-                <span className="tnum">999</span>
+                <span className="tnum">16263</span>
               </a>
 
               {/* Auth Controls */}
@@ -684,11 +696,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
               )}
 
               <a
-                href="tel:999"
+                href="tel:16263"
                 className="flex items-center justify-center gap-2 rounded-xl bg-blood text-white min-h-[44px] py-2.5 text-sm font-bold hover:bg-blood-deep transition-colors shadow-xs"
               >
                 <Phone className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-                <span>{lang === "bn" ? "জরুরি সেবা (৯৯৯)" : "Emergency (999)"}</span>
+                <span>{lang === "bn" ? "স্বাস্থ্য বাতায়ন (১৬২৬৩)" : "Shasthyo Batayon (16263)"}</span>
               </a>
             </div>
           </div>
@@ -761,20 +773,20 @@ function Footer() {
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <a
-                  href="tel:999"
-                  aria-label={isBn ? "জাতীয় জরুরি সেবা ৯৯৯ এ কল করুন" : "Call National Emergency 999"}
+                  href="tel:16263"
+                  aria-label={isBn ? "স্বাস্থ্য বাতায়ন ১৬২৬৩ এ কল করুন" : "Call Shasthyo Batayon 16263"}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-blood/10 border border-blood/30 px-3 py-1.5 text-xs font-bold text-blood hover:bg-blood hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood"
                 >
                   <Phone className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span>৯৯৯ {isBn ? "জরুরি সেবা" : "Emergency"}</span>
+                  <span>১৬২৬৩ {isBn ? "স্বাস্থ্য বাতায়ন" : "Health Hotline"}</span>
                 </a>
                 <a
-                  href="tel:16263"
-                  aria-label={isBn ? "স্বাস্থ্য বাতায়ন ১৬২৬৩ এ কল করুন" : "Call Shastho Batayon 16263"}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-brand/10 border border-brand/30 px-3 py-1.5 text-xs font-bold text-brand hover:bg-brand hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  href="tel:999"
+                  aria-label={isBn ? "জাতীয় জরুরি সেবা ৯৯৯ এ কল করুন" : "Call National Emergency 999"}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-surface border border-line px-3 py-1.5 text-xs font-bold text-ink hover:bg-elevated transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   <Phone className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span>১৬২৬৩ {isBn ? "স্বাস্থ্য বাতায়ন" : "Health Hotline"}</span>
+                  <span>৯৯৯ {isBn ? "জরুরি সেবা" : "Emergency"}</span>
                 </a>
                 <a
                   href="tel:333"

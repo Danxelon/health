@@ -52,10 +52,10 @@ const COPY = {
     en: "Reach us with a question, feedback, or a problem. But in an emergency, do not wait for a reply — call first.",
   },
   helplineLabel: { bn: "২৪ ঘণ্টার জাতীয় হেল্পলাইন", en: "National helpline, 24 hours" },
-  helplineTitle: { bn: "প্রাণের ঝুঁকি থাকলে ৯৯৯", en: "If a life is at risk, call 999" },
+  helplineTitle: { bn: "স্বাস্থ্য সহায়তায় ১৬২৬৩", en: "For health help, call 16263" },
   helplineNote: {
-    bn: "অ্যাম্বুলেন্স, পুলিশ বা আগুন — যেকোনো প্রাণঘাতী জরুরি অবস্থায় ৯৯৯ এক নম্বর। এই ফর্মটি অপেক্ষা করবে, জীবন নয়।",
-    en: "Ambulance, police or fire — for any life-threatening emergency, 999 is the number. This form can wait; a life cannot.",
+    bn: "স্বাস্থ্য বাতায়ন — ফোনে ডাক্তারের পরামর্শ ও জরুরি স্বাস্থ্য সহায়তা। এই ফর্মটি অপেক্ষা করবে, স্বাস্থ্য নয়।",
+    en: "Shasthyo Batayon — doctor consultation and urgent health help over the phone. This form can wait; your health cannot.",
   },
   callNow: { bn: "এখনই কল করুন", en: "Call now" },
   formTitle: { bn: "আমাদের বার্তা পাঠান", en: "Send us a message" },
@@ -265,12 +265,12 @@ export default function Contact() {
             </div>
 
             <a
-              href="tel:999"
+              href="tel:16263"
               className="group inline-flex flex-col items-center justify-center gap-1 rounded-3xl border border-blood/30 bg-blood-soft px-8 py-6 hover:bg-blood-soft/70 transition-colors cursor-pointer"
             >
               <Phone className="h-5 w-5 text-blood-deep" strokeWidth={1.8} aria-hidden="true" />
-              <span className="tnum display text-[clamp(3rem,11vw,5rem)] leading-none text-blood-deep">
-                999
+              <span className="tnum display text-[clamp(2rem,9vw,4rem)] leading-none text-blood-deep">
+                16263
               </span>
               <span className="text-xs font-semibold uppercase tracking-[0.14em] text-blood-deep">
                 {c("callNow")}

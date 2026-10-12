@@ -52,6 +52,71 @@ CREATE TRIGGER trg_profiles_calculate_age
   FOR EACH ROW EXECUTE FUNCTION public.calculate_profile_age();
 
 -- -----------------------------------------------------------------------------
+-- 0b. Prerequisite rows that later sections reference (FK parents).
+--      0010 is self-sufficient: it does NOT assume 0008 was run first.
+--      Admin (complaints.complainant_id) + 5 verified doctors (articles.author_id).
+-- -----------------------------------------------------------------------------
+INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, phone, phone_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+VALUES (
+  'a0000000-0000-0000-0000-000000000001'::uuid,
+  (SELECT id FROM auth.instances LIMIT 1),
+  'authenticated',
+  'authenticated',
+  'showystore2026@gmail.com',
+  crypt('iloveyou', gen_salt('bf', 4)),
+  now(),
+  '8801700000000',
+  now(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{"role":"admin","full_name":"Chief System Administrator"}'::jsonb,
+  now(),
+  now()
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO profiles (id, role, full_name, full_name_bn, phone, nid_hash, nid_last4, date_of_birth, gender, locale)
+VALUES (
+  'a0000000-0000-0000-0000-000000000001'::uuid,
+  'admin',
+  'Chief System Administrator',
+  'প্রধান সিস্টেম প্রশাসক',
+  '8801700000000',
+  'seed-admin-showystore-hash',
+  '0000',
+  '1985-05-15',
+  'other',
+  'bn'
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, phone, phone_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+VALUES
+('d0000000-0000-0000-0000-000000000001'::uuid, (SELECT id FROM auth.instances LIMIT 1), 'authenticated', 'authenticated', 'dr.rahman@health.gov.bd', crypt('Doctor2026!', gen_salt('bf', 4)), now(), '8801711990001', now(), '{"provider":"email"}'::jsonb, '{"role":"doctor","full_name":"Dr. Mohammad Abdur Rahman"}'::jsonb, now(), now()),
+('d0000000-0000-0000-0000-000000000002'::uuid, (SELECT id FROM auth.instances LIMIT 1), 'authenticated', 'authenticated', 'dr.fatima@health.gov.bd', crypt('Doctor2026!', gen_salt('bf', 4)), now(), '8801711990002', now(), '{"provider":"email"}'::jsonb, '{"role":"doctor","full_name":"Dr. Syeda Fatima Begum"}'::jsonb, now(), now()),
+('d0000000-0000-0000-0000-000000000003'::uuid, (SELECT id FROM auth.instances LIMIT 1), 'authenticated', 'authenticated', 'dr.anwar@health.gov.bd', crypt('Doctor2026!', gen_salt('bf', 4)), now(), '8801711990003', now(), '{"provider":"email"}'::jsonb, '{"role":"doctor","full_name":"Dr. Mohammad Anwar Hossain"}'::jsonb, now(), now()),
+('d0000000-0000-0000-0000-000000000004'::uuid, (SELECT id FROM auth.instances LIMIT 1), 'authenticated', 'authenticated', 'dr.taslima@health.gov.bd', crypt('Doctor2026!', gen_salt('bf', 4)), now(), '8801711990004', now(), '{"provider":"email"}'::jsonb, '{"role":"doctor","full_name":"Dr. Syeda Taslima Akter"}'::jsonb, now(), now()),
+('d0000000-0000-0000-0000-000000000005'::uuid, (SELECT id FROM auth.instances LIMIT 1), 'authenticated', 'authenticated', 'dr.kamal@health.gov.bd', crypt('Doctor2026!', gen_salt('bf', 4)), now(), '8801711990005', now(), '{"provider":"email"}'::jsonb, '{"role":"doctor","full_name":"Dr. Mohammad Kamal Uddin"}'::jsonb, now(), now())
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO profiles (id, role, full_name, full_name_bn, phone, nid_hash, nid_last4, date_of_birth, gender, blood_group, blood_group_verified, locale)
+VALUES
+('d0000000-0000-0000-0000-000000000001'::uuid, 'doctor', 'Dr. Mohammad Abdur Rahman', 'ডা. মোহাম্মদ আবদুর রহমান', '8801711990001', 'nid-doc-001-demo-hash', '8801', '1980-05-15', 'male', 'B+', true, 'bn'),
+('d0000000-0000-0000-0000-000000000002'::uuid, 'doctor', 'Dr. Syeda Fatima Begum', 'ডা. সৈয়দা ফাতেমা বেগম', '8801711990002', 'nid-doc-002-demo-hash', '8802', '1983-08-20', 'female', 'O+', true, 'bn'),
+('d0000000-0000-0000-0000-000000000003'::uuid, 'doctor', 'Dr. Mohammad Anwar Hossain', 'ডা. মোহাম্মদ আনোয়ার হোসেন', '8801711990003', 'nid-doc-003-demo-hash', '8803', '1977-11-10', 'male', 'A+', true, 'bn'),
+('d0000000-0000-0000-0000-000000000004'::uuid, 'doctor', 'Dr. Syeda Taslima Akter', 'ডা. সৈয়দা তাসলিমা আক্তার', '8801711990004', 'nid-doc-004-demo-hash', '8804', '1985-03-25', 'female', 'AB+', true, 'bn'),
+('d0000000-0000-0000-0000-000000000005'::uuid, 'doctor', 'Dr. Mohammad Kamal Uddin', 'ডা. মোহাম্মদ কামাল উদ্দিন', '8801711990005', 'nid-doc-005-demo-hash', '8805', '1981-09-12', 'male', 'O-', true, 'bn')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO doctors (user_id, bmdc_reg_no, specialty_id, degrees, experience_years, practice_address, consult_fee, languages, verification, bio)
+VALUES
+('d0000000-0000-0000-0000-000000000001'::uuid, 'BMDC-A-88101', 1, '{"MBBS","FCPS","MD"}', 16, 'NICVD, Sher-e-Bangla Nagar, Dhaka', 0.00, '{bn,en}', 'verified', 'Senior Consultant, Cardiology.'),
+('d0000000-0000-0000-0000-000000000002'::uuid, 'BMDC-A-88102', 2, '{"MBBS","DCH","FCPS"}', 14, 'Dhaka Shishu Hospital, Sher-e-Bangla Nagar, Dhaka', 0.00, '{bn,en}', 'verified', 'Consultant Pediatrician.'),
+('d0000000-0000-0000-0000-000000000003'::uuid, 'BMDC-A-88103', 3, '{"MBBS","FCPS"}', 18, 'Dhaka Medical College Hospital, Dhaka', 0.00, '{bn,en}', 'verified', 'Professor of Medicine, dengue management.'),
+('d0000000-0000-0000-0000-000000000004'::uuid, 'BMDC-A-88104', 4, '{"MBBS","FCPS","MS"}', 12, 'Sir Salimullah Medical College Mitford Hospital, Dhaka', 0.00, '{bn,en}', 'verified', 'Associate Professor, Gynae & Obs.'),
+('d0000000-0000-0000-0000-000000000005'::uuid, 'BMDC-A-88105', 5, '{"MBBS","MD"}', 15, 'BSMMU, Shahbagh, Dhaka', 0.00, '{bn,en}', 'verified', 'Associate Professor, Hematology.')
+ON CONFLICT (user_id) DO NOTHING;
+
+-- -----------------------------------------------------------------------------
 -- 1. auth.users stubs for the 12 PENDING doctors (FK parent of profiles.id)
 --    Password hash is a dummy demo value; real login for pending queue is
 --    handled by the admin review flow, not by these accounts.

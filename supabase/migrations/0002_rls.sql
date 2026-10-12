@@ -100,6 +100,55 @@ alter table notification_prefs      enable row level security;
 alter table app_config              enable row level security;
 
 -- -----------------------------------------------------------------------------
+-- IDEMPOTENCY: drop every policy this file creates, so re-runs never hit
+-- ERROR 42710 "policy already exists". Safe: DROP IF EXISTS is a no-op
+-- when the policy is absent.
+-- -----------------------------------------------------------------------------
+drop policy if exists geo_divisions_read on divisions;
+drop policy if exists geo_districts_read on districts;
+drop policy if exists geo_upazilas_read on upazilas;
+drop policy if exists specialties_read on specialties;
+drop policy if exists profiles_select_own on profiles;
+drop policy if exists profiles_insert_own on profiles;
+drop policy if exists profiles_update_own on profiles;
+drop policy if exists donors_select_own on donors;
+drop policy if exists donors_insert_own on donors;
+drop policy if exists donors_update_own on donors;
+drop policy if exists donor_avail_select on donor_availability;
+drop policy if exists donor_avail_write on donor_availability;
+drop policy if exists blood_requests_select_involved on blood_requests;
+drop policy if exists blood_requests_insert_own on blood_requests;
+drop policy if exists blood_requests_update_own on blood_requests;
+drop policy if exists responses_select_involved on request_responses;
+drop policy if exists responses_insert_self on request_responses;
+drop policy if exists responses_update_self on request_responses;
+drop policy if exists unlocks_select_related on contact_unlocks;
+drop policy if exists contributions_select_related on contributions;
+drop policy if exists doctors_select_own on doctors;
+drop policy if exists doctors_insert_own on doctors;
+drop policy if exists doctors_update_own on doctors;
+drop policy if exists doctor_avail_select on doctor_availability;
+drop policy if exists doctor_avail_write on doctor_availability;
+drop policy if exists consultations_select_participant on consultations;
+drop policy if exists consultations_insert_patient on consultations;
+drop policy if exists consultations_update_participant on consultations;
+drop policy if exists messages_select_participant on consultation_messages;
+drop policy if exists messages_insert_participant on consultation_messages;
+drop policy if exists articles_select_published on articles;
+drop policy if exists articles_insert_author on articles;
+drop policy if exists articles_update_author on articles;
+drop policy if exists reactions_select_all on article_reactions;
+drop policy if exists reactions_write_own on article_reactions;
+drop policy if exists complaints_select_own on complaints;
+drop policy if exists complaints_insert_own on complaints;
+drop policy if exists complaints_admin_update on complaints;
+drop policy if exists blood_banks_read on blood_banks;
+drop policy if exists blood_banks_admin on blood_banks;
+drop policy if exists stock_read on blood_bank_stock;
+drop policy if exists audit_read_admin on audit_log;
+drop policy if exists notification_prefs_own on notification_prefs;
+
+-- -----------------------------------------------------------------------------
 -- REFERENCE DATA: readable by any authenticated user (and anon for the
 -- registration form's upazila picker).
 -- -----------------------------------------------------------------------------
@@ -287,7 +336,8 @@ create policy notification_prefs_own on notification_prefs for all to authentica
 
 -- Redacted live emergency board. No patient name, no requestor id, no exact
 -- coordinates, no hospital phone. Enough to act on, nothing to weaponise.
-create or replace view public.emergency_feed
+drop view if exists public.emergency_feed;
+create view public.emergency_feed
 with (security_invoker = false) as
 select
   r.id,
@@ -324,7 +374,8 @@ where r.status in ('open','matching')
 grant select on public.emergency_feed to authenticated;
 
 -- Doctor public card: everything a patient needs to choose, nothing internal.
-create or replace view public.doctor_cards
+drop view if exists public.doctor_cards;
+create view public.doctor_cards
 with (security_invoker = false) as
 select
   doc.user_id,
@@ -367,7 +418,8 @@ grant select on public.doctor_cards to authenticated;
 grant select on public.doctor_cards to anon;
 
 -- Article feed with author attribution resolved in one place.
-create or replace view public.article_feed
+drop view if exists public.article_feed;
+create view public.article_feed
 with (security_invoker = false) as
 select
   a.id, a.slug, a.title, a.title_bn, a.excerpt, a.cover_image_path,
@@ -389,6 +441,7 @@ grant select on public.article_feed to anon, authenticated;
 
 -- Aggregate blood availability. Powers "X donors near you" and the district
 -- picture without ever scanning donor rows from the client.
+drop materialized view if exists public.donor_counts_by_upazila_group;
 create materialized view public.donor_counts_by_upazila_group as
 select
   p.home_upazila_id as upazila_id,

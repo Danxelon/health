@@ -2581,7 +2581,8 @@ INSERT INTO profiles (id, role, full_name, full_name_bn, phone, nid_hash, nid_la
 ('5cd58214-fa0c-4ca4-8b53-cc01e56e9924', 'donor', 'Tasnim Roksana Banu', 'তাসনিম রোকসানা বানু', '88013001196', 'seed-nid-hash-01197-demo', '1196', '1972-09-10', 54, 'female', 'O+', true, 68.9, 161.7, 6, 23, 'House 5, Road 11, Agrabad', 'Vill: Madhupur, PO: Agrabad', ST_SetSRID(ST_MakePoint(91.937625, 22.552482), 4326)::geography, NULL, 'bn'),
 ('535fe1d2-3b36-48c4-8e57-c9948f5bc6e3', 'citizen', 'Farhana Rehana Ferdous', 'ফারহানা রেহানা ফেরদৌস', '88013001197', 'seed-nid-hash-01198-demo', '1197', '1973-04-23', 53, 'female', 'B+', false, 82.0, 174.9, 37, 26, 'House 27, Road 10, Mohammadpur', 'Vill: Kalibari, PO: Mohammadpur', ST_SetSRID(ST_MakePoint(91.671053, 23.873735), 4326)::geography, NULL, 'en'),
 ('5fd430f3-6272-4af2-a732-dab7f2e21141', 'citizen', 'Sadia Fatema Khanom', 'সাদিয়া ফাতেমা খানম', '88013001198', 'seed-nid-hash-01199-demo', '1198', '1974-11-08', 51, 'female', 'A+', true, 59.1, 169.7, 31, 30, 'House 70, Road 14, Mohakhali', 'Vill: Kathaltoli, PO: Mohakhali', ST_SetSRID(ST_MakePoint(88.474433, 21.816921), 4326)::geography, NULL, 'bn'),
-('cdba9bae-1fd4-412f-800d-4cad02282b5f', 'donor', 'Mir Rashedul Haque', 'মীর রাশেদুল হক', '88013001199', 'seed-nid-hash-01200-demo', '1199', '1975-06-21', 51, 'male', 'O+', false, 57.8, 156.0, 5, 4, 'House 77, Road 10, Dhanmondi', 'Vill: Kazipara, PO: Dhanmondi', ST_SetSRID(ST_MakePoint(90.301102, 25.668241), 4326)::geography, NULL, 'bn');
+('cdba9bae-1fd4-412f-800d-4cad02282b5f', 'donor', 'Mir Rashedul Haque', 'মীর রাশেদুল হক', '88013001199', 'seed-nid-hash-01200-demo', '1199', '1975-06-21', 51, 'male', 'O+', false, 57.8, 156.0, 5, 4, 'House 77, Road 10, Dhanmondi', 'Vill: Kazipara, PO: Dhanmondi', ST_SetSRID(ST_MakePoint(90.301102, 25.668241), 4326)::geography, NULL, 'bn')
+ON CONFLICT (id) DO NOTHING;
 
 -- donors (800)
 INSERT INTO donors (user_id, last_donation_date, total_donations, temp_status, available_from, travel_note, weight_kg, chronic_conditions, medications, smoker, recent_illness, contact_visibility, notify_radius_km, notifications_enabled, declined_count_12mo, accepted_count_12mo, donated_count_12mo) VALUES
@@ -3384,7 +3385,8 @@ INSERT INTO donors (user_id, last_donation_date, total_donations, temp_status, a
 ('f9824dfd-cb59-48e5-80e9-363fd83f1f4d', '2025-12-02', 1, 'unavailable', NULL, NULL, 49.0, NULL, NULL, false, false, 'on_unlock', 17, true, 2, 1, 3),
 ('3c004365-fc11-4c09-9ba4-3b1cb92e88b4', '2025-08-07', 7, 'cooldown', NULL, NULL, 64.8, NULL, NULL, false, false, 'on_unlock', 16, true, 0, 2, 1),
 ('4746b0c4-ac86-427d-bc40-010b617746e6', '2025-02-25', 8, 'available', NULL, NULL, 82.0, NULL, NULL, true, true, 'on_unlock', 25, true, 3, 5, 2),
-('a6d9e1b0-585c-4435-95e2-78eeb8156e16', NULL, 0, 'available', NULL, NULL, 71.3, NULL, NULL, true, true, 'on_unlock', 26, true, 3, 2, 1);
+('a6d9e1b0-585c-4435-95e2-78eeb8156e16', NULL, 0, 'available', NULL, NULL, 71.3, NULL, NULL, true, true, 'on_unlock', 26, true, 3, 2, 1)
+ON CONFLICT (user_id) DO NOTHING;
 
 -- doctors (60)
 INSERT INTO doctors (user_id, bmdc_reg_no, specialty_id, degrees, experience_years, practice_upazila_id, practice_address, practice_geog, consult_fee, languages, verification, rejection_reason, certificate_path, bio) VALUES
@@ -3447,7 +3449,8 @@ INSERT INTO doctors (user_id, bmdc_reg_no, specialty_id, degrees, experience_yea
 ('1309851a-a06e-4eac-9cf2-5c3f9f5a0b5a', 'BMDC-A-100056', 4, '{"MBBS"}', 14, 26, 'Room 141, Mohammadpur branch', ST_SetSRID(ST_MakePoint(91.039439, 21.673473), 4326)::geography, 1900.00, '{bn,en}', 'verified', NULL, NULL, 'Patient-friendly, explains clearly'),
 ('930d1e88-7a39-4e1e-931c-77bf97c0863c', 'BMDC-A-100057', 10, '{"MBBS"}', 4, 31, 'Room 234, Mohakhali branch', ST_SetSRID(ST_MakePoint(88.463372, 21.854716), 4326)::geography, 500.00, '{bn,en}', 'verified', NULL, NULL, 'Senior consultant, 10 yrs experience'),
 ('4631921a-7537-4bcc-9b8b-9cec49e0c5c4', 'BMDC-A-100058', 8, '{"MBBS"}', 2, 15, 'Room 670, Cumilla Cantonment branch', ST_SetSRID(ST_MakePoint(88.508494, 23.951678), 4326)::geography, 2000.00, '{bn,en}', 'pending', NULL, NULL, 'Emergency care specialist'),
-('20f62739-3ec4-4b92-8e40-64ea9e06b874', 'BMDC-A-100059', 7, '{"MBBS"}', 10, 41, 'Room 596, Mirpur branch', ST_SetSRID(ST_MakePoint(90.784956, 22.984810), 4326)::geography, 1200.00, '{bn,en}', 'verified', NULL, NULL, 'Emergency care specialist');
+('20f62739-3ec4-4b92-8e40-64ea9e06b874', 'BMDC-A-100059', 7, '{"MBBS"}', 10, 41, 'Room 596, Mirpur branch', ST_SetSRID(ST_MakePoint(90.784956, 22.984810), 4326)::geography, 1200.00, '{bn,en}', 'verified', NULL, NULL, 'Emergency care specialist')
+ON CONFLICT (user_id) DO NOTHING;
 
 -- blood_requests (200)
 INSERT INTO blood_requests (id, requestor_id, patient_name, patient_age, patient_gender, blood_group_needed, component, units_needed, units_confirmed, urgency, status, needed_by, hospital_name, hospital_contact, upazila_id, geog, address_text, hemoglobin, reason) VALUES
@@ -3650,7 +3653,8 @@ INSERT INTO blood_requests (id, requestor_id, patient_name, patient_age, patient
 ('c188359d-99f1-4815-a6b8-f10df78c5f3c', 'cdba9bae-1fd4-412f-800d-4cad02282b5f', 'Mim Sarkar', 58, 'male', 'B-', 'whole_blood', 2, 0, 'critical', 'open', NULL, 'Khulna Medical College Hospital', '09139960910', 1, ST_SetSRID(ST_MakePoint(90.193162, 24.305519), 4326)::geography, 'Khulna Medical College Hospital, Agrabad', NULL, 'Dengue with low platelets'),
 ('1076f398-c090-4ade-a637-8127c5431890', '957c57a0-a255-4714-aad2-4e5aec597f6a', 'Ayesha Khatun', 30, 'male', 'A+', 'plasma', 3, 0, 'routine', 'open', NULL, 'Sylhet MAG Osmani Medical', '09828110349', 22, ST_SetSRID(ST_MakePoint(89.614519, 22.347552), 4326)::geography, 'Sylhet MAG Osmani Medical, Narayanganj', NULL, 'Anemia crisis'),
 ('696cd874-b90c-4973-a2cd-cf09a8ea9762', '04b32999-ba76-4874-ba06-d09e4bd13329', 'Rakib Hossain', 62, 'female', 'O+', 'plasma', 2, 0, 'critical', 'open', NULL, 'Rangpur Medical College Hospital', '09615916021', 8, ST_SetSRID(ST_MakePoint(90.402918, 22.286269), 4326)::geography, 'Rangpur Medical College Hospital, Savar', NULL, 'Heart surgery'),
-('2ef67198-d679-405b-8209-514fb407cc6f', 'd3ae07ef-d57e-4b2c-bc4f-2a217b286f0f', 'Arif Khan', 57, 'male', 'O+', 'platelets', 1, 0, 'urgent', 'matching', NULL, 'Sylhet MAG Osmani Medical', '09272181550', 30, ST_SetSRID(ST_MakePoint(88.949194, 26.011473), 4326)::geography, 'Sylhet MAG Osmani Medical, Banani', NULL, 'Childbirth (C-section)');
+('2ef67198-d679-405b-8209-514fb407cc6f', 'd3ae07ef-d57e-4b2c-bc4f-2a217b286f0f', 'Arif Khan', 57, 'male', 'O+', 'platelets', 1, 0, 'urgent', 'matching', NULL, 'Sylhet MAG Osmani Medical', '09272181550', 30, ST_SetSRID(ST_MakePoint(88.949194, 26.011473), 4326)::geography, 'Sylhet MAG Osmani Medical, Banani', NULL, 'Childbirth (C-section)')
+ON CONFLICT (id) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- ADMIN USER & PROFILE

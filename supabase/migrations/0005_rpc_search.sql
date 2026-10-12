@@ -8,6 +8,9 @@
 -- =============================================================================
 
 -- Ring radii in metres. Rings 0-2 are radial; 3+ are administrative.
+-- DROP first: CREATE OR REPLACE cannot change the return type, and the
+-- consolidated setup script defines this function with a wider signature.
+drop function if exists public.ring_radius_m(smallint);
 create or replace function public.ring_radius_m(p_ring smallint)
 returns double precision language sql immutable as $$
   select case p_ring
