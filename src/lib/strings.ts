@@ -21,12 +21,15 @@ export const DEFAULT_LANG: Lang = "bn";
 /** Keys are dot-paths; `t()` walks them so a missing key is a visible string. */
 export const STRINGS = {
   app: {
-    name: { bn: "জীবন রক্ষা", en: "Jibon Rokkha" },
+    name: { bn: "মেডিলিঙ্ক", en: "Medilink" },
     tagline: {
-      bn: "নিকটস্থ রক্তদাতা, ডাক্তারি পরামর্শ ও স্বাস্থ্য তথ্য — একটাই জায়গা।",
-      en: "Nearby donors, doctors, and health information — in one place.",
+      bn: "গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের ডিজিটাল স্বাস্থ্য উদ্যোগ — ৬৪ জেলায় জরুরি রক্তের তাৎক্ষণিক ম্যাচিং ও বিনামূল্যে ডাক্তারের পরামর্শ।",
+      en: "Government Digital Health Initiative — emergency blood matching across 64 districts & free doctor telemedicine consultations.",
     },
-    gov: { bn: "স্বাস্থ্যসেবার জন্য একটি প্ল্যাটফর্ম", en: "A platform for public health" },
+    gov: {
+      bn: "গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের ডিজিটাল স্বাস্থ্য উদ্যোগ",
+      en: "Government Digital Health Initiative of Bangladesh",
+    },
   },
 
   nav: {
@@ -75,7 +78,7 @@ export const STRINGS = {
   },
 
   home: {
-    heroEyebrow: { bn: "জীবন রক্ষা", en: "Jibon Rokkha" },
+    heroEyebrow: { bn: "মেডিলিঙ্ক", en: "Medilink" },
     heroTitle: { bn: "রক্ত আর জীবন", en: "Blood and life," },
     heroTitleAccent: { bn: "একসাথে।", en: "side by side." },
     heroBody: {
@@ -289,13 +292,13 @@ export const STRINGS = {
   },
 
   footer: {
-    about: { bn: "আমাদের সম্পর্কে", en: "About" },
+    about: { bn: "মেডিলিঙ্ক সম্পর্কে", en: "About Medilink" },
     contact: { bn: "যোগাযোগ", en: "Contact" },
     helpline: { bn: "হেল্পলাইন", en: "Helpline" },
     legal: { bn: "শর্তাবলি ও গোপনীয়তা", en: "Terms and privacy" },
     notice: {
-      bn: "এটি একটি সেবামূলক প্ল্যাটফর্ম। জরুরি অবস্থায় ৯৯৯-এ কল করুন।",
-      en: "This is a support platform. In a critical emergency, call 999.",
+      bn: "মেডিলিঙ্ক একটি সরকারি ডিজিটাল স্বাস্থ্য উদ্যোগ। জরুরি অবস্থায় সরাসরি ৯৯৯ বা ১৬২৬৩-এ কল করুন।",
+      en: "Medilink is a government digital health initiative. In a medical emergency, call 999 or 16263.",
     },
     rights: { bn: "সর্বস্বত্ব সংরক্ষিত", en: "All rights reserved" },
   },

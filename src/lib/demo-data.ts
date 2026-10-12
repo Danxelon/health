@@ -13,7 +13,8 @@
 import { acceptableDonorsFor, groupBadge, GROUP_PREVALENCE_BD } from "@/domain/blood.ts";
 import { maxRingFor, scoreDonor } from "@/domain/matching.ts";
 import { expiresAtISO } from "@/domain/requests.ts";
-import { maskName, maskPhone } from "@/domain/profile.ts";
+import { maskName, maskNameBn, maskPhone } from "@/domain/profile.ts";
+import { ageInYears } from "@/domain/eligibility.ts";
 import type {
   ArticleFeedItem,
   BloodComponent,
@@ -115,17 +116,160 @@ export const DEFAULT_ORIGIN = { lat: 23.8103, lng: 90.4125, upazila_id: 111 };
 /* Donors                                                                      */
 /* -------------------------------------------------------------------------- */
 
-const GIVEN_NAMES = [
-  "Rakibul", "Shathi", "Tanvir", "Nusrat", "Imran", "Farhana", "Sabbir", "Mehjabin",
-  "Arif", "Sadia", "Mahmud", "Rumana", "Jahid", "Sumaiya", "Nayeem", "Taslima",
-  "Rashed", "Ayesha", "Kamrul", "Sharmin", "Faisal", "Rehana", "Shakil", "Nasrin",
-  "Anwar", "Jannatul", "Mizanur", "Parvin", "Hasib", "Lubna",
-] as const;
+interface BilingualNamePart {
+  readonly en: string;
+  readonly bn: string;
+}
 
-const SURNAMES = [
-  "Hasan", "Akter", "Islam", "Rahman", "Chowdhury", "Begum", "Hossain", "Khatun",
-  "Ahmed", "Sultana", "Mia", "Parvin", "Alam", "Jahan", "Kabir", "Nahar",
-] as const;
+const MALE_FIRST_NAMES: readonly BilingualNamePart[] = [
+  { en: "Mohammad", bn: "মোহাম্মদ" },
+  { en: "Tanvir", bn: "তানভীর" },
+  { en: "Rakibul", bn: "রাকিবুল" },
+  { en: "Arif", bn: "আরিফ" },
+  { en: "Mahmud", bn: "মাহমুদ" },
+  { en: "Sabbir", bn: "সাব্বির" },
+  { en: "Imran", bn: "ইমরান" },
+  { en: "Jahid", bn: "জাহিদ" },
+  { en: "Nayeem", bn: "নাঈম" },
+  { en: "Rashed", bn: "রাশেদ" },
+  { en: "Kamrul", bn: "কামরুল" },
+  { en: "Faisal", bn: "ফয়সাল" },
+  { en: "Shakil", bn: "শাকিল" },
+  { en: "Mizanur", bn: "মিজানুর" },
+  { en: "Hasib", bn: "হাসিব" },
+  { en: "Kazi", bn: "কাজী" },
+  { en: "Tariqul", bn: "তারিকুল" },
+  { en: "Ashraful", bn: "আশরাফুল" },
+  { en: "Shahidul", bn: "শহীদুল" },
+  { en: "Ziaur", bn: "জিয়াউর" },
+  { en: "Monirul", bn: "মনিরুল" },
+  { en: "Habibur", bn: "হাবিবুর" },
+];
+
+const MALE_MIDDLE_NAMES: readonly BilingualNamePart[] = [
+  { en: "Hasan", bn: "হাসান" },
+  { en: "Hossain", bn: "হোসেন" },
+  { en: "Abdur", bn: "আবদুর" },
+  { en: "Anwar", bn: "আনোয়ার" },
+  { en: "Kamal", bn: "কামাল" },
+  { en: "Jahangir", bn: "জাহাঙ্গীর" },
+  { en: "Ashraf", bn: "আশরাফ" },
+  { en: "Monir", bn: "মনির" },
+  { en: "Tariq", bn: "তারিক" },
+  { en: "Zia", bn: "জিয়া" },
+  { en: "Nasir", bn: "নাসির" },
+  { en: "Sadek", bn: "সাদেক" },
+  { en: "Habib", bn: "হাবিব" },
+  { en: "Enam", bn: "এনাম" },
+  { en: "Mahbub", bn: "মাহবুব" },
+  { en: "Shahid", bn: "শহীদ" },
+  { en: "Faruk", bn: "ফারুক" },
+  { en: "Salim", bn: "সেলিম" },
+];
+
+const MALE_LAST_NAMES: readonly BilingualNamePart[] = [
+  { en: "Rahman", bn: "রহমান" },
+  { en: "Chowdhury", bn: "চৌধুরী" },
+  { en: "Ahmed", bn: "আহমেদ" },
+  { en: "Islam", bn: "ইসলাম" },
+  { en: "Uddin", bn: "উদ্দিন" },
+  { en: "Alam", bn: "আলম" },
+  { en: "Kabir", bn: "কবির" },
+  { en: "Mia", bn: "মিয়া" },
+  { en: "Khan", bn: "খান" },
+  { en: "Haque", bn: "হক" },
+  { en: "Sikder", bn: "সিকদার" },
+  { en: "Talukder", bn: "তালুকদার" },
+  { en: "Bhuiyan", bn: "ভূঁইয়া" },
+  { en: "Sheikh", bn: "শেখ" },
+];
+
+const FEMALE_FIRST_NAMES: readonly BilingualNamePart[] = [
+  { en: "Nusrat", bn: "নুসরাত" },
+  { en: "Farhana", bn: "ফারহানা" },
+  { en: "Sadia", bn: "সাদিয়া" },
+  { en: "Rumana", bn: "রুমানা" },
+  { en: "Sumaiya", bn: "সুমাইয়া" },
+  { en: "Taslima", bn: "তাসলিমা" },
+  { en: "Ayesha", bn: "আয়েশা" },
+  { en: "Sharmin", bn: "শারমিন" },
+  { en: "Rehana", bn: "রেহানা" },
+  { en: "Nasrin", bn: "নাসরিন" },
+  { en: "Jannatul", bn: "জান্নাতুল" },
+  { en: "Mehjabin", bn: "মেহজাবিন" },
+  { en: "Shathi", bn: "সাথী" },
+  { en: "Lubna", bn: "লুবনা" },
+  { en: "Syeda", bn: "সৈয়দা" },
+  { en: "Sabina", bn: "সাবিনা" },
+  { en: "Tahmina", bn: "তাহমিনা" },
+  { en: "Nazma", bn: "নাজমা" },
+  { en: "Dilruba", bn: "দিলরুবা" },
+  { en: "Rokeya", bn: "রোকেয়া" },
+];
+
+const FEMALE_MIDDLE_NAMES: readonly BilingualNamePart[] = [
+  { en: "Jahan", bn: "জাহান" },
+  { en: "Akter", bn: "আক্তার" },
+  { en: "Sultana", bn: "সুলতানা" },
+  { en: "Parvin", bn: "পারভীন" },
+  { en: "Fatima", bn: "ফাতেমা" },
+  { en: "Begum", bn: "বেগম" },
+  { en: "Ferdous", bn: "ফেরদৌস" },
+  { en: "Yasmin", bn: "ইয়াসমিন" },
+  { en: "Nahar", bn: "নাহার" },
+  { en: "Khatun", bn: "খাতুন" },
+  { en: "Nasrin", bn: "নাসরিন" },
+  { en: "Sharmin", bn: "শারমিন" },
+  { en: "Noor", bn: "নূর" },
+  { en: "Ara", bn: "আরা" },
+];
+
+const FEMALE_LAST_NAMES: readonly BilingualNamePart[] = [
+  { en: "Chowdhury", bn: "চৌধুরী" },
+  { en: "Begum", bn: "বেগম" },
+  { en: "Akter", bn: "আক্তার" },
+  { en: "Khatun", bn: "খাতুন" },
+  { en: "Sultana", bn: "সুলতানা" },
+  { en: "Jahan", bn: "জাহান" },
+  { en: "Nahar", bn: "নাহার" },
+  { en: "Parvin", bn: "পারভীন" },
+  { en: "Banu", bn: "বানু" },
+  { en: "Ferdous", bn: "ফেরদৌস" },
+  { en: "Khanom", bn: "খানম" },
+  { en: "Ahmed", bn: "আহমেদ" },
+  { en: "Rahman", bn: "রহমান" },
+];
+
+export function sample3WordName(isFemale: boolean): { en: string; bn: string } {
+  if (isFemale) {
+    const f = pick(FEMALE_FIRST_NAMES);
+    let m = pick(FEMALE_MIDDLE_NAMES);
+    while (m.en === f.en) {
+      m = pick(FEMALE_MIDDLE_NAMES);
+    }
+    let l = pick(FEMALE_LAST_NAMES);
+    while (l.en === m.en || l.en === f.en) {
+      l = pick(FEMALE_LAST_NAMES);
+    }
+    return {
+      en: `${f.en} ${m.en} ${l.en}`,
+      bn: `${f.bn} ${m.bn} ${l.bn}`,
+    };
+  }
+  const f = pick(MALE_FIRST_NAMES);
+  let m = pick(MALE_MIDDLE_NAMES);
+  while (m.en === f.en) {
+    m = pick(MALE_MIDDLE_NAMES);
+  }
+  let l = pick(MALE_LAST_NAMES);
+  while (l.en === m.en || l.en === f.en) {
+    l = pick(MALE_LAST_NAMES);
+  }
+  return {
+    en: `${f.en} ${m.en} ${l.en}`,
+    bn: `${f.bn} ${m.bn} ${l.bn}`,
+  };
+}
 
 /** Weighted so the list reflects Bangladesh's real group distribution. */
 function sampleGroup(): BloodGroup {
@@ -150,11 +294,23 @@ function daysAgoISO(days: number): string {
  * projection — there is deliberately no `phone` or `nid` field on it, because
  * the real RPC never returns one either.
  */
-function makeDonor(index: number): DonorCard & { _raw_name: string; _phone: string; _lat: number; _lng: number } {
+function makeDonor(index: number): DonorCard & {
+  _raw_name: string;
+  _raw_name_bn: string;
+  _phone: string;
+  _lat: number;
+  _lng: number;
+  full_name: string;
+  full_name_bn: string;
+  display_name_bn: string;
+  date_of_birth: string;
+  age: number;
+} {
   const upazila = pick(DEMO_UPAZILAS);
-  const first = pick(GIVEN_NAMES);
-  const last = pick(SURNAMES);
-  const fullName = `${first} ${last}`;
+  const isFemale = rng() < 0.38;
+  const name = sample3WordName(isFemale);
+  const fullName = name.en;
+  const fullNameBn = name.bn;
   const group = sampleGroup();
   const lastDonation = rng() < 0.55 ? daysAgoISO(between(20, 400)) : null;
 
@@ -208,9 +364,21 @@ function makeDonor(index: number): DonorCard & { _raw_name: string; _phone: stri
   const donorLat = Number((upazila.lat + (((index * 13) % 20) - 10) * 0.0015).toFixed(4));
   const donorLng = Number((upazila.lng + (((index * 17) % 20) - 10) * 0.0015).toFixed(4));
 
+  const targetAge = between(19, 54);
+  const birthYear = 2026 - targetAge;
+  const birthMonth = String(between(1, 12)).padStart(2, "0");
+  const birthDay = String(between(1, 28)).padStart(2, "0");
+  const dob = `${birthYear}-${birthMonth}-${birthDay}`;
+  const calculatedAge = ageInYears(dob, "2026-10-12") ?? targetAge;
+
   return {
     donor_id: `demo-donor-${index}`,
     display_name: maskName(fullName),
+    display_name_bn: maskNameBn(fullNameBn, "রক্তদাতা"),
+    full_name: fullName,
+    full_name_bn: fullNameBn,
+    date_of_birth: dob,
+    age: calculatedAge,
     blood_group: group,
     blood_group_verified: verified,
     distance_band: band,
@@ -233,14 +401,25 @@ function makeDonor(index: number): DonorCard & { _raw_name: string; _phone: stri
     score,
     contact_mode: rng() < 0.85 ? "on_unlock" : "private_admin",
     _raw_name: fullName,
+    _raw_name_bn: fullNameBn,
     _phone: `+8801${between(3, 9)}${String(between(10_000_000, 99_999_999))}`,
     _lat: donorLat,
     _lng: donorLng,
   };
 }
 
-export const DEMO_DONORS: readonly (DonorCard & { _raw_name: string; _phone: string; _lat: number; _lng: number })[] =
-  Array.from({ length: 96 }, (_, i) => makeDonor(i));
+export const DEMO_DONORS: readonly (DonorCard & {
+  _raw_name: string;
+  _raw_name_bn: string;
+  _phone: string;
+  _lat: number;
+  _lng: number;
+  full_name: string;
+  full_name_bn: string;
+  display_name_bn: string;
+  date_of_birth: string;
+  age: number;
+})[] = Array.from({ length: 96 }, (_, i) => makeDonor(i));
 
 /* -------------------------------------------------------------------------- */
 /* Emergency requests near the user                                            */
@@ -441,25 +620,44 @@ export const DEMO_SPECIALTIES = SPECIALTIES;
 
 const DEGREES = ["MBBS", "MBBS, FCPS", "MBBS, MD", "MBBS, MS", "MBBS, FCPS, MD"] as const;
 
-function makeDoctor(index: number): DoctorCard & { _phone: string; phone: string } {
+function makeDoctor(index: number): DoctorCard & {
+  _phone: string;
+  phone: string;
+  display_name_bn: string;
+  full_name_bn: string;
+  date_of_birth: string;
+  age: number;
+} {
   const upazila = pick(DEMO_UPAZILAS);
   const specialty = pick(SPECIALTIES);
-  const first = pick(GIVEN_NAMES);
-  const last = pick(SURNAMES);
-  const fullName = `Dr. ${first} ${last}`;
+  const isFemale = rng() < 0.35;
+  const name = sample3WordName(isFemale);
+  const fullName = `Dr. ${name.en}`;
+  const fullNameBn = `ডা. ${name.bn}`;
   const degrees = pick(DEGREES);
   const fee = 0; // Government health service: 100% free
   const verified = rng() < 0.82;
   const phone = `+8801${between(3, 9)}${String(between(10_000_000, 99_999_999))}`;
+  const experienceYears = between(3, 28);
+  const baseAge = 26 + experienceYears + between(1, 4);
+  const birthYear = 2026 - baseAge;
+  const birthMonth = String(between(1, 12)).padStart(2, "0");
+  const birthDay = String(between(1, 28)).padStart(2, "0");
+  const dob = `${birthYear}-${birthMonth}-${birthDay}`;
+  const calculatedAge = ageInYears(dob, "2026-10-12") ?? baseAge;
 
   return {
     user_id: `demo-doctor-${index}`,
     display_name: fullName,
     full_name: fullName,
+    display_name_bn: fullNameBn,
+    full_name_bn: fullNameBn,
+    date_of_birth: dob,
+    age: calculatedAge,
     avatar_url: null,
     bmdc_reg_no: verified ? `BMDC-${between(10000, 99999)}` : null,
     degrees,
-    experience_years: between(3, 28),
+    experience_years: experienceYears,
     consult_fee: fee,
     languages: rng() < 0.9 ? ["bn", "en"] : ["bn"],
     bio:
@@ -487,11 +685,22 @@ function makeDoctor(index: number): DoctorCard & { _phone: string; phone: string
 }
 
 /** Featured verified specialist doctors with BMDC credentials. */
-export const FEATURED_DOCTORS: readonly (DoctorCard & { _phone: string; phone: string })[] = [
+export const FEATURED_DOCTORS: readonly (DoctorCard & {
+  _phone: string;
+  phone: string;
+  display_name_bn: string;
+  full_name_bn: string;
+  date_of_birth: string;
+  age: number;
+})[] = [
   {
     user_id: "demo-doctor-0",
-    display_name: "Dr. M. A. Rahman",
-    full_name: "Dr. M. A. Rahman",
+    display_name: "Dr. Mohammad Abdur Rahman",
+    full_name: "Dr. Mohammad Abdur Rahman",
+    display_name_bn: "ডা. মোহাম্মদ আবদুর রহমান",
+    full_name_bn: "ডা. মোহাম্মদ আবদুর রহমান",
+    date_of_birth: "1978-04-12",
+    age: 48,
     avatar_url: null,
     bmdc_reg_no: "BMDC-A-88101",
     degrees: "MBBS, FCPS, MD (Cardiology)",
@@ -519,8 +728,12 @@ export const FEATURED_DOCTORS: readonly (DoctorCard & { _phone: string; phone: s
   },
   {
     user_id: "demo-doctor-1",
-    display_name: "Dr. Fatima Begum",
-    full_name: "Dr. Fatima Begum",
+    display_name: "Dr. Syeda Fatima Begum",
+    full_name: "Dr. Syeda Fatima Begum",
+    display_name_bn: "ডা. সৈয়দা ফাতেমা বেগম",
+    full_name_bn: "ডা. সৈয়দা ফাতেমা বেগম",
+    date_of_birth: "1982-08-25",
+    age: 44,
     avatar_url: null,
     bmdc_reg_no: "BMDC-A-88102",
     degrees: "MBBS, DCH, FCPS (Pediatrics)",
@@ -548,8 +761,12 @@ export const FEATURED_DOCTORS: readonly (DoctorCard & { _phone: string; phone: s
   },
   {
     user_id: "demo-doctor-2",
-    display_name: "Dr. Anwar Hossain",
-    full_name: "Dr. Anwar Hossain",
+    display_name: "Dr. Mohammad Anwar Hossain",
+    full_name: "Dr. Mohammad Anwar Hossain",
+    display_name_bn: "ডা. মোহাম্মদ আনোয়ার হোসেন",
+    full_name_bn: "ডা. মোহাম্মদ আনোয়ার হোসেন",
+    date_of_birth: "1974-02-18",
+    age: 52,
     avatar_url: null,
     bmdc_reg_no: "BMDC-A-88103",
     degrees: "MBBS, FCPS (Medicine), MACP",
@@ -577,8 +794,12 @@ export const FEATURED_DOCTORS: readonly (DoctorCard & { _phone: string; phone: s
   },
   {
     user_id: "demo-doctor-3",
-    display_name: "Dr. Taslima Akter",
-    full_name: "Dr. Taslima Akter",
+    display_name: "Dr. Syeda Taslima Akter",
+    full_name: "Dr. Syeda Taslima Akter",
+    display_name_bn: "ডা. সৈয়দা তাসলিমা আক্তার",
+    full_name_bn: "ডা. সৈয়দা তাসলিমা আক্তার",
+    date_of_birth: "1984-11-05",
+    age: 42,
     avatar_url: null,
     bmdc_reg_no: "BMDC-A-88104",
     degrees: "MBBS, MS (Gynae & Obs), FCPS",
@@ -606,8 +827,12 @@ export const FEATURED_DOCTORS: readonly (DoctorCard & { _phone: string; phone: s
   },
   {
     user_id: "demo-doctor-4",
-    display_name: "Dr. Kamal Uddin",
-    full_name: "Dr. Kamal Uddin",
+    display_name: "Dr. Mohammad Kamal Uddin",
+    full_name: "Dr. Mohammad Kamal Uddin",
+    display_name_bn: "ডা. মোহাম্মদ কামাল উদ্দিন",
+    full_name_bn: "ডা. মোহাম্মদ কামাল উদ্দিন",
+    date_of_birth: "1980-06-30",
+    age: 46,
     avatar_url: null,
     bmdc_reg_no: "BMDC-A-88105",
     degrees: "MBBS, FCPS (Hematology), MD",
@@ -635,7 +860,14 @@ export const FEATURED_DOCTORS: readonly (DoctorCard & { _phone: string; phone: s
   },
 ];
 
-export const DEMO_DOCTORS: readonly (DoctorCard & { _phone: string; phone?: string })[] = [
+export const DEMO_DOCTORS: readonly (DoctorCard & {
+  _phone: string;
+  phone?: string;
+  display_name_bn: string;
+  full_name_bn: string;
+  date_of_birth: string;
+  age: number;
+})[] = [
   ...FEATURED_DOCTORS,
   ...Array.from({ length: 37 }, (_, i) => makeDoctor(i + 5)),
 ];
@@ -697,7 +929,8 @@ const ARTICLE_SEEDS = [
 
 const ARTICLE_DOC_DETAILS = [
   {
-    name: "Dr. Anwar Hossain",
+    name: "Dr. Mohammad Anwar Hossain",
+    name_bn: "ডা. মোহাম্মদ আনোয়ার হোসেন",
     degrees: "MBBS, FCPS",
     bmdc: "BMDC-A-88103",
     specialty_en: "Internal Medicine & Dengue",
@@ -705,7 +938,8 @@ const ARTICLE_DOC_DETAILS = [
     specialty_slug: "medicine",
   },
   {
-    name: "Dr. Kamal Uddin",
+    name: "Dr. Mohammad Kamal Uddin",
+    name_bn: "ডা. মোহাম্মদ কামাল উদ্দিন",
     degrees: "MBBS, MD (Hematology)",
     bmdc: "BMDC-A-88105",
     specialty_en: "Hematology & Blood Disorders",
@@ -713,7 +947,8 @@ const ARTICLE_DOC_DETAILS = [
     specialty_slug: "blood",
   },
   {
-    name: "Dr. Kamal Uddin",
+    name: "Dr. Mohammad Kamal Uddin",
+    name_bn: "ডা. মোহাম্মদ কামাল উদ্দিন",
     degrees: "MBBS, MD (Hematology)",
     bmdc: "BMDC-A-88105",
     specialty_en: "Hematology & Blood Disorders",
@@ -721,7 +956,8 @@ const ARTICLE_DOC_DETAILS = [
     specialty_slug: "blood",
   },
   {
-    name: "Dr. M. A. Rahman",
+    name: "Dr. Mohammad Abdur Rahman",
+    name_bn: "ডা. মোহাম্মদ আবদুর রহমান",
     degrees: "MBBS, FCPS, MD",
     bmdc: "BMDC-A-88101",
     specialty_en: "Cardiology",
@@ -729,7 +965,8 @@ const ARTICLE_DOC_DETAILS = [
     specialty_slug: "cardiology",
   },
   {
-    name: "Dr. Fatima Begum",
+    name: "Dr. Syeda Fatima Begum",
+    name_bn: "ডা. সৈয়দা ফাতেমা বেগম",
     degrees: "MBBS, DCH, FCPS",
     bmdc: "BMDC-A-88102",
     specialty_en: "Paediatrics",
@@ -737,7 +974,8 @@ const ARTICLE_DOC_DETAILS = [
     specialty_slug: "pediatrics",
   },
   {
-    name: "Dr. Taslima Akter",
+    name: "Dr. Syeda Taslima Akter",
+    name_bn: "ডা. সৈয়দা তাসলিমা আক্তার",
     degrees: "MBBS, FCPS, MS",
     bmdc: "BMDC-A-88104",
     specialty_en: "Gynaecology & Obstetrics",
@@ -764,6 +1002,7 @@ export const DEMO_ARTICLES: readonly ArticleFeedItem[] = ARTICLE_SEEDS.map((seed
     flagged_review: false,
     author_id: author.user_id,
     author_name: docMeta.name ?? author.full_name,
+    author_name_bn: docMeta.name_bn,
     author_avatar: null,
     author_degrees: docMeta.degrees ?? author.degrees,
     author_bmdc: docMeta.bmdc,

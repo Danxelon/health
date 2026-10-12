@@ -253,6 +253,40 @@ describe("rankDonors", () => {
     assert.equal((first as Record<string, unknown>).nid_hash, undefined);
     assert.equal((first as Record<string, unknown>).nid_last4, undefined);
   });
+
+  it("preserves age, date_of_birth, and full bilingual names consistently", () => {
+    const donorWithAgeAndNames = {
+      ...mk("donor-age-1", 0, 0.95, 800),
+      display_name: "Mohammad R.",
+      display_name_bn: "মোহাম্মদ র.",
+      full_name: "Mohammad Rafiqul Islam",
+      full_name_bn: "মোহাম্মদ রফিকুল ইসলাম",
+      age: 28,
+      date_of_birth: "1998-05-14",
+      address_en: "House 12, Road 4, Dhanmondi, Dhaka",
+      address_bn: "বাসা ১২, রোড ৪, ধানমন্ডি, ঢাকা",
+      upazila_en: "Dhanmondi",
+      upazila_bn: "ধানমন্ডি",
+      district_en: "Dhaka",
+      district_bn: "ঢাকা",
+      division_en: "Dhaka",
+      division_bn: "ঢাকা",
+      lat: 23.7461,
+      lng: 90.3742,
+    };
+
+    const ranked = rankDonors([donorWithAgeAndNames]);
+    assert.equal(ranked.length, 1);
+    const first = ranked[0]!;
+    assert.equal(first.age, 28);
+    assert.equal(first.date_of_birth, "1998-05-14");
+    assert.equal(first.display_name, "Mohammad R.");
+    assert.equal(first.display_name_bn, "মোহাম্মদ র.");
+    assert.equal(first.full_name, "Mohammad Rafiqul Islam");
+    assert.equal(first.full_name_bn, "মোহাম্মদ রফিকুল ইসলাম");
+    assert.equal(first.district_en, "Dhaka");
+    assert.equal(first.district_bn, "ঢাকা");
+  });
 });
 
 describe("groupByRing", () => {

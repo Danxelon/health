@@ -23,7 +23,7 @@ import {
   isRareGroup,
   parseBloodGroup,
 } from "./blood.ts";
-import { BLOOD_GROUPS, type BloodGroup } from "./types.ts";
+import { BLOOD_GROUPS, BLOOD_COMPONENTS, type BloodGroup, type BloodComponent } from "./types.ts";
 
 describe("parseBloodGroup", () => {
   it("splits every group into abo and rh", () => {
@@ -209,6 +209,14 @@ describe("badges and prevalence", () => {
   it("treats every negative group as rare", () => {
     for (const g of BLOOD_GROUPS) {
       assert.equal(isRareGroup(g), g.endsWith("-") || g === "AB+");
+    }
+  });
+
+  it("defines the four canonical clinical blood components", () => {
+    assert.deepEqual([...BLOOD_COMPONENTS], ["whole_blood", "prbc", "platelets", "plasma"]);
+    for (const component of BLOOD_COMPONENTS) {
+      const allowed: BloodComponent = component;
+      assert.ok(allowed.length > 0);
     }
   });
 });

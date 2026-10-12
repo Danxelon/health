@@ -26,6 +26,7 @@ import {
   SearchX,
   ShieldAlert,
   ShieldCheck,
+  Sparkles,
   Stethoscope,
   X,
 } from "lucide-react";
@@ -36,6 +37,7 @@ import { Badge, ErrorBanner, SectionHeader } from "@/components/ui.tsx";
 import { fetchArticles } from "@/api/articles.ts";
 import { DomainError, type ArticleFeedItem } from "@/domain/types.ts";
 import { toBengaliDigits } from "@/domain/profile.ts";
+import { getDoctorAuthorProfile } from "@/domain/doctor-profiles.ts";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -83,14 +85,20 @@ function ArticleCard({ article }: { article: ArticleFeedItem }) {
   const { t, lang, isBn } = useAppShell();
 
   const title = lang === "bn" && article.title_bn ? article.title_bn : article.title;
-  const authorName =
-    article.author_name ?? (lang === "bn" ? article.specialty_bn : article.specialty_en);
+
+  // Resolve 3-word doctor author name in both languages
+  const docProfile = getDoctorAuthorProfile(
+    article.author_name,
+    article.author_bmdc ?? article.bmdc_reg_no,
+    article.author_id
+  );
+
+  const authorNamePrimary = isBn ? docProfile.nameBn : docProfile.nameEn;
+  const authorNameSecondary = isBn ? docProfile.nameEn : docProfile.nameBn;
+
   const degrees = article.author_degrees;
-  const specialty =
-    lang === "bn"
-      ? (article.specialty_bn ?? article.specialty_en)
-      : (article.specialty_en ?? article.specialty_bn);
-  const bmdc = article.author_bmdc ?? article.bmdc_reg_no ?? "BMDC-A-88101";
+  const specialty = isBn ? docProfile.specialtyBn : docProfile.specialtyEn;
+  const bmdc = article.author_bmdc ?? article.bmdc_reg_no ?? docProfile.bmdc;
 
   const cover =
     article.cover_image_path ?? `https://picsum.photos/seed/${article.slug}/1920/1080`;
@@ -115,9 +123,15 @@ function ArticleCard({ article }: { article: ArticleFeedItem }) {
 
         {tag && (
           <span className="absolute left-3 top-3 rounded-full bg-surface/90 px-2.5 py-1 text-[11px] font-semibold capitalize text-ink backdrop-blur-xs">
-            {tag}
+            {tag === "free-consultation" ? (isBn ? "বিনামূল্যে পরামর্শ" : "Free Consultation") : tag}
           </span>
         )}
+
+        {/* Free Consultation Tag overlaid on cover */}
+        <span className="absolute left-3 bottom-3 inline-flex items-center gap-1 rounded-full bg-emerald-700/95 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs backdrop-blur-xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+          <span>{isBn ? "বিনামূল্যে পরামর্শ" : "Free Consultation"}</span>
+        </span>
 
         {article.flagged_review ? (
           <span className="absolute right-3 top-3">
@@ -130,7 +144,7 @@ function ArticleCard({ article }: { article: ArticleFeedItem }) {
           <span className="absolute right-3 top-3">
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600/90 px-2.5 py-1 text-[11px] font-bold text-white shadow-xs backdrop-blur-xs">
               <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.4} aria-hidden="true" />
-              <span>{isBn ? "ভেরিফাইড ডক্টর" : "BMDC Verified"}</span>
+              <span>{isBn ? "BMDC ভেরিফাইড" : "BMDC Verified"}</span>
             </span>
           </span>
         )}
@@ -148,14 +162,17 @@ function ArticleCard({ article }: { article: ArticleFeedItem }) {
         {/* Doctor Verification & BMDC Credentials Box */}
         <div className="mt-4 rounded-2xl border border-line/80 bg-elevated/50 p-3 transition-colors group-hover:border-brand/30 group-hover:bg-brand-soft/20">
           <div className="flex items-start gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-deep font-bold text-xs ring-1 ring-brand/20">
-              <Stethoscope className="h-4 w-4" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-deep font-bold text-xs ring-1 ring-brand/20">
+              <Stethoscope className="h-4.5 w-4.5" />
             </div>
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-bold text-sm text-ink truncate">
-                  {authorName}
+                  {authorNamePrimary}
+                </span>
+                <span className="text-xs text-muted font-medium">
+                  ({authorNameSecondary})
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                   <ShieldCheck className="h-3 w-3 text-emerald-600 dark:text-emerald-400" strokeWidth={2.4} aria-hidden="true" />
@@ -170,6 +187,17 @@ function ArticleCard({ article }: { article: ArticleFeedItem }) {
                 </span>
                 <span className="text-muted font-medium text-[11px] truncate">
                   {degrees ? `${degrees} · ` : ""}{specialty}
+                </span>
+              </div>
+
+              {/* Free Consultation Tag */}
+              <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-line/60 pt-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-0.5 text-[11px] font-bold shadow-2xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>{isBn ? "বিনামূল্যে পরামর্শ (Free Consultation)" : "Free Consultation (বিনামূল্যে পরামর্শ)"}</span>
+                </span>
+                <span className="text-[11px] font-bold text-brand hover:underline">
+                  {isBn ? "পরামর্শ নিন →" : "Consult Free →"}
                 </span>
               </div>
             </div>
@@ -259,10 +287,17 @@ export default function Articles() {
         const titleBn = (article.title_bn ?? "").toLowerCase();
         const excerptEn = (article.excerpt ?? "").toLowerCase();
         const excerptBn = (article.excerpt_bn ?? "").toLowerCase();
-        const author = (article.author_name ?? "").toLowerCase();
-        const bmdc = (article.author_bmdc ?? article.bmdc_reg_no ?? "").toLowerCase();
-        const specEn = (article.specialty_en ?? "").toLowerCase();
-        const specBn = (article.specialty_bn ?? "").toLowerCase();
+        const docProf = getDoctorAuthorProfile(
+          article.author_name,
+          article.author_bmdc ?? article.bmdc_reg_no,
+          article.author_id
+        );
+        const authorEn = docProf.nameEn.toLowerCase();
+        const authorBn = docProf.nameBn.toLowerCase();
+        const rawAuthor = (article.author_name ?? "").toLowerCase();
+        const bmdc = (article.author_bmdc ?? article.bmdc_reg_no ?? docProf.bmdc).toLowerCase();
+        const specEn = (article.specialty_en ?? docProf.specialtyEn).toLowerCase();
+        const specBn = (article.specialty_bn ?? docProf.specialtyBn).toLowerCase();
         const tagList = (article.tags ?? []).map((t) => t.toLowerCase()).join(" ");
 
         return (
@@ -270,11 +305,17 @@ export default function Articles() {
           titleBn.includes(q) ||
           excerptEn.includes(q) ||
           excerptBn.includes(q) ||
-          author.includes(q) ||
+          authorEn.includes(q) ||
+          authorBn.includes(q) ||
+          rawAuthor.includes(q) ||
           bmdc.includes(q) ||
           specEn.includes(q) ||
           specBn.includes(q) ||
-          tagList.includes(q)
+          tagList.includes(q) ||
+          "medilink".includes(q) ||
+          "মেডিলিঙ্ক".includes(q) ||
+          "free".includes(q) ||
+          "বিনামূল্যে".includes(q)
         );
       });
     }
@@ -334,14 +375,23 @@ export default function Articles() {
       <section ref={headerRef} className="mx-auto max-w-7xl px-4 pt-14 sm:px-6 sm:pt-20">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
           <div>
+            <div
+              data-masthead
+              className="reveal-init inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-soft/70 px-4 py-1.5 text-xs font-bold text-brand-deep mb-4 shadow-2xs"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-brand" />
+              <span>{isBn ? "মেডিলিঙ্ক স্বাস্থ্য প্রকাশনা পোর্টাল (Medilink Health)" : "Medilink Health Publications (মেডিলিঙ্ক)"}</span>
+            </div>
             <h1
               data-masthead
               className="reveal-init display max-w-6xl text-[clamp(2.25rem,5.2vw,4.25rem)] text-ink"
             >
-              {t("articles.title")}
+              {isBn ? "মেডিলিঙ্ক স্বাস্থ্য নিবন্ধ" : "Medilink Health Articles"}
             </h1>
             <p data-masthead className="reveal-init mt-4 max-w-2xl text-base text-muted sm:text-lg">
-              {t("articles.subtitle")}
+              {isBn
+                ? "মেডিলিঙ্ক (Medilink) প্ল্যাটফর্মে BMDC সনদপ্রাপ্ত বিশেষজ্ঞ চিকিৎসকদের দ্বারা যাচাইকৃত স্বাস্থ্য নির্দেশিকা ও বিনামূল্যে পরামর্শ।"
+                : "Verified clinical health advisories authored by BMDC-registered doctors on Medilink (মেডিলিঙ্ক) with free consultation access."}
             </p>
           </div>
 
@@ -354,7 +404,7 @@ export default function Articles() {
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white transition-transform group-hover:rotate-90">
                   <Plus className="h-4 w-4" strokeWidth={2.6} />
                 </div>
-                <span>নতুন আর্টিকেল লিখুন (Publish Article)</span>
+                <span>{isBn ? "মেডিলিঙ্কে নতুন আর্টিকেল লিখুন" : "Write Article on Medilink"}</span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white backdrop-blur-xs">
                   <ShieldCheck className="h-3 w-3" />
                   <span>{isBn ? "ডাক্তার পোর্টাল" : "Doctor Portal"}</span>
@@ -366,7 +416,7 @@ export default function Articles() {
                 className="inline-flex h-12 items-center gap-2.5 rounded-full bg-brand px-6 text-sm font-bold text-white shadow-md hover:bg-brand-deep hover:shadow-lg active:scale-95 transition-all shrink-0 self-start sm:self-auto cursor-pointer"
               >
                 <Plus className="h-4 w-4" strokeWidth={2.4} />
-                <span>নতুন আর্টিকেল লিখুন (Publish Article)</span>
+                <span>{isBn ? "মেডিলিঙ্কে আর্টিকেল লিখুন (Publish Article)" : "Publish Article on Medilink (মেডিলিঙ্ক)"}</span>
               </Link>
             )}
           </div>
@@ -394,7 +444,7 @@ export default function Articles() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isBn ? "বিষয়, উপসর্গ বা ডাক্তার খুঁজুন..." : "Search topics, doctors, BMDC..."}
+              placeholder={isBn ? "মেডিলিঙ্ক নিবন্ধ, ডাক্তার, BMDC খুঁজুন..." : "Search Medilink articles, doctors, BMDC..."}
               className="h-11 w-full rounded-full border border-line bg-surface pl-10 pr-9 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-hidden focus:ring-1 focus:ring-brand shadow-2xs"
             />
             {searchQuery && (
@@ -510,17 +560,25 @@ export default function Articles() {
           <div className="aurora pointer-events-none absolute inset-0 opacity-60" aria-hidden="true" />
           <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="max-w-xl">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft text-brand-deep px-3 py-1 text-xs font-bold mb-3 border border-brand/20">
+                <Stethoscope className="h-3.5 w-3.5" />
+                <span>{isBn ? "মেডিলিঙ্ক টেলিমেডিসিন · ১০০% বিনামূল্যে" : "Medilink Telemedicine · 100% Free"}</span>
+              </div>
               <h2 className="display text-[clamp(1.75rem,3.4vw,2.75rem)] text-ink">
                 {t("doctors.title")}
               </h2>
-              <p className="mt-3 text-[15px] text-muted">{t("doctors.subtitle")}</p>
+              <p className="mt-3 text-[15px] text-muted">
+                {isBn
+                  ? "মেডিলিঙ্ক (Medilink) এর মাধ্যমে সরাসরি BMDC অনুমোদিত বিশেষজ্ঞ ডাক্তারের সাথে বিনামূল্যে টেলিমেডিসিন পরামর্শ নিন।"
+                  : "Connect directly with BMDC-verified specialist physicians for 100% free telemedicine consultations on Medilink (মেডিলিঙ্ক)."}
+              </p>
             </div>
             <Link
               to="/doctors?guide=open"
               className="inline-flex h-12 shrink-0 items-center gap-2 self-start rounded-full bg-brand px-7 text-[15px] font-semibold text-white transition-colors hover:bg-brand-deep cursor-pointer md:self-auto"
             >
               <Stethoscope className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-              {t("doctors.book")}
+              <span>{isBn ? "বিনামূল্যে ডাক্তারের পরামর্শ নিন" : "Consult Doctor Free"}</span>
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>

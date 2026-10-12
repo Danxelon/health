@@ -101,6 +101,7 @@ export interface Profile {
   full_name: string;
   full_name_bn: string | null;
   date_of_birth: string | null;
+  age?: number | null;
   gender: string | null;
   blood_group: BloodGroup | null;
   blood_group_verified: boolean;
@@ -147,6 +148,11 @@ export interface Donor {
 export interface DonorCard {
   donor_id: string;
   display_name: string;
+  display_name_bn?: string | null;
+  full_name?: string | null;
+  full_name_bn?: string | null;
+  age?: number | null;
+  date_of_birth?: string | null;
   blood_group: BloodGroup;
   blood_group_verified: boolean;
   distance_band: DistanceBand;
@@ -202,6 +208,7 @@ export type EligibilityReason = HardBlockReason | SoftWarningReason;
 
 export interface EligibilityInput {
   date_of_birth: string | null;
+  age?: number | null;
   weight_kg: number | null;
   last_donation_date: string | null;
   temp_status: DonorTempStatus;
@@ -231,6 +238,8 @@ export interface BloodRequest {
   id: string;
   requestor_id: string;
   patient_name: string | null;
+  patient_name_bn?: string | null;
+  patient_age?: number | null;
   blood_group_needed: BloodGroup;
   component: BloodComponent;
   units_needed: number;
@@ -274,6 +283,11 @@ export interface RequestResponder {
   response_id: string;
   donor_id: string;
   display_name: string;
+  display_name_bn?: string | null;
+  full_name?: string | null;
+  full_name_bn?: string | null;
+  age?: number | null;
+  date_of_birth?: string | null;
   blood_group: BloodGroup | null;
   state: ResponseState;
   invited_at: string;
@@ -340,7 +354,11 @@ export interface Specialty {
 export interface DoctorCard {
   user_id: string;
   display_name: string;
+  display_name_bn?: string | null;
   full_name: string;
+  full_name_bn?: string | null;
+  age?: number | null;
+  date_of_birth?: string | null;
   avatar_url: string | null;
   bmdc_reg_no: string | null;
   degrees: string | null;
@@ -402,6 +420,7 @@ export interface ArticleFeedItem {
   flagged_review: boolean;
   author_id: string;
   author_name: string | null;
+  author_name_bn?: string | null;
   author_avatar: string | null;
   author_degrees: string | null;
   author_bmdc?: string | null;

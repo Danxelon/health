@@ -197,6 +197,78 @@ p {
 }
 
 /* =============================================================================
+   MOBILE FOUNDATION — Android + iOS parity (safe-area, touch, viewport)
+   ========================================================================== */
+
+html,
+body {
+  overflow-x: clip;
+  overscroll-behavior-y: none;
+}
+
+@supports not (overflow: clip) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+}
+
+body {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: auto;
+}
+
+body,
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Notch / gesture-bar padding helpers (viewport-fit=cover is set in index.html) */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.px-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Prevent iOS Safari auto-zoom on focus: form controls stay at 16px on phones */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Thin, theme-aware scrollbars (mobile drawers + desktop tables) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line-strong);
+  border-radius: 8px;
+}
+
+/* Media never overflows a 360px viewport */
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+/* =============================================================================
    UTILITIES
    ========================================================================== */
 

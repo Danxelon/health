@@ -1,5 +1,5 @@
 /**
- * Medical Article Publishing Portal — Jibon Rokkha.
+ * Medical Article Publishing Portal — Medilink / মেডিলিঙ্ক.
  *
  * Restricted strictly to verified medical practitioners with BMDC registration.
  * Non-doctors cannot publish articles to ensure clinical integrity.
@@ -29,9 +29,10 @@ import { useAppShell } from "@/state/app-shell.tsx";
 import { useAuth } from "@/state/auth-context.tsx";
 import { Badge } from "@/components/ui.tsx";
 import { publishArticle } from "@/api/articles.ts";
+import { getDoctorAuthorProfile } from "@/domain/doctor-profiles.ts";
 
 /**
- * Standard categories required by Jibon Rokkha editorial guidelines.
+ * Standard categories required by Medilink / মেডিলিঙ্ক editorial guidelines.
  */
 const CATEGORY_TAGS = [
   { id: "dengue", labelBn: "ডেঙ্গু", labelEn: "Dengue" },
@@ -41,6 +42,7 @@ const CATEGORY_TAGS = [
   { id: "emergency", labelBn: "জরুরি সেবা", labelEn: "Emergency" },
   { id: "lifestyle", labelBn: "লাইফস্টাইল", labelEn: "Lifestyle" },
   { id: "surgery", labelBn: "সার্জারি", labelEn: "Surgery" },
+  { id: "free-consultation", labelBn: "বিনামূল্যে পরামর্শ", labelEn: "Free Consultation" },
 ] as const;
 
 /**
@@ -211,7 +213,7 @@ export default function ArticleNew() {
   const [titleEn, setTitleEn] = useState("");
   const [slug, setSlug] = useState("");
   const [isSlugManual, setIsSlugManual] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<string[]>(["dengue"]);
+  const [selectedTags, setSelectedTags] = useState<string[]>(["dengue", "free-consultation"]);
   const [excerptBn, setExcerptBn] = useState("");
   const [excerptEn, setExcerptEn] = useState("");
   const [contentBn, setContentBn] = useState("");
@@ -266,11 +268,14 @@ export default function ArticleNew() {
     await loginWithCredentials("dr.rahman@health.gov.bd", "Doctor2026!");
   };
 
-  // Resolve Doctor Display Data
-  const doctorName =
-    user?.name?.replace(/\s*\(BMDC-.*?\)/, "") || "Dr. M. A. Rahman";
-  const doctorBmdc = user?.bmdc || "BMDC-A-88101";
-  const doctorSpecialty = user?.specialty || "Cardiology & Clinical Medicine";
+  // Resolve Doctor Display Data with canonical full 3-word name in both languages
+  const docProfile = getDoctorAuthorProfile(user?.name, user?.bmdc, user?.email);
+  const doctorNameEn = docProfile.nameEn;
+  const doctorNameBn = docProfile.nameBn;
+  const doctorBmdc = docProfile.bmdc;
+  const doctorSpecialtyEn = docProfile.specialtyEn;
+  const doctorSpecialtyBn = docProfile.specialtyBn;
+  const doctorSpecialty = isBn ? doctorSpecialtyBn : doctorSpecialtyEn;
 
   // Form Validation & Submission
   const handlePublish = async (e: React.FormEvent) => {
@@ -320,6 +325,10 @@ export default function ArticleNew() {
     setPublishing(true);
 
     try {
+      const tagsWithFreeConsult = selectedTags.includes("free-consultation")
+        ? selectedTags
+        : [...selectedTags, "free-consultation"];
+
       await publishArticle({
         title: titleEn.trim() || titleBn.trim(),
         titleBn: titleBn.trim() || undefined,
@@ -328,19 +337,19 @@ export default function ArticleNew() {
         excerptBn: excerptBn.trim() || undefined,
         bodyEn: contentEn.trim() || contentBn.trim(),
         bodyBn: contentBn.trim() || undefined,
-        tags: selectedTags,
+        tags: tagsWithFreeConsult,
         authorId: user?.phone || "doctor-verified",
-        authorName: doctorName,
-        authorDegrees: "MBBS, FCPS",
-        specialtyEn: doctorSpecialty,
-        specialtyBn: isBn ? "বিশেষজ্ঞ চিকিৎসক" : doctorSpecialty,
+        authorName: doctorNameEn,
+        authorDegrees: "MBBS, FCPS, MD",
+        specialtyEn: doctorSpecialtyEn,
+        specialtyBn: doctorSpecialtyBn,
         bmdcRegNo: doctorBmdc,
       });
 
       setSuccessMessage(
         isBn
-          ? "মেডিকেল আর্টিকেল সফলভাবে প্রকাশিত হয়েছে! নিবন্ধ তালিকায় নিয়ে যাওয়া হচ্ছে..."
-          : "Medical article published successfully! Redirecting to articles feed..."
+          ? "মেডিলিঙ্ক (Medilink) মেডিকেল আর্টিকেল সফলভাবে প্রকাশিত হয়েছে! নিবন্ধ তালিকায় নিয়ে যাওয়া হচ্ছে..."
+          : "Medilink medical article published successfully! Redirecting to articles feed..."
       );
 
       // Smooth redirect to /articles
@@ -365,24 +374,30 @@ export default function ArticleNew() {
             <Lock className="h-8 w-8" strokeWidth={2.2} />
           </div>
 
-          <h1 className="mt-6 text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
+          <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand-soft/60 px-3.5 py-1 text-xs font-bold text-brand-deep">
+            <span>{isBn ? "মেডিলিঙ্ক · Medilink" : "Medilink · মেডিলিঙ্ক"}</span>
+          </div>
+
+          <h1 className="mt-4 text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
             {lang === "bn" ? "ডাক্তারদের জন্য সংরক্ষিত পোর্টাল" : "Doctor Publishing Portal"}
           </h1>
 
-          {/* Exact required barrier phrasing */}
+          {/* Exact required barrier phrasing referencing Medilink / মেডিলিঙ্ক */}
           <div className="mt-4 rounded-2xl border border-brand/20 bg-brand-soft/50 p-5 text-center">
             <p className="text-base font-bold text-brand-deep">
-              শুধুমাত্র BMDC নিবন্ধিত অনুমোদিত ডাক্তারগণ মেডিকেল আর্টিকেল প্রকাশ করতে পারেন।
+              {lang === "bn"
+                ? "শুধুমাত্র BMDC নিবন্ধিত অনুমোদিত ডাক্তারগণ মেডিলিঙ্ক (Medilink) প্ল্যাটফর্মে আর্টিকেল প্রকাশ করতে পারেন।"
+                : "Only verified doctors registered with BMDC can publish articles on Medilink (মেডিলিঙ্ক) to maintain clinical integrity."}
             </p>
             <p className="mt-1 text-xs text-muted">
-              (Only verified doctors registered with BMDC can publish articles on Jibon Rokkha to maintain clinical integrity).
+              (Only verified doctors registered with BMDC can publish articles on Medilink / মেডিলিঙ্ক to maintain clinical integrity).
             </p>
           </div>
 
           <p className="mt-4 text-sm text-muted leading-relaxed">
             {lang === "bn"
-              ? "স্বাস্থ্য নিরাপত্তা ও ক্লিনিক্যাল তথ্যের নির্ভুলতা রক্ষায় জীবন রক্ষা প্ল্যাটফর্মে প্রতিটি স্বাস্থ্য নিবন্ধ বাংলাদেশ মেডিকেল অ্যান্ড ডেন্টাল কাউন্সিল (BMDC) সনদপ্রাপ্ত চিকিৎসকের স্বাক্ষরে প্রকাশিত হয়।"
-              : "To protect clinical integrity and patient safety, all medical literature and advisories published on Jibon Rokkha are strictly authored by BMDC-registered practitioners."}
+              ? "স্বাস্থ্য নিরাপত্তা ও ক্লিনিক্যাল তথ্যের নির্ভুলতা রক্ষায় মেডিলিঙ্ক (Medilink) প্ল্যাটফর্মে প্রতিটি স্বাস্থ্য নিবন্ধ বাংলাদেশ মেডিকেল অ্যান্ড ডেন্টাল কাউন্সিল (BMDC) সনদপ্রাপ্ত চিকিৎসকের স্বাক্ষরে প্রকাশিত হয় এবং নাগরিকদের জন্য ১০০% বিনামূল্যে পরামর্শ সুবিধা যুক্ত থাকে।"
+              : "To protect clinical integrity and patient safety, all medical literature and advisories published on Medilink (মেডিলিঙ্ক) are strictly authored by BMDC-registered practitioners with free consultation access."}
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -408,7 +423,7 @@ export default function ArticleNew() {
               title="Instant test login with Demo Doctor credentials"
             >
               <Sparkles className="h-4 w-4 text-emerald-600" />
-              <span>{lang === "bn" ? "১-ক্লিকে টেস্ট ডাক্তার লগইন" : "Instant Demo Doctor"}</span>
+              <span>{lang === "bn" ? `১-ক্লিকে টেস্ট ডাক্তার (${docProfile.nameBn})` : `Instant Demo Doctor (${docProfile.nameEn})`}</span>
             </button>
           </div>
 
@@ -418,7 +433,7 @@ export default function ArticleNew() {
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              <span>{lang === "bn" ? "সকল আর্টিকেলে ফিরে যান" : "Return to articles feed"}</span>
+              <span>{lang === "bn" ? "সকল মেডিলিঙ্ক আর্টিকেলে ফিরে যান" : "Return to Medilink articles feed"}</span>
             </Link>
           </div>
         </div>
@@ -439,10 +454,12 @@ export default function ArticleNew() {
             className="inline-flex items-center gap-2 text-xs font-bold text-brand-deep hover:text-brand transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>{lang === "bn" ? "সকল আর্টিকেলে ফিরে যান" : "Back to Articles"}</span>
+            <span>{lang === "bn" ? "সকল মেডিলিঙ্ক আর্টিকেলে ফিরে যান" : "Back to Medilink Articles"}</span>
           </Link>
-          <span className="text-xs text-muted">
-            {lang === "bn" ? "মেডিকেল পাবলিশিং ড্যাশবোর্ড" : "Medical Publishing Dashboard"}
+          <span className="text-xs font-semibold text-muted flex items-center gap-1.5">
+            <span className="font-bold text-brand">{isBn ? "মেডিলিঙ্ক" : "Medilink"}</span>
+            <span>·</span>
+            <span>{lang === "bn" ? "মেডিকেল পাবলিশিং ড্যাশবোর্ড" : "Medical Publishing Dashboard"}</span>
           </span>
         </div>
 
@@ -455,11 +472,20 @@ export default function ArticleNew() {
               </div>
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-lg font-extrabold text-ink">{doctorName}</h2>
+                  <h2 className="text-lg font-extrabold text-ink">
+                    {isBn ? doctorNameBn : doctorNameEn}
+                  </h2>
+                  <span className="text-xs font-semibold text-muted">
+                    ({isBn ? doctorNameEn : doctorNameBn})
+                  </span>
                   <Badge tone="success">
                     <ShieldCheck className="h-3.5 w-3.5 text-success" strokeWidth={2.2} />
-                    <span>BMDC Verified / যাচাইকৃত</span>
+                    <span>BMDC Verified / বিএমডিসি সনদপ্রাপ্ত</span>
                   </Badge>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>{isBn ? "বিনামূল্যে পরামর্শ প্রদানকারী" : "Free Consultation Doctor"}</span>
+                  </span>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
                   <span className="font-semibold text-ink">
@@ -469,7 +495,12 @@ export default function ArticleNew() {
                   <span>{doctorSpecialty}</span>
                   <span>·</span>
                   <span className="text-emerald-700 font-medium">
-                    {lang === "bn" ? "অনুমোদিত মেডিকেল অথর" : "Verified Medical Author"}
+                    {lang === "bn" ? "মেডিলিঙ্ক অনুমোদিত অথর" : "Medilink Verified Author"}
+                  </span>
+                  <span>·</span>
+                  <span className="inline-flex items-center gap-1 font-semibold text-emerald-800">
+                    <Sparkles className="h-3 w-3 text-emerald-600" />
+                    <span>{isBn ? "১০০% বিনামূল্যে সেবা" : "100% Free Service"}</span>
                   </span>
                 </div>
               </div>
@@ -522,13 +553,16 @@ export default function ArticleNew() {
         <form onSubmit={handlePublish} className="space-y-6">
           <div className="rounded-3xl border border-line bg-surface p-6 sm:p-8 space-y-7 shadow-xs">
             <div>
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand-soft/60 px-3 py-0.5 text-[11px] font-bold text-brand-deep mb-2">
+                <span>{isBn ? "মেডিলিঙ্ক পোর্টাল" : "Medilink Portal"}</span>
+              </div>
               <h1 className="text-2xl font-extrabold text-ink tracking-tight">
-                {lang === "bn" ? "মেডিকেল আর্টিকেল প্রকাশনা ফর্ম" : "Medical Article Publishing"}
+                {lang === "bn" ? "মেডিলিঙ্ক মেডিকেল আর্টিকেল প্রকাশনা ফর্ম" : "Medilink Medical Article Publishing"}
               </h1>
               <p className="text-xs text-muted mt-1 leading-relaxed">
                 {lang === "bn"
-                  ? "বাংলা ও ইংরেজি উভয় ভাষাতে ক্লিনিক্যাল তথ্য প্রদান করুন যাতে সাধারণ মানুষ সহজেই বুঝতে পারে।"
-                  : "Draft clear, clinically accurate medical guidance in Bengali and English for citizens."}
+                  ? "মেডিলিঙ্ক (Medilink) প্ল্যাটফর্মে বাংলা ও ইংরেজি উভয় ভাষায় ক্লিনিক্যাল তথ্য প্রকাশ করুন যাতে সাধারণ মানুষ ও রোগীরা উপকৃত হতে পারেন।"
+                  : "Draft clear, clinically accurate medical guidance in Bengali and English on Medilink (মেডিলিঙ্ক) for citizens."}
               </p>
             </div>
 
@@ -581,7 +615,7 @@ export default function ArticleNew() {
                   </button>
                 </div>
                 <div className="flex items-center rounded-xl border border-line bg-surface px-3 py-2 text-xs font-mono">
-                  <span className="text-muted shrink-0 select-none">jibonrokkha.gov.bd/articles/</span>
+                  <span className="text-muted shrink-0 select-none">medilink.gov.bd/articles/</span>
                   <input
                     id="article-slug"
                     type="text"
@@ -775,9 +809,22 @@ export default function ArticleNew() {
                       </button>
                     </div>
 
-                    <span className="text-xs text-muted">
-                      লেখক: <strong className="text-ink">{doctorName}</strong>
-                    </span>
+                    <div className="text-xs text-muted flex items-center gap-2 flex-wrap">
+                      <span>{previewLang === "bn" ? "লেখক:" : "Author:"}</span>
+                      <strong className="text-ink">
+                        {previewLang === "bn"
+                          ? `${doctorNameBn} (${doctorNameEn})`
+                          : `${doctorNameEn} (${doctorNameBn})`}
+                      </strong>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 text-[11px] font-bold">
+                        <ShieldCheck className="h-3 w-3 text-emerald-600" />
+                        <span>BMDC: {doctorBmdc}</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>{previewLang === "bn" ? "বিনামূল্যে পরামর্শ" : "Free Consultation"}</span>
+                      </span>
+                    </div>
                   </div>
 
                   {/* Rendered Preview Header */}
@@ -793,7 +840,7 @@ export default function ArticleNew() {
                         key={t}
                         className="rounded-full bg-elevated px-2.5 py-1 text-[11px] font-semibold text-ink capitalize"
                       >
-                        {t}
+                        {t === "free-consultation" ? (previewLang === "bn" ? "বিনামূল্যে পরামর্শ" : "Free Consultation") : t}
                       </span>
                     ))}
                   </div>
@@ -819,8 +866,8 @@ export default function ArticleNew() {
                 <Info className="h-4 w-4 text-muted shrink-0" />
                 <span>
                   {lang === "bn"
-                    ? "প্রকাশিত নিবন্ধে আপনার BMDC সনদ নম্বর ও নাম সংযুক্ত থাকবে।"
-                    : "Published articles display your BMDC registration & specialty credentials."}
+                    ? "মেডিলিঙ্ক (Medilink) প্রকাশিত নিবন্ধে আপনার ৩ শব্দের পূর্ণ নাম (ডা. মাহমুদুর রহমান / Dr. Mahmudur Rahman), BMDC সনদ ও বিনামূল্যে পরামর্শ সুবিধা দৃশ্যমান থাকবে।"
+                    : "Articles published on Medilink (মেডিলিঙ্ক) display your full 3-word name in both languages, BMDC badge, and free consultation tag."}
                 </span>
               </div>
 

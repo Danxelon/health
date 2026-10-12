@@ -142,31 +142,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const DOCTOR_CREDENTIALS: Record<string, { name: string; phone: string; bmdc: string; specialty: string }> = {
     "dr.rahman@health.gov.bd": {
-      name: "Dr. M. A. Rahman",
+      name: "Dr. Mohammad Abdur Rahman",
       phone: "01711990001",
       bmdc: "BMDC-A-88101",
       specialty: "Cardiology",
     },
     "dr.fatima@health.gov.bd": {
-      name: "Dr. Fatima Begum",
+      name: "Dr. Syeda Fatima Begum",
       phone: "01711990002",
       bmdc: "BMDC-A-88102",
       specialty: "Pediatrics",
     },
     "dr.anwar@health.gov.bd": {
-      name: "Dr. Anwar Hossain",
+      name: "Dr. Mohammad Anwar Hossain",
       phone: "01711990003",
       bmdc: "BMDC-A-88103",
       specialty: "Internal Medicine & Dengue",
     },
     "dr.taslima@health.gov.bd": {
-      name: "Dr. Taslima Akter",
+      name: "Dr. Syeda Taslima Akter",
       phone: "01711990004",
       bmdc: "BMDC-A-88104",
       specialty: "Gynecology & Obstetrics",
     },
     "dr.kamal@health.gov.bd": {
-      name: "Dr. Kamal Uddin",
+      name: "Dr. Mohammad Kamal Uddin",
       phone: "01711990005",
       bmdc: "BMDC-A-88105",
       specialty: "Hematology & Blood Disorders",
@@ -184,7 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (trimmedEmail === "showystore2026@gmail.com" && password === "iloveyou") {
         const authUser: AuthUser = {
           phone: "01700000000",
-          name: "System Administrator",
+          name: "Chief System Administrator",
           email: "showystore2026@gmail.com",
           role: "admin",
         };

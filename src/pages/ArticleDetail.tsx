@@ -28,6 +28,7 @@ import { fetchArticle, fetchArticles } from "@/api/articles.ts";
 import type { ArticleDetail as ArticleDetailT } from "@/api/articles.ts";
 import type { ArticleFeedItem } from "@/domain/types.ts";
 import { toBengaliDigits } from "@/domain/profile.ts";
+import { getDoctorAuthorProfile } from "@/domain/doctor-profiles.ts";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -153,23 +154,40 @@ export default function ArticleDetail() {
         </h1>
 
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted">
-          {item.author_name && (
-            <span className="inline-flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-ink">
-                {t("articles.by")} {item.author_name}
+          {item.author_name && (() => {
+            const docProf = getDoctorAuthorProfile(
+              item.author_name,
+              item.author_bmdc ?? item.bmdc_reg_no,
+              item.author_id
+            );
+            const authorNamePrimary = isBn ? docProf.nameBn : docProf.nameEn;
+            const authorNameSecondary = isBn ? docProf.nameEn : docProf.nameBn;
+            const bmdc = item.author_bmdc ?? item.bmdc_reg_no ?? docProf.bmdc;
+            return (
+              <span className="inline-flex items-center gap-2 flex-wrap">
+                <span className="font-semibold text-ink">
+                  {t("articles.by")} {authorNamePrimary}
+                </span>
+                <span className="text-xs text-muted font-medium">
+                  ({authorNameSecondary})
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={2.4} aria-hidden="true" />
+                  <span>{isBn ? "ভেরিফাইড চিকিৎসক" : "Verified Doctor"}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 font-mono font-bold text-xs text-brand-deep bg-brand-soft border border-brand/20 px-2 py-0.5 rounded-md shadow-2xs">
+                  <span>{bmdc}</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>{isBn ? "বিনামূল্যে পরামর্শ" : "Free Consultation"}</span>
+                </span>
+                {item.author_degrees ? (
+                  <span className="text-muted font-normal">({item.author_degrees})</span>
+                ) : null}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={2.4} aria-hidden="true" />
-                <span>{isBn ? "ভেরিফাইড চিকিৎসক" : "Verified Doctor"}</span>
-              </span>
-              <span className="inline-flex items-center gap-1 font-mono font-bold text-xs text-brand-deep bg-brand-soft border border-brand/20 px-2 py-0.5 rounded-md shadow-2xs">
-                <span>{item.author_bmdc ?? item.bmdc_reg_no ?? "BMDC-A-88101"}</span>
-              </span>
-              {item.author_degrees ? (
-                <span className="text-muted font-normal">({item.author_degrees})</span>
-              ) : null}
-            </span>
-          )}
+            );
+          })()}
           {date && <span>{date}</span>}
           {item.view_count > 0 && (
             <span className="inline-flex items-center gap-1 tnum">

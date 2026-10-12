@@ -33,6 +33,7 @@ import { searchDonors, type SearchDonorsArgs, type SearchResults } from "@/api/d
 import { fetchDoctors } from "@/api/doctors.ts";
 import type { BloodGroup, DoctorCard, DonorCard, RequestUrgency } from "@/domain/types.ts";
 import { URGENCY_LABELS } from "@/lib/strings.ts";
+import { toBengaliDigits } from "@/domain/profile.ts";
 import { DEMO_UPAZILAS } from "@/lib/demo-data.ts";
 import DonorAddressMapDrawer from "@/components/DonorAddressMapDrawer.tsx";
 
@@ -186,11 +187,15 @@ export default function Donors() {
     if (sortBy === "ready") {
       list.sort((a, b) => (b.can_give_now ? 1 : 0) - (a.can_give_now ? 1 : 0));
     } else if (sortBy === "name") {
-      list.sort((a, b) => a.display_name.localeCompare(b.display_name));
+      list.sort((a, b) => {
+        const nameA = (lang === "bn" ? (a.full_name_bn || a.display_name_bn || a.display_name) : (a.full_name || a.display_name)).toLowerCase();
+        const nameB = (lang === "bn" ? (b.full_name_bn || b.display_name_bn || b.display_name) : (b.full_name || b.display_name)).toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
     }
     // "match" uses default ranked order from backend/domain
     return list;
-  }, [results, sortBy]);
+  }, [results, sortBy, lang]);
 
   // If not logged in, show auth gate prompt
   if (!isLoggedIn) {
@@ -293,7 +298,7 @@ export default function Donors() {
               <span>{lang === "bn" ? "এলাকা ও অগ্রাধিকার ফিল্টার" : "Area & Urgency Filters"}</span>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 items-end">
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-5 items-end">
               {/* Division Sort Option */}
               <div>
                 <label className="block text-xs font-bold text-ink mb-1.5">
@@ -305,7 +310,7 @@ export default function Donors() {
                     setSelectedDivision(e.target.value);
                     setSelectedUpazila("");
                   }}
-                  className="w-full h-11 rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand font-medium"
+                  className="w-full h-12 sm:h-11 rounded-xl border border-line bg-surface px-3 text-base sm:text-sm text-ink outline-none focus:border-brand font-medium"
                 >
                   <option value="">{lang === "bn" ? "সকল বিভাগ" : "All Divisions"}</option>
                   {divisions.map((div) => (
@@ -326,7 +331,7 @@ export default function Donors() {
                   value={areaSearchQuery}
                   onChange={(e) => setAreaSearchQuery(e.target.value)}
                   placeholder={lang === "bn" ? "যেমন: ধানমন্ডি, মিরপুর..." : "e.g. Mirpur, Sylhet..."}
-                  className="w-full h-11 rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand font-medium placeholder:text-muted/60"
+                  className="w-full h-12 sm:h-11 rounded-xl border border-line bg-surface px-3 text-base sm:text-sm text-ink outline-none focus:border-brand font-medium placeholder:text-muted/60"
                 />
               </div>
 
@@ -341,10 +346,10 @@ export default function Donors() {
                 <select
                   value={selectedUpazila}
                   onChange={(e) => setSelectedUpazila(e.target.value ? Number(e.target.value) : "")}
-                  className="w-full h-11 rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand font-medium"
+                  className="w-full h-12 sm:h-11 rounded-xl border border-line bg-surface px-3 text-base sm:text-sm text-ink outline-none focus:border-brand font-medium"
                 >
                   <option value="">
-                    {lang === "bn" ? "সমগ্র বাংলাদেশ (সকল এলাকা)" : "All Areas (Nationwide)"}
+                    {lang === "bn" ? "সকল এলাকা" : "All Areas (Nationwide)"}
                   </option>
                   {filteredUpazilas.map((u) => (
                     <option key={u.id} value={u.id}>
@@ -362,7 +367,7 @@ export default function Donors() {
                 <select
                   value={selectedUrgency}
                   onChange={(e) => setSelectedUrgency(e.target.value as RequestUrgency)}
-                  className="w-full h-11 rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand font-medium"
+                  className="w-full h-12 sm:h-11 rounded-xl border border-line bg-surface px-3 text-base sm:text-sm text-ink outline-none focus:border-brand font-medium"
                 >
                   {(["routine", "urgent", "critical"] as RequestUrgency[]).map((u) => (
                     <option key={u} value={u}>
@@ -377,7 +382,7 @@ export default function Donors() {
                 <button
                   type="submit"
                   disabled={loading || !selectedGroup}
-                  className="w-full inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-sm font-bold text-white disabled:opacity-40 hover:bg-brand-deep transition-all shadow-xs cursor-pointer active:scale-98"
+                  className="w-full inline-flex h-12 sm:h-11 min-h-[44px] items-center justify-center gap-2 rounded-xl bg-brand px-6 text-sm font-bold text-white disabled:opacity-40 hover:bg-brand-deep transition-all shadow-xs cursor-pointer active:scale-98"
                 >
                   <Search className="h-4 w-4" aria-hidden="true" />
                   {loading ? t("common.loading") : t("common.search")}
@@ -391,7 +396,7 @@ export default function Donors() {
       {/* Results View */}
       <div className="mt-10" role="status" aria-live="polite">
         {loading && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4" aria-label={t("common.loading")}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" aria-label={t("common.loading")}>
             {[...Array(4)].map((_, i) => (
               <div key={i} className="animate-pulse rounded-3xl border border-line bg-surface p-6">
                 <div className="h-10 w-10 rounded-full bg-elevated" />
@@ -419,14 +424,15 @@ export default function Donors() {
                 <span className="text-brand font-bold">{results.counts.ready_now}</span>
               </p>
 
-              {/* Sort By controls */}
-              <div className="flex items-center gap-2 text-xs">
+              {/* Sort By controls — wraps + scrolls on narrow phones, 44px targets */}
+              <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span className="text-muted font-medium">{lang === "bn" ? "সাজান:" : "Sort:"}</span>
-                <div className="inline-flex rounded-xl border border-line bg-surface p-0.5">
+                <div role="group" aria-label={lang === "bn" ? "রক্তদাতা সাজান" : "Sort donors"} className="inline-flex max-w-full overflow-x-auto rounded-xl border border-line bg-surface p-0.5">
                   <button
                     type="button"
                     onClick={() => setSortBy("match")}
-                    className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                    aria-pressed={sortBy === "match"}
+                    className={`min-h-[44px] px-4 py-1 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                       sortBy === "match" ? "bg-brand text-white shadow-2xs" : "text-muted hover:text-ink"
                     }`}
                   >
@@ -435,7 +441,8 @@ export default function Donors() {
                   <button
                     type="button"
                     onClick={() => setSortBy("ready")}
-                    className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                    aria-pressed={sortBy === "ready"}
+                    className={`min-h-[44px] px-4 py-1 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                       sortBy === "ready" ? "bg-brand text-white shadow-2xs" : "text-muted hover:text-ink"
                     }`}
                   >
@@ -444,7 +451,8 @@ export default function Donors() {
                   <button
                     type="button"
                     onClick={() => setSortBy("name")}
-                    className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                    aria-pressed={sortBy === "name"}
+                    className={`min-h-[44px] px-4 py-1 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                       sortBy === "name" ? "bg-brand text-white shadow-2xs" : "text-muted hover:text-ink"
                     }`}
                   >
@@ -470,110 +478,145 @@ export default function Donors() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                {sortedDonors.map((d) => (
-                  <div
-                    key={d.donor_id}
-                    className="group flex flex-col gap-4 p-6 rounded-3xl border border-line bg-surface hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-soft text-brand-deep font-black text-base tnum shadow-2xs">
-                        {d.blood_group}
-                      </span>
-                      <div className="min-w-0">
-                        <span className="block truncate font-bold text-ink">{d.display_name}</span>
-                        <span className="block truncate text-xs text-muted">
-                          {d.distance_km != null ? `${d.distance_km} km` : "Bangladesh"}
-                        </span>
-                      </div>
-                    </div>
+                {sortedDonors.map((d) => {
+                  const primaryName = lang === "bn"
+                    ? (d.full_name_bn || d.display_name_bn || d.display_name)
+                    : (d.full_name || d.display_name);
+                  const secondaryName = lang === "bn"
+                    ? (d.full_name || d.display_name)
+                    : (d.full_name_bn || d.display_name_bn || d.display_name);
+                  const showSecondary = Boolean(secondaryName && secondaryName !== primaryName);
 
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <DistanceChip km={d.distance_km} band={d.distance_band} />
-                      <Badge tone={d.can_give_now ? "success" : "muted"}>
-                        {d.can_give_now ? t("donors.readyNow") : t("donors.unavailable")}
-                      </Badge>
-                      {d.blood_group_verified && (
-                        <Badge tone="brand">
-                          ✓ {t("donors.respects")}
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Address Info on Card with Click to View Map */}
+                  return (
                     <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => setSelectedMapDonor(d)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          setSelectedMapDonor(d);
-                        }
-                      }}
-                      className="flex items-start gap-2.5 rounded-2xl bg-brand-soft/25 hover:bg-brand-soft/60 p-3 border border-brand/20 hover:border-brand/40 transition-all cursor-pointer group/addr shadow-2xs"
-                      title={lang === "bn" ? "ম্যাপে বিস্তারিত ঠিকানা দেখতে ক্লিক করুন" : "Click to view map and full address"}
+                      key={d.donor_id}
+                      className="group flex flex-col gap-3 sm:gap-4 p-4 sm:p-6 rounded-3xl border border-line bg-surface hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                     >
-                      <MapPin className="h-4 w-4 text-brand shrink-0 mt-0.5 group-hover/addr:scale-110 group-hover/addr:text-brand-deep transition-all" />
-                      <div className="min-w-0 flex-1">
-                        <span className="block text-xs font-bold text-ink line-clamp-1 group-hover/addr:text-brand-deep transition-colors">
-                          {d.address_bn || `${d.upazila_bn}, ${d.district_bn}`}
+                      <div className="flex items-start gap-3">
+                        <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-brand-deep font-black text-base tnum shadow-2xs mt-0.5">
+                          {d.blood_group}
                         </span>
-                        <span className="block text-[11px] text-muted truncate mt-0.5">
-                          {d.address_en || `${d.upazila_en}, ${d.district_en}`}
-                        </span>
-                        <span className="block text-[10px] text-muted/80 truncate mt-0.5">
-                          {lang === "bn"
-                            ? `${d.upazila_bn}, ${d.district_bn}${d.division_bn ? `, ${d.division_bn}` : ""}`
-                            : `${d.upazila_en}, ${d.district_en}${d.division_en ? `, ${d.division_en}` : ""}`}
-                        </span>
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate font-bold text-ink text-sm sm:text-base leading-tight" title={primaryName}>
+                            {primaryName}
+                          </span>
+                          {showSecondary && (
+                            <span className="block truncate text-[11px] text-muted font-medium mt-0.5" title={secondaryName}>
+                              {secondaryName}
+                            </span>
+                          )}
+                          <div className="flex items-center gap-1.5 text-xs text-muted mt-1 truncate">
+                            {d.age != null && (
+                              <>
+                                <span className="font-bold text-brand shrink-0">
+                                  {lang === "bn" ? `${toBengaliDigits(d.age)} বছর` : `${d.age} yrs`}
+                                </span>
+                                <span className="opacity-40">•</span>
+                              </>
+                            )}
+                            <span className="truncate">
+                              {d.distance_km != null
+                                ? (lang === "bn" ? `${toBengaliDigits(d.distance_km)} কিমি` : `${d.distance_km} km`)
+                                : (lang === "bn" ? "বাংলাদেশ" : "Bangladesh")}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-brand bg-surface px-2 py-1 rounded-lg border border-brand/20 shadow-2xs group-hover/addr:bg-brand group-hover/addr:text-white transition-all shrink-0">
-                        {lang === "bn" ? "ম্যাপ ↗" : "Map ↗"}
-                      </span>
-                    </div>
 
-                    <div className="mt-auto pt-3 border-t border-line space-y-2.5">
-                      {/* Contact Number Display with Quick Copy */}
-                      <div className="flex items-center justify-between rounded-xl bg-elevated/60 px-3 py-1.5 border border-line/60">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <Phone className="h-3 w-3 text-muted shrink-0" />
-                          <span className="font-mono text-xs font-bold text-ink truncate">
-                            {d.phone || "+8801712345678"}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {d.age != null && (
+                          <Badge tone="muted">
+                            {lang === "bn" ? `${toBengaliDigits(d.age)} বছর` : `${d.age} yrs`}
+                          </Badge>
+                        )}
+                        <DistanceChip km={d.distance_km} band={d.distance_band} />
+                        <Badge tone={d.can_give_now ? "success" : "muted"}>
+                          {d.can_give_now ? t("donors.readyNow") : t("donors.unavailable")}
+                        </Badge>
+                        {d.blood_group_verified && (
+                          <Badge tone="brand">
+                            ✓ {t("donors.respects")}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Address Info on Card with Click to View Map */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSelectedMapDonor(d)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelectedMapDonor(d);
+                          }
+                        }}
+                        className="flex items-start gap-2.5 rounded-2xl bg-brand-soft/25 hover:bg-brand-soft/60 p-3 border border-brand/20 hover:border-brand/40 transition-all cursor-pointer group/addr shadow-2xs"
+                        title={lang === "bn" ? "ম্যাপে বিস্তারিত ঠিকানা দেখতে ক্লিক করুন" : "Click to view map and full address"}
+                      >
+                        <MapPin className="h-4 w-4 text-brand shrink-0 mt-0.5 group-hover/addr:scale-110 group-hover/addr:text-brand-deep transition-all" />
+                        <div className="min-w-0 flex-1">
+                          <span className="block text-xs font-bold text-ink line-clamp-1 group-hover/addr:text-brand-deep transition-colors">
+                            {d.address_bn || `${d.upazila_bn}, ${d.district_bn}`}
+                          </span>
+                          <span className="block text-[11px] text-muted truncate mt-0.5">
+                            {d.address_en || `${d.upazila_en}, ${d.district_en}`}
+                          </span>
+                          <span className="block text-[10px] text-muted/80 truncate mt-0.5">
+                            {lang === "bn"
+                              ? `${d.upazila_bn}, ${d.district_bn}${d.division_bn ? `, ${d.division_bn}` : ""}`
+                              : `${d.upazila_en}, ${d.district_en}${d.division_en ? `, ${d.division_en}` : ""}`}
                           </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyPhone(d.phone || "+8801712345678")}
-                          className="ml-2 shrink-0 text-[11px] font-bold text-brand hover:underline cursor-pointer"
-                          title={lang === "bn" ? "নম্বর কপি করুন" : "Copy number"}
-                        >
-                          {copiedPhone ? (lang === "bn" ? "কপি হয়েছে" : "Copied!") : (lang === "bn" ? "কপি" : "Copy")}
-                        </button>
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-brand bg-surface px-2 py-1 rounded-lg border border-brand/20 shadow-2xs group-hover/addr:bg-brand group-hover/addr:text-white transition-all shrink-0">
+                          {lang === "bn" ? "ম্যাপ ↗" : "Map ↗"}
+                        </span>
                       </div>
 
-                      {/* Direct Call Now & Needed Right Now */}
-                      <div className="grid grid-cols-2 gap-2">
-                        <a
-                          href={`tel:${d.phone || "+8801712345678"}`}
-                          className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition-colors cursor-pointer active:scale-95"
-                          title={lang === "bn" ? "সরাসরি কল করুন" : "Direct Call"}
-                        >
-                          <PhoneCall className="h-3.5 w-3.5 fill-white shrink-0" />
-                          <span>{lang === "bn" ? "কল করুন" : "Call Now"}</span>
-                        </a>
+                      <div className="mt-auto pt-3 border-t border-line space-y-2.5">
+                        {/* Contact Number Display with Quick Copy */}
+                        <div className="flex items-center justify-between rounded-xl bg-elevated/60 px-3 py-1.5 border border-line/60">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <Phone className="h-3 w-3 text-muted shrink-0" />
+                            <span className="font-mono text-xs font-bold text-ink truncate">
+                              {d.phone || "+8801712345678"}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyPhone(d.phone || "+8801712345678")}
+                            aria-label={lang === "bn" ? "নম্বর কপি করুন" : "Copy phone number"}
+                            className="ml-2 shrink-0 inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 py-1 text-[11px] font-bold text-brand hover:underline cursor-pointer whitespace-nowrap"
+                            title={lang === "bn" ? "নম্বর কপি করুন" : "Copy number"}
+                          >
+                            {copiedPhone ? (lang === "bn" ? "কপি হয়েছে" : "Copied!") : (lang === "bn" ? "কপি" : "Copy")}
+                          </button>
+                        </div>
 
-                        <button
-                          type="button"
-                          onClick={() => setContactModalDonor(d)}
-                          className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-brand hover:bg-brand-deep text-white text-xs font-black shadow-xs transition-colors cursor-pointer active:scale-95"
-                        >
-                          <Droplet className="h-3.5 w-3.5 fill-white shrink-0" />
-                          <span>{t("request.express")}</span>
-                        </button>
+                        {/* Direct Call Now & Needed Right Now */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <a
+                            href={`tel:${d.phone || "+8801712345678"}`}
+                            className="inline-flex h-11 min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition-colors cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                            title={lang === "bn" ? "সরাসরি কল করুন" : "Direct Call"}
+                          >
+                            <PhoneCall className="h-3.5 w-3.5 fill-white shrink-0" />
+                            <span>{lang === "bn" ? "কল করুন" : "Call Now"}</span>
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={() => setContactModalDonor(d)}
+                            className="inline-flex h-11 min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-brand hover:bg-brand-deep text-white text-xs font-black shadow-xs transition-colors cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                          >
+                            <Droplet className="h-3.5 w-3.5 fill-white shrink-0" />
+                            <span>{t("request.express")}</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
@@ -628,11 +671,11 @@ export default function Donors() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="contact-modal-title"
-          className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-100 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-ink/50 backdrop-blur-sm animate-fade-in"
           onClick={() => setContactModalDonor(null)}
         >
           <div
-            className="relative w-full max-w-md rounded-3xl border border-line bg-surface p-6 sm:p-8 shadow-2xl transition-all"
+            className="relative w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-line bg-surface p-6 sm:p-8 shadow-2xl transition-all max-h-[90dvh] overflow-y-auto overscroll-contain"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -661,10 +704,31 @@ export default function Donors() {
               </div>
 
               <h2 id="contact-modal-title" className="mt-4 text-xl sm:text-2xl font-black text-ink">
-                {contactModalDonor.display_name}
+                {lang === "bn"
+                  ? (contactModalDonor.full_name_bn || contactModalDonor.display_name_bn || contactModalDonor.display_name)
+                  : (contactModalDonor.full_name || contactModalDonor.display_name)}
               </h2>
 
+              {/* Secondary bilingual name */}
+              {((lang === "bn"
+                ? (contactModalDonor.full_name || contactModalDonor.display_name)
+                : (contactModalDonor.full_name_bn || contactModalDonor.display_name_bn || contactModalDonor.display_name)) !==
+                (lang === "bn"
+                  ? (contactModalDonor.full_name_bn || contactModalDonor.display_name_bn || contactModalDonor.display_name)
+                  : (contactModalDonor.full_name || contactModalDonor.display_name))) && (
+                <p className="text-xs text-muted font-medium mt-0.5">
+                  {lang === "bn"
+                    ? (contactModalDonor.full_name || contactModalDonor.display_name)
+                    : (contactModalDonor.full_name_bn || contactModalDonor.display_name_bn || contactModalDonor.display_name)}
+                </p>
+              )}
+
               <p className="mt-1 text-xs sm:text-sm text-muted font-medium">
+                {contactModalDonor.age != null && (
+                  <span className="font-bold text-brand mr-1.5">
+                    {lang === "bn" ? `${toBengaliDigits(contactModalDonor.age)} বছর` : `${contactModalDonor.age} yrs`} ·
+                  </span>
+                )}
                 {contactModalDonor.upazila_bn || contactModalDonor.upazila_en
                   ? lang === "bn"
                     ? `${contactModalDonor.upazila_bn}, ${contactModalDonor.district_bn}`
@@ -675,6 +739,11 @@ export default function Donors() {
 
               {/* Badges */}
               <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                {contactModalDonor.age != null && (
+                  <Badge tone="muted">
+                    {lang === "bn" ? `${toBengaliDigits(contactModalDonor.age)} বছর` : `${contactModalDonor.age} yrs`}
+                  </Badge>
+                )}
                 <Badge tone={contactModalDonor.can_give_now ? "success" : "muted"}>
                   {contactModalDonor.can_give_now ? t("donors.readyNow") : t("donors.unavailable")}
                 </Badge>

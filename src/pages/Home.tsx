@@ -1,5 +1,6 @@
 /**
  * Home — AIDA Structure & High-End Design
+ * Rebranded for Medilink (মেডিলিঙ্ক) with seamless theme & language reactivity
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -7,7 +8,16 @@ import { Link } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { ArrowRight, Droplet, Megaphone, Stethoscope, ShieldCheck, HeartPulse } from "lucide-react";
+import {
+  ArrowRight,
+  Droplet,
+  Megaphone,
+  Stethoscope,
+  ShieldCheck,
+  HeartPulse,
+  Sparkles,
+  CheckCircle2,
+} from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
 import { useAuth } from "@/state/auth-context.tsx";
@@ -22,7 +32,7 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 /* -------------------------------------------------------------------------- */
 
 function Hero() {
-  const { t } = useAppShell();
+  const { t, lang } = useAppShell();
   const { requireAuth } = useAuth();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -41,27 +51,57 @@ function Hero() {
   );
 
   return (
-    <section ref={ref} className="relative overflow-hidden pt-12 pb-16 md:pt-20 md:pb-24 border-b border-line bg-gradient-to-b from-surface via-surface to-elevated/40" aria-labelledby="hero-h1">
+    <section
+      ref={ref}
+      className="relative overflow-hidden pt-12 pb-16 md:pt-20 md:pb-24 border-b border-line bg-gradient-to-b from-surface via-surface to-elevated/40"
+      aria-labelledby="hero-h1"
+    >
       <div className="aurora absolute inset-0 -z-10 opacity-70" aria-hidden="true" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 text-center">
-        <div data-hero-reveal className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-soft px-4 py-1.5 text-xs font-bold text-brand-deep mb-4 shadow-2xs">
-          <ShieldCheck className="h-4 w-4" />
-          <span>{t("app.gov")}</span>
+        {/* Medilink National Network Pill */}
+        <div
+          data-hero-reveal
+          className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-soft/80 px-4 py-1.5 text-xs font-bold text-brand-deep mb-4 shadow-2xs backdrop-blur-xs"
+        >
+          <ShieldCheck className="h-4 w-4 text-brand shrink-0" />
+          <span>
+            {lang === "bn"
+              ? "মেডিলিঙ্ক — জাতীয় ডিজিটাল স্বাস্থ্য ও জরুরি রক্তসেবা"
+              : "Medilink — National Digital Health & Blood Network"}
+          </span>
         </div>
 
+        {/* Hero Title — Bangladesh's First Intelligent Blood Matching Network */}
         <h1
           id="hero-h1"
           data-hero-reveal
           className="display mx-auto max-w-5xl text-[clamp(2.5rem,5.5vw,4.75rem)] text-ink leading-[1.05]"
         >
-          {t("home.heroTitle")} <span className="text-brand">{t("home.heroTitleAccent")}</span>
+          {lang === "bn" ? (
+            <>
+              বাংলাদেশের প্রথম{" "}
+              <span className="text-brand">ইন্টেলিজেন্ট ব্লাড ম্যাচিং নেটওয়ার্ক</span>
+            </>
+          ) : (
+            <>
+              Bangladesh&rsquo;s First{" "}
+              <span className="text-brand">Intelligent Blood Matching Network</span>
+            </>
+          )}
         </h1>
 
-        <p data-hero-reveal className="mx-auto mt-6 max-w-2xl text-base sm:text-xl text-muted font-normal leading-relaxed">
-          {t("home.heroBody")}
+        {/* Hero Sub-copy */}
+        <p
+          data-hero-reveal
+          className="mx-auto mt-6 max-w-2xl text-base sm:text-xl text-muted font-normal leading-relaxed"
+        >
+          {lang === "bn"
+            ? "সময় যখন জরুরি, আপনার উপযুক্ত রক্তদাতা ভাবনার চেয়েও কাছে।"
+            : "When time matters, your matching donor is closer than you think."}
         </p>
 
+        {/* Main CTAs */}
         <div data-hero-reveal className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <button
             type="button"
@@ -81,6 +121,25 @@ function Hero() {
             <Stethoscope className="h-5 w-5" />
             <span>{t("home.ctaSecondary")}</span>
           </button>
+        </div>
+
+        {/* Trust Badges Bar */}
+        <div
+          data-hero-reveal
+          className="mt-10 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs sm:text-sm font-semibold text-muted"
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            {lang === "bn" ? "১০০% বিনামূল্যে সেবা" : "100% Free Public Service"}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            {lang === "bn" ? "বিএমডিসি যাচাইকৃত ডাক্তার" : "BMDC-Verified Doctors"}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            {lang === "bn" ? "তাৎক্ষণিক লোকেশন ম্যাচিং" : "Real-time Location Matching"}
+          </span>
         </div>
       </div>
     </section>
@@ -136,7 +195,7 @@ function ActionOptions() {
           }}
           onClick={() => requireAuth("/donors")}
           data-option
-          className="group relative overflow-hidden rounded-[2.5rem] border border-brand/20 bg-gradient-to-br from-white via-rose-50/50 to-rose-100/40 p-8 sm:p-12 text-ink flex flex-col justify-between min-h-[20rem] shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-brand"
+          className="group relative overflow-hidden rounded-[2.5rem] border border-brand/20 bg-gradient-to-br from-surface via-surface to-brand-soft/30 dark:to-brand-soft/10 p-8 sm:p-12 text-ink flex flex-col justify-between min-h-[20rem] shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-brand"
         >
           <div className="pointer-events-none absolute -right-16 -bottom-16 h-64 w-64 rounded-full bg-brand/10 blur-2xl" aria-hidden="true" />
           <div className="flex items-center justify-between">
@@ -144,15 +203,19 @@ function ActionOptions() {
               <Droplet className="h-7 w-7 fill-current" strokeWidth={2} aria-hidden="true" />
             </span>
             <span className="text-xs font-bold uppercase tracking-wider bg-brand-soft text-brand-deep px-3.5 py-1.5 rounded-full border border-brand/20">
-              {lang === "bn" ? "জরুরি ম্যাচ" : "Emergency Match"}
+              {lang === "bn" ? "মেডিলিঙ্ক ব্লাড ম্যাচ" : "Medilink Blood Match"}
             </span>
           </div>
 
           <div className="relative mt-12">
             <h3 className="text-3xl sm:text-4xl font-extrabold leading-tight text-ink">
-              {t("home.ctaPrimary")}
+              {lang === "bn" ? "সঙ্গতিপূর্ণ রক্তদাতা খুঁজুন" : "Find a Matched Donor"}
             </h3>
-            <p className="mt-3 text-base text-muted max-w-md">{t("donors.subtitle")}</p>
+            <p className="mt-3 text-base text-muted max-w-md">
+              {lang === "bn"
+                ? "মেডিলিঙ্ক দ্রুততম অ্যালগরিদমে আপনার নিকটের সক্রিয় ও উপযুক্ত রক্তদাতাদের খুঁজে দেয় এবং সরাসরি যোগাযোগের পথ সুগম করে।"
+                : "Medilink connects you with verified nearby blood donors across all districts in seconds with compatibility-first matching."}
+            </p>
             <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-white bg-brand hover:bg-brand-deep px-5 py-2.5 rounded-full transition-colors shadow-xs">
               {t("common.search")}
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
@@ -172,7 +235,7 @@ function ActionOptions() {
           }}
           onClick={() => requireAuth("/doctors?guide=open")}
           data-option
-          className="group relative overflow-hidden rounded-[2.5rem] border border-ink-brand/20 bg-gradient-to-br from-white via-teal-50/50 to-teal-100/40 p-8 sm:p-12 text-ink flex flex-col justify-between min-h-[20rem] shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-ink-brand"
+          className="group relative overflow-hidden rounded-[2.5rem] border border-ink-brand/20 bg-gradient-to-br from-surface via-surface to-ink-brand-soft/30 dark:to-ink-brand-soft/10 p-8 sm:p-12 text-ink flex flex-col justify-between min-h-[20rem] shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-ink-brand"
         >
           <div className="pointer-events-none absolute -right-16 -bottom-16 h-64 w-64 rounded-full bg-ink-brand/10 blur-2xl" aria-hidden="true" />
           <div className="flex items-center justify-between">
@@ -180,19 +243,108 @@ function ActionOptions() {
               <Stethoscope className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
             </span>
             <span className="text-xs font-bold uppercase tracking-wider bg-ink-brand-soft text-ink-brand px-3.5 py-1.5 rounded-full border border-ink-brand/20">
-              {lang === "bn" ? "টেলিমেডিসিন" : "Telemedicine"}
+              {lang === "bn" ? "মেডিলিঙ্ক টেলিমেডিসিন" : "Medilink Telemedicine"}
             </span>
           </div>
 
           <div className="relative mt-12">
             <h3 className="text-3xl sm:text-4xl font-extrabold leading-tight text-ink">
-              {t("home.ctaSecondary")}
+              {lang === "bn" ? "বিশেষজ্ঞ ডাক্তারের সাথে পরামর্শ" : "Consult a Specialist Doctor"}
             </h3>
-            <p className="mt-3 text-base text-muted max-w-md">{t("doctors.subtitle")}</p>
+            <p className="mt-3 text-base text-muted max-w-md">
+              {lang === "bn"
+                ? "লক্ষণ ও রোগ অনুযায়ী সঠিক বিশেষজ্ঞ বেছে নিতে মেডিলিঙ্ক ইন্টারেক্টিভ গাইড ব্যবহার করুন — সম্পূর্ণ সরকারি বিনামূল্যে সেবা।"
+                : "Use Medilink's interactive specialty guide to find the right BMDC-verified doctor — 100% free public healthcare."}
+            </p>
             <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-white bg-ink-brand hover:opacity-90 px-5 py-2.5 rounded-full transition-colors shadow-xs">
-              {t("doctors.book")}
+              {lang === "bn" ? "পরামর্শ গাইড চালু করুন" : "Open Doctor Guide"}
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
             </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Specialty Consultation Guide Promo Banner                                  */
+/* -------------------------------------------------------------------------- */
+
+function DoctorSpecialtyBanner() {
+  const { lang } = useAppShell();
+  const { requireAuth } = useAuth();
+  const ref = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const el = ref.current;
+      if (!el) return;
+      gsap.fromTo(
+        el,
+        { y: 24, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.7,
+          ease: "power2.out",
+          scrollTrigger: { trigger: el, start: "top 88%" },
+        }
+      );
+    },
+    { scope: ref }
+  );
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-14 sm:pb-18" ref={ref} aria-labelledby="guide-banner-title">
+      <div className="relative overflow-hidden rounded-[2.5rem] border border-ink-brand/30 bg-gradient-to-r from-ink-brand-soft/40 via-surface to-brand-soft/30 dark:from-ink-brand-soft/15 dark:via-surface dark:to-brand-soft/15 p-8 sm:p-12 shadow-sm">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-ink-brand/10 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -left-20 -bottom-20 h-72 w-72 rounded-full bg-brand/10 blur-3xl" aria-hidden="true" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-ink-brand/30 bg-ink-brand-soft px-3.5 py-1 text-xs font-bold text-ink-brand mb-4">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{lang === "bn" ? "মেডিলিঙ্ক স্পেশালিটি গাইড" : "Medilink Specialty Guide"}</span>
+            </div>
+            <h2 id="guide-banner-title" className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-ink leading-tight">
+              {lang === "bn"
+                ? "কোন ডাক্তারের কাছে যাবেন বুঝতে পারছেন না?"
+                : "Not sure which doctor or specialist you need?"}
+            </h2>
+            <p className="mt-3 text-base text-muted leading-relaxed">
+              {lang === "bn"
+                ? "মেডিলিঙ্ক-এর ইন্টারেক্টিভ সিম্পটম গাইড আপনাকে উপসর্গ বিশ্লেষণ করে সঠিক চিকিৎসা বিভাগ ও বিশেষজ্ঞ ডাক্তারের কাছে পৌঁছে দেবে — সম্পূর্ণ বিনামূল্যে সরকারি স্বাস্থ্যসেবায়।"
+                : "Medilink's interactive symptom guide guides you to the right medical department and BMDC-verified doctor in seconds — 100% free public service."}
+            </p>
+
+            <div className="mt-5 flex flex-wrap items-center gap-4 text-xs sm:text-sm font-semibold text-muted">
+              <span className="inline-flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-ink-brand shrink-0" />
+                {lang === "bn" ? "১২টি চিকিৎসা বিভাগ" : "12 Medical Specialties"}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-ink-brand shrink-0" />
+                {lang === "bn" ? "বিএমডিসি যাচাইকৃত ডাক্তার" : "BMDC-Verified Doctors"}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-ink-brand shrink-0" />
+                {lang === "bn" ? "১০০% বিনামূল্যে সেবা" : "100% Free Public Service"}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 items-center">
+            <button
+              type="button"
+              onClick={() => requireAuth("/doctors?guide=open")}
+              className="inline-flex h-14 items-center justify-center gap-3 rounded-full bg-ink-brand px-8 text-base font-bold text-white shadow-lg hover:opacity-90 hover:shadow-xl transition-all cursor-pointer active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-ink-brand focus:ring-offset-2"
+            >
+              <Stethoscope className="h-5 w-5" />
+              <span>{lang === "bn" ? "পরামর্শ গাইড চালু করুন" : "Open Doctor Guide"}</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>
@@ -216,9 +368,9 @@ function NationalRail({
   const kindTone = (kind: NationalHealthUpdate["kind"]) => {
     switch (kind) {
       case "alert":
-        return "border-blood/40 bg-blood-soft/50 text-blood-deep";
+        return "border-blood/40 bg-blood-soft/50 text-blood-deep dark:bg-blood-soft/20 dark:text-red-300";
       case "campaign":
-        return "border-brand/30 bg-brand-soft/60 text-brand-deep";
+        return "border-brand/30 bg-brand-soft/60 text-brand-deep dark:bg-brand-soft/20 dark:text-rose-300";
       default:
         return "border-line bg-surface text-ink";
     }
@@ -323,7 +475,9 @@ function ArticlesRail({ items, loading }: { items: ArticleFeedItem[]; loading: b
     <section ref={ref} className="min-w-0 flex-1" aria-labelledby="articles-h2">
       <div className="flex items-center justify-between">
         <div>
-          <span className="text-xs font-bold uppercase tracking-widest text-brand">{t("home.articlesTitle")}</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-brand">
+            {lang === "bn" ? "মেডিলিঙ্ক স্বাস্থ্য" : "Medilink Health"}
+          </span>
           <h2 id="articles-h2" className="text-2xl sm:text-3xl font-extrabold text-ink mt-1">
             {t("home.articlesTitle")}
           </h2>
@@ -407,10 +561,16 @@ function ArticlesRail({ items, loading }: { items: ArticleFeedItem[]; loading: b
 /* -------------------------------------------------------------------------- */
 
 export default function Home() {
+  const { lang, theme } = useAppShell();
   const [updates, setUpdates] = useState<NationalHealthUpdate[]>([]);
   const [updatesLoading, setUpdatesLoading] = useState(true);
   const [articles, setArticles] = useState<ArticleFeedItem[]>([]);
   const [articlesLoading, setArticlesLoading] = useState(true);
+
+  // Seamless GSAP recalculation whenever user switches language or theme sliders
+  useEffect(() => {
+    ScrollTrigger.refresh();
+  }, [lang, theme]);
 
   const load = useMemo(
     () => async () => {
@@ -438,9 +598,10 @@ export default function Home() {
   }, [load]);
 
   return (
-    <div className="overflow-x-hidden w-full max-w-full bg-bg text-ink">
+    <div className="overflow-x-hidden w-full max-w-full bg-bg text-ink transition-colors duration-200">
       <Hero />
       <ActionOptions />
+      <DoctorSpecialtyBanner />
 
       <div className="mx-auto pb-24 max-w-7xl px-4 sm:px-6 flex flex-col lg:flex-row lg:items-start gap-12">
         <ArticlesRail items={articles} loading={articlesLoading} />

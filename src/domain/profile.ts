@@ -214,8 +214,10 @@ export function completeness(profile: CompletenessInput): {
 /* Age bands (never an exact age on a public surface)                          */
 /* -------------------------------------------------------------------------- */
 
-export function ageBand(age: number | null): { en: string; bn: string } {
-  if (age === null) return { en: "Age not given", bn: "বয়স দেওয়া নেই" };
+export function ageBand(age: number | null | undefined): { en: string; bn: string } {
+  if (age === null || age === undefined || Number.isNaN(age) || age <= 0) {
+    return { en: "Age not given", bn: "বয়স দেওয়া নেই" };
+  }
   if (age < 25) return { en: "18–24", bn: "১৮–২৪" };
   if (age < 35) return { en: "25–34", bn: "২৫–৩৪" };
   if (age < 45) return { en: "35–44", bn: "৩৫–৪৪" };

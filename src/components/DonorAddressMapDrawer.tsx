@@ -214,8 +214,32 @@ export function DonorAddressMapDrawer({
                 id="map-drawer-title"
                 className="text-lg sm:text-xl font-black text-ink truncate leading-tight"
               >
-                {donor.display_name}
+                {lang === "bn"
+                  ? (donor.full_name_bn || donor.display_name_bn || donor.display_name)
+                  : (donor.full_name || donor.display_name)}
               </h2>
+              <div className="flex items-center gap-2 mt-0.5 text-xs text-muted">
+                {((lang === "bn"
+                  ? (donor.full_name || donor.display_name)
+                  : (donor.full_name_bn || donor.display_name_bn || donor.display_name)) !==
+                  (lang === "bn"
+                    ? (donor.full_name_bn || donor.display_name_bn || donor.display_name)
+                    : (donor.full_name || donor.display_name))) && (
+                  <span className="truncate">
+                    {lang === "bn"
+                      ? (donor.full_name || donor.display_name)
+                      : (donor.full_name_bn || donor.display_name_bn || donor.display_name)}
+                  </span>
+                )}
+                {donor.age != null && (
+                  <>
+                    <span className="opacity-40">•</span>
+                    <span className="font-bold text-brand shrink-0">
+                      {lang === "bn" ? `${toBnDigits(donor.age)} বছর` : `${donor.age} yrs old`}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -234,6 +258,13 @@ export function DonorAddressMapDrawer({
         <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6 space-y-6 overscroll-contain">
           {/* Status & Verification Chips */}
           <div className="flex flex-wrap items-center gap-2">
+            {donor.age != null && (
+              <Badge tone="muted">
+                <span className="font-bold">
+                  {lang === "bn" ? `বয়স: ${toBnDigits(donor.age)} বছর` : `Age: ${donor.age} yrs`}
+                </span>
+              </Badge>
+            )}
             <Badge tone={donor.can_give_now ? "success" : "muted"}>
               {donor.can_give_now ? t("donors.readyNow") : t("donors.unavailable")}
             </Badge>
@@ -249,6 +280,40 @@ export function DonorAddressMapDrawer({
               </span>
             </Badge>
           </div>
+
+          {/* Donor Identity Card (Bilingual Full Name & Age) */}
+          <section className="rounded-3xl border border-line bg-surface p-5 space-y-3.5 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">
+                {lang === "bn" ? "রক্তদাতার পূর্ণ পরিচিতি ও বয়স" : "Donor Identity & Age"}
+              </span>
+              {donor.age != null && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand-deep">
+                  {lang === "bn" ? `বয়স: ${toBnDigits(donor.age)} বছর` : `Age: ${donor.age} yrs`}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div className="rounded-2xl border border-line bg-elevated/40 p-3.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted block mb-1">
+                  {lang === "bn" ? "বাংলায় পূর্ণ নাম" : "Name in Bengali"}
+                </span>
+                <span className="text-sm sm:text-base font-black text-ink block truncate">
+                  {donor.full_name_bn || donor.display_name_bn || donor.display_name}
+                </span>
+              </div>
+
+              <div className="rounded-2xl border border-line bg-elevated/40 p-3.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted block mb-1">
+                  {lang === "bn" ? "ইংরেজিতে পূর্ণ নাম" : "Name in English"}
+                </span>
+                <span className="text-sm sm:text-base font-black text-ink block truncate">
+                  {donor.full_name || donor.display_name}
+                </span>
+              </div>
+            </div>
+          </section>
 
           {/* 1. Full Address Card */}
           <section className="rounded-3xl border border-line bg-elevated/40 p-5 space-y-4 shadow-2xs">

@@ -114,6 +114,10 @@ describe("name masking", () => {
     assert.equal(maskName("Md. Rakibul Hasan"), "Md. R.");
     assert.equal(maskName("Rakibul Hasan"), "Rakibul H.");
     assert.equal(maskName("  Rakibul   Hasan  "), "Rakibul H.");
+    // 3-word authentic Bangladeshi full names
+    assert.equal(maskName("Mohammad Rafiqul Islam"), "Mohammad R.");
+    assert.equal(maskName("Kazi Nazmul Hossain"), "Kazi N.");
+    assert.equal(maskName("Syeda Farzana Rahman"), "Syeda F.");
   });
 
   it("leaves a single-word name whole rather than truncating it to one letter", () => {
@@ -128,11 +132,15 @@ describe("name masking", () => {
 
   it("masks the Bengali name with the same rule and a supplied fallback", () => {
     assert.equal(maskNameBn("রাকিবুল হাসান", "একজন রক্তদাতা"), "রাকিবুল হ.");
+    assert.equal(maskNameBn("মোহাম্মদ রফিকুল ইসলাম", "একজন রক্তদাতা"), "মোহাম্মদ র.");
+    assert.equal(maskNameBn("সৈয়দা ফারজানা রহমান", "একজন রক্তদাতা"), "সৈয়দা ফ.");
     assert.equal(maskNameBn(null, "একজন রক্তদাতা"), "একজন রক্তদাতা");
   });
 
   it("derives initials without leaking the rest of the name", () => {
     assert.equal(initialsOf("Md. Rakibul Hasan"), "MH");
+    assert.equal(initialsOf("Mohammad Rafiqul Islam"), "MI");
+    assert.equal(initialsOf("Syeda Farzana Rahman"), "SR");
     assert.equal(initialsOf("Shathi"), "S");
     assert.equal(initialsOf(null), "•");
   });
@@ -147,6 +155,7 @@ describe("profile completeness", () => {
     blood_group: "O+" as const,
     home_upazila_id: 101,
     present_address: "House 4, Road 2, Savar",
+    age: 31,
   };
 
   it("scores a complete profile at 100 and lists nothing missing", () => {
@@ -188,9 +197,19 @@ describe("age banding", () => {
     assert.equal(ageBand(50).en, "45–55");
     assert.equal(ageBand(60).en, "56–65");
     assert.equal(ageBand(null).en, "Age not given");
+    assert.equal(ageBand(undefined).en, "Age not given");
+    assert.equal(ageBand(0).en, "Age not given");
+    assert.equal(ageBand(Number.NaN).en, "Age not given");
+    assert.equal(ageBand(null).bn, "বয়স দেওয়া নেই");
+    assert.equal(ageBand(undefined).bn, "বয়স দেওয়া নেই");
   });
 
   it("uses Bengali numerals in the Bengali band", () => {
+    assert.equal(ageBand(20).bn, "১৮–২৪");
+    assert.equal(ageBand(30).bn, "২৫–৩৪");
+    assert.equal(ageBand(40).bn, "৩৫–৪৪");
+    assert.equal(ageBand(50).bn, "৪৫–৫৫");
+    assert.equal(ageBand(60).bn, "৫৬–৬৫");
     assert.match(ageBand(30).bn, /[০-৯]/);
   });
 });

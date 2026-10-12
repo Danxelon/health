@@ -27,6 +27,7 @@ import {
   Brain,
   Droplet,
   Activity,
+  Phone,
 } from "lucide-react";
 import { useAppShell } from "@/state/app-shell.tsx";
 import { useAuth } from "@/state/auth-context.tsx";
@@ -38,6 +39,7 @@ import { DEMO_SPECIALTIES } from "@/lib/demo-data.ts";
 import { DoctorSpecialtyGuide } from "@/components/DoctorSpecialtyGuide.tsx";
 import { distanceBand } from "@/domain/matching.ts";
 import { initialsOf, toBengaliDigits } from "@/domain/profile.ts";
+import { ageInYears } from "@/domain/eligibility.ts";
 import { DomainError } from "@/domain/types.ts";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -69,7 +71,10 @@ const COPY = {
   message: { bn: "বার্তা", en: "Message" },
   chat: { bn: "বার্তা পাঠান (Chat)", en: "Message (Chat)" },
   chatLoading: { bn: "চ্যাট খোলা হচ্ছে…", en: "Opening chat…" },
+  call: { bn: "কল করুন (Call)", en: "Call" },
   bmdcLabel: { bn: "বিএমডিসি", en: "BMDC" },
+  expLabel: { bn: "অভিজ্ঞতা", en: "Exp" },
+  ageLabel: { bn: "বয়স", en: "Age" },
   symptomPh: { bn: "সংক্ষেপে সমস্যা লিখুন…", en: "Briefly describe your issue…" },
   symptomLabel: { bn: "আপনার সমস্যা", en: "Your concern" },
   sending: { bn: "পাঠানো হচ্ছে…", en: "Sending…" },
@@ -487,119 +492,184 @@ export default function Doctors() {
                 aria-live="polite"
                 className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 grid-flow-dense"
               >
-                {doctors.map((d) => (
-                  <article
-                    key={d.user_id}
-                    className="group flex flex-col rounded-3xl border border-line bg-surface p-5 transition-transform duration-300 hover:-translate-y-1"
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-deep font-bold">
-                        {initialsOf(d.display_name)}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <h2 className="truncate font-semibold text-ink">{d.display_name}</h2>
-                        <p className="truncate text-xs text-muted">
-                          {d.degrees ?? (lang === "bn" ? d.specialty_bn : d.specialty_en)}
-                        </p>
+                {doctors.map((d) => {
+                  const primaryName =
+                    lang === "bn"
+                      ? (d.full_name_bn || d.display_name)
+                      : (d.full_name || d.display_name);
+                  const secondaryName =
+                    lang === "bn"
+                      ? (d.full_name || (d.display_name !== primaryName ? d.display_name : null))
+                      : (d.full_name_bn || (d.display_name !== primaryName ? d.display_name : null));
+                  const showSecondary = Boolean(
+                    secondaryName && secondaryName.trim() && secondaryName !== primaryName
+                  );
+                  const doctorAge =
+                    typeof d.age === "number" && d.age > 0
+                      ? d.age
+                      : ageInYears(d.date_of_birth ?? null);
+
+                  return (
+                    <article
+                      key={d.user_id}
+                      className="group flex flex-col rounded-3xl border border-line bg-surface p-5 transition-transform duration-300 hover:-translate-y-1 shadow-2xs hover:shadow-md"
+                    >
+                      <div className="flex items-start gap-3">
+                        {d.avatar_url ? (
+                          <img
+                            src={d.avatar_url}
+                            alt={primaryName}
+                            className="h-12 w-12 shrink-0 rounded-full object-cover border border-line/60"
+                          />
+                        ) : (
+                          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-deep font-bold text-sm">
+                            {initialsOf(d.full_name || d.display_name || primaryName)}
+                          </span>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <h2 className="truncate font-bold text-ink text-base tracking-tight leading-snug">
+                            {primaryName}
+                          </h2>
+                          {showSecondary && (
+                            <p className="truncate text-xs font-medium text-muted mt-0.5">
+                              {secondaryName}
+                            </p>
+                          )}
+                          <p className="truncate text-xs text-muted/80 mt-0.5">
+                            {d.degrees ?? (lang === "bn" ? d.specialty_bn : d.specialty_en)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Badge tone="success">
-                        <ShieldCheck className="h-3 w-3" strokeWidth={1.8} aria-hidden="true" />
-                        {t("doctors.verified")}
-                      </Badge>
-                      {d.bmdc_reg_no && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-elevated px-2 py-0.5 text-xs font-medium text-ink/85 border border-line/60">
-                          <span className="text-[10px] font-bold text-muted uppercase">
-                            {COPY.bmdcLabel[lang]}
+                      <div className="mt-3 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <Badge tone="success">
+                          <ShieldCheck className="h-3 w-3" strokeWidth={1.8} aria-hidden="true" />
+                          {t("doctors.verified")}
+                        </Badge>
+                        {d.bmdc_reg_no && (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-md bg-elevated px-2 py-0.5 text-xs font-medium text-ink/85 border border-line/60"
+                            title={`BMDC: ${d.bmdc_reg_no}`}
+                          >
+                            <span className="text-[10px] font-bold text-muted uppercase">
+                              {COPY.bmdcLabel[lang]}
+                            </span>
+                            <span className="tnum font-semibold">
+                              {d.bmdc_reg_no.startsWith("BMDC-") ? d.bmdc_reg_no.slice(5) : d.bmdc_reg_no}
+                            </span>
                           </span>
-                          <span className="tnum font-semibold">
-                            {d.bmdc_reg_no.startsWith("BMDC-") ? d.bmdc_reg_no.slice(5) : d.bmdc_reg_no}
+                        )}
+                        {d.experience_years !== null && d.experience_years !== undefined && (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-elevated px-2 py-0.5 text-xs font-medium text-ink/85 border border-line/60">
+                            <span className="text-[10px] font-bold text-muted uppercase">
+                              {COPY.expLabel[lang]}
+                            </span>
+                            <span className="tnum font-semibold">
+                              {lang === "bn"
+                                ? `${toBengaliDigits(d.experience_years)} ${t("doctors.years")}`
+                                : `${d.experience_years} ${t("doctors.years")}`}
+                            </span>
                           </span>
-                        </span>
-                      )}
-                      {d.distance_km !== null && (
-                        <DistanceChip km={d.distance_km} band={distanceBand(d.distance_km * 1000)} />
-                      )}
-                      {d.experience_years !== null && (
-                        <span className="text-xs text-muted tnum">
-                          {toBengaliDigits(d.experience_years)} {t("doctors.years")}
-                        </span>
-                      )}
-                    </div>
+                        )}
+                        {doctorAge !== null && doctorAge !== undefined && doctorAge > 0 && (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-elevated px-2 py-0.5 text-xs font-medium text-ink/85 border border-line/60">
+                            <span className="text-[10px] font-bold text-muted uppercase">
+                              {COPY.ageLabel[lang]}
+                            </span>
+                            <span className="tnum font-semibold">
+                              {lang === "bn"
+                                ? `${toBengaliDigits(doctorAge)} বছর`
+                                : `${doctorAge} yrs`}
+                            </span>
+                          </span>
+                        )}
+                        {d.distance_km !== null && (
+                          <DistanceChip km={d.distance_km} band={distanceBand(d.distance_km * 1000)} />
+                        )}
+                      </div>
 
-                    <div className="mt-2.5 flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                        {lang === "bn" ? "বিনামূল্যে (সরকারি সেবা)" : "Free (Govt. Service)"}
-                      </span>
-                      <span className="text-[11px] font-semibold text-muted">
-                        {lang === "bn" ? "ফি: ৳০" : "Fee: ৳0"}
-                      </span>
-                    </div>
+                      <div className="mt-2.5 flex items-center justify-between">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          {lang === "bn" ? "বিনামূল্যে (সরকারি সেবা)" : "Free (Govt. Service)"}
+                        </span>
+                        <span className="text-[11px] font-semibold text-muted">
+                          {lang === "bn" ? "ফি: ৳০" : "Fee: ৳0"}
+                        </span>
+                      </div>
 
-                    {composerFor === d.user_id && (
-                      <div className="mt-3">
-                        <label
-                          htmlFor={`sym-${d.user_id}`}
-                          className="text-xs font-semibold text-muted"
+                      {composerFor === d.user_id && (
+                        <div className="mt-3">
+                          <label
+                            htmlFor={`sym-${d.user_id}`}
+                            className="text-xs font-semibold text-muted"
+                          >
+                            {COPY.symptomLabel[lang]}
+                          </label>
+                          <textarea
+                            id={`sym-${d.user_id}`}
+                            rows={2}
+                            value={symptomByDoctor[d.user_id] ?? ""}
+                            onChange={(e) =>
+                              setSymptomByDoctor((m) => ({ ...m, [d.user_id]: e.target.value }))
+                            }
+                            placeholder={COPY.symptomPh[lang]}
+                            className="mt-1 w-full rounded-2xl border border-line bg-bg px-3 py-2 text-sm text-ink placeholder:text-subtle focus:border-brand focus:outline-none"
+                          />
+                        </div>
+                      )}
+
+                      <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                        <button
+                          type="button"
+                          disabled={messagingId === d.user_id || bookingId === d.user_id}
+                          onClick={() => handleMessageDoctor(d)}
+                          className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-deep transition-all cursor-pointer disabled:opacity-60 shadow-xs"
                         >
-                          {COPY.symptomLabel[lang]}
-                        </label>
-                        <textarea
-                          id={`sym-${d.user_id}`}
-                          rows={2}
-                          value={symptomByDoctor[d.user_id] ?? ""}
-                          onChange={(e) =>
-                            setSymptomByDoctor((m) => ({ ...m, [d.user_id]: e.target.value }))
-                          }
-                          placeholder={COPY.symptomPh[lang]}
-                          className="mt-1 w-full rounded-2xl border border-line bg-bg px-3 py-2 text-sm text-ink placeholder:text-subtle focus:border-brand focus:outline-none"
-                        />
+                          {messagingId === d.user_id ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                              <span>{COPY.chatLoading[lang]}</span>
+                            </>
+                          ) : (
+                            <>
+                              <MessageCircle className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+                              <span>{COPY.chat[lang]}</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={bookingId === d.user_id || messagingId === d.user_id}
+                          onClick={() => handleBook(d)}
+                          className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-ink hover:bg-elevated transition-colors cursor-pointer disabled:opacity-60"
+                        >
+                          {bookingId === d.user_id ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                              <span>{COPY.sending[lang]}</span>
+                            </>
+                          ) : (
+                            <>
+                              <CalendarCheck className="h-4 w-4 text-brand-deep" strokeWidth={1.8} aria-hidden="true" />
+                              <span>{COPY.book[lang]}</span>
+                            </>
+                          )}
+                        </button>
+                        {d.phone && (
+                          <a
+                            href={`tel:${d.phone}`}
+                            aria-label={COPY.call[lang]}
+                            title={COPY.call[lang]}
+                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition-colors"
+                          >
+                            <Phone className="h-4 w-4" strokeWidth={1.8} />
+                          </a>
+                        )}
                       </div>
-                    )}
-
-                    <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                      <button
-                        type="button"
-                        disabled={messagingId === d.user_id || bookingId === d.user_id}
-                        onClick={() => handleMessageDoctor(d)}
-                        className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-deep transition-all cursor-pointer disabled:opacity-60 shadow-xs"
-                      >
-                        {messagingId === d.user_id ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                            <span>{COPY.chatLoading[lang]}</span>
-                          </>
-                        ) : (
-                          <>
-                            <MessageCircle className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-                            <span>{COPY.chat[lang]}</span>
-                          </>
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={bookingId === d.user_id || messagingId === d.user_id}
-                        onClick={() => handleBook(d)}
-                        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-ink hover:bg-elevated transition-colors cursor-pointer disabled:opacity-60"
-                      >
-                        {bookingId === d.user_id ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                            <span>{COPY.sending[lang]}</span>
-                          </>
-                        ) : (
-                          <>
-                            <CalendarCheck className="h-4 w-4 text-brand-deep" strokeWidth={1.8} aria-hidden="true" />
-                            <span>{COPY.book[lang]}</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </article>
-                ))}
+                    </article>
+                  );
+                })}
               </div>
             )}
           </>

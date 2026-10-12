@@ -45,19 +45,27 @@ type NavItem = {
 };
 
 
-/** Bilingual wordmark under the logo. */
-function Wordmark() {
-  const { t } = useAppShell();
+/** Bilingual wordmark with Medilink logo. */
+function Wordmark({ className = "" }: { className?: string }) {
   return (
-    <span className="flex items-baseline gap-2 whitespace-nowrap shrink-0 select-none">
-      <span className="font-display text-[1.125rem] font-800 tracking-tight text-ink leading-none">
-        {t("app.name")}
-      </span>
-      <span
-        lang="bn"
-        className="font-display text-[1.125rem] font-800 tracking-tight text-brand leading-none hidden min-[400px]:inline"
-      >
-        জীবন রক্ষা
+    <span className={`inline-flex items-center gap-2.5 whitespace-nowrap shrink-0 select-none ${className}`}>
+      <img
+        src="/symbol.png"
+        alt="Medilink"
+        className="h-8 w-8 object-contain shrink-0 rounded-lg shadow-2xs"
+        width={32}
+        height={32}
+      />
+      <span className="inline-flex items-baseline gap-1.5">
+        <span className="font-display text-[1.125rem] font-800 tracking-tight text-ink leading-none">
+          Medilink
+        </span>
+        <span
+          lang="bn"
+          className="font-display text-[1.125rem] font-800 tracking-tight text-brand leading-none hidden sm:inline"
+        >
+          মেডিলিঙ্ক
+        </span>
       </span>
     </span>
   );
@@ -306,6 +314,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // Close mobile drawer on navigation
   useEffect(() => setMobileOpen(false), [pathname]);
 
+  // Mobile drawer a11y: Escape closes, body scroll locks, stale open state
+  // clears when resizing up to desktop where the hamburger is hidden.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const mq = window.matchMedia("(min-width: 768px)");
+    const onCross = (ev: MediaQueryListEvent) => {
+      if (ev.matches) setMobileOpen(false);
+    };
+    mq.addEventListener("change", onCross);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+      mq.removeEventListener("change", onCross);
+    };
+  }, [mobileOpen]);
+
   const handleNavClick = (item: NavItem, e: React.MouseEvent) => {
     if (item.requiresAuth && !isLoggedIn) {
       e.preventDefault();
@@ -371,16 +401,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <LoginPromptModal />
 
       {/* Modern, clean top navigation bar */}
-      <header className="sticky top-0 z-50 border-b border-line bg-surface/95 backdrop-blur-md transition-shadow">
-        <nav aria-label="Primary" className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="flex items-center justify-between h-[4.5rem] gap-3 sm:gap-6">
+      <header className="sticky top-0 z-50 border-b border-line bg-surface/95 backdrop-blur-md transition-shadow pt-[env(safe-area-inset-top)]">
+        <nav aria-label="Primary" className="mx-auto max-w-7xl px-3 sm:px-6">
+          <div className="flex items-center justify-between h-14 sm:h-[4.5rem] gap-2 sm:gap-6">
             {/* Logo: shrink-0 min-w-max prevents squishing/overlapping */}
             <Link
               to="/"
-              className="flex items-center gap-2.5 shrink-0 min-w-max"
+              className="flex items-center shrink-0 min-w-max"
               aria-label={t("app.name")}
             >
-              <img src="/logo.svg" alt="" className="h-8 w-8 shrink-0" width={32} height={32} />
               <Wordmark />
             </Link>
 
@@ -423,9 +452,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </nav>
                 </div>
 
-                {/* Scrolled Quick Action Buttons: "Find a donor" & "Consult a doctor" */}
+                {/* Scrolled Quick Action Buttons: desktop only — phones use the hamburger drawer */}
                 <div
-                  className={`absolute inset-0 flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 ease-out ${
+                  className={`absolute inset-0 hidden md:flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 ease-out ${
                     isScrolled
                       ? "opacity-100 pointer-events-auto translate-y-0 scale-100 visible"
                       : "opacity-0 pointer-events-none translate-y-2 scale-95 invisible"
@@ -460,9 +489,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Right controls */}
-            <div className="flex items-center gap-2 shrink-0 min-w-max">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <ThemeToggle />
-              <LanguageToggle />
+              <LanguageToggle className="hidden sm:inline-flex" />
 
               {/* Emergency Hotline 999 */}
               <a
@@ -535,12 +564,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </div>
               )}
 
-              {/* Mobile hamburger menu */}
+              {/* Mobile hamburger menu — 44px target for Android/iOS */}
               <button
                 type="button"
                 onClick={() => setMobileOpen((open) => !open)}
-                className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-ink cursor-pointer hover:bg-elevated transition-colors"
+                className="md:hidden inline-flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-line bg-surface text-ink cursor-pointer hover:bg-elevated transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
                 aria-expanded={mobileOpen}
+                aria-controls="mobile-menu"
+                aria-haspopup="true"
                 aria-label={mobileOpen ? t("nav.close") : t("nav.menu")}
               >
                 {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -549,9 +580,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
 
-        {/* Mobile drawer */}
+        {/* Mobile drawer — hamburger sheet with dialog semantics */}
         {mobileOpen && (
-          <div className="md:hidden mx-4 mb-3 rounded-2xl border border-line bg-surface/98 backdrop-blur-md p-4 shadow-xl">
+          <div
+            id="mobile-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label={lang === "bn" ? "মেনু" : "Menu"}
+            className="md:hidden mx-3 mb-3 rounded-2xl border border-line bg-surface p-4 shadow-xl max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom))] animate-fade-in"
+          >
+            <div className="flex items-center justify-between pb-3 mb-2 border-b border-line px-1">
+              <Wordmark />
+              <span className="text-[11px] font-semibold text-muted">
+                {lang === "bn" ? "মেনু" : "Menu"}
+              </span>
+            </div>
             <ul className="flex flex-col gap-1.5">
               {mobileNavItems.map((item) => {
                 const Icon = item.icon;
@@ -564,7 +607,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         handleNavClick(item, e);
                         setMobileOpen(false);
                       }}
-                      className={`flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors cursor-pointer ${
+                      className={`flex items-center gap-3 rounded-xl px-4 py-2.5 min-h-[44px] text-sm font-bold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
                         active
                           ? "text-white bg-brand shadow-xs"
                           : "text-muted hover:text-ink hover:bg-elevated"
@@ -615,7 +658,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       logout();
                       setMobileOpen(false);
                     }}
-                    className="flex items-center justify-center gap-2 rounded-xl border border-line bg-surface py-2.5 text-sm font-bold text-blood hover:bg-blood-soft transition-colors cursor-pointer"
+                    className="flex items-center justify-center gap-2 rounded-xl border border-line bg-surface min-h-[44px] py-2.5 text-sm font-bold text-blood hover:bg-blood-soft transition-colors cursor-pointer"
                   >
                     <LogOut className="h-4 w-4" />
                     <span>{lang === "bn" ? "লগ আউট" : "Log out"}</span>
@@ -626,14 +669,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Link
                     to="/login"
                     onClick={() => setMobileOpen(false)}
-                    className="flex items-center justify-center rounded-xl border border-line bg-surface py-2.5 text-sm font-bold text-ink hover:bg-elevated text-center"
+                    className="flex items-center justify-center rounded-xl border border-line bg-surface min-h-[44px] py-2.5 text-sm font-bold text-ink hover:bg-elevated text-center"
                   >
                     {t("auth.login")}
                   </Link>
                   <Link
                     to="/register"
                     onClick={() => setMobileOpen(false)}
-                    className="flex items-center justify-center rounded-xl bg-brand text-white py-2.5 text-sm font-bold hover:bg-brand-deep text-center shadow-xs"
+                    className="flex items-center justify-center rounded-xl bg-brand text-white min-h-[44px] py-2.5 text-sm font-bold hover:bg-brand-deep text-center shadow-xs"
                   >
                     {t("auth.register")}
                   </Link>
@@ -642,7 +685,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
               <a
                 href="tel:999"
-                className="flex items-center justify-center gap-2 rounded-xl bg-blood text-white py-2.5 text-sm font-bold hover:bg-blood-deep transition-colors shadow-xs"
+                className="flex items-center justify-center gap-2 rounded-xl bg-blood text-white min-h-[44px] py-2.5 text-sm font-bold hover:bg-blood-deep transition-colors shadow-xs"
               >
                 <Phone className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
                 <span>{lang === "bn" ? "জরুরি সেবা (৯৯৯)" : "Emergency (999)"}</span>
@@ -663,43 +706,227 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 function Footer() {
-  const { t } = useAppShell();
+  const { t, lang } = useAppShell();
+  const isBn = lang === "bn";
+
   return (
-    <footer className="mt-20 border-t border-line bg-surface">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
-          <div className="max-w-md">
-            <div className="flex items-center gap-2.5">
-              <img src="/logo.svg" alt="" className="h-8 w-8" width={32} height={32} />
+    <footer
+      role="contentinfo"
+      aria-label={isBn ? "মেডিলিঙ্ক ফুটার এবং প্রাতিষ্ঠানিক তথ্য" : "Medilink site footer and information"}
+      className="mt-20 border-t border-line bg-surface"
+    >
+      {/* Government Digital Health Initiative Banner */}
+      <div className="border-b border-line/60 bg-brand/5 dark:bg-brand/10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-ink">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand text-white shadow-2xs">
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            </span>
+            <span className="font-bold">
+              {isBn
+                ? "গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের ডিজিটাল স্বাস্থ্য উদ্যোগ"
+                : "Government Digital Health Initiative of Bangladesh"}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-muted">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1 border border-line font-semibold text-ink shadow-2xs">
+              <Droplet className="h-3.5 w-3.5 text-blood" aria-hidden="true" />
+              {isBn ? "৬৪ জেলায় জরুরি রক্ত ম্যাচিং" : "64 Districts Blood Matching"}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1 border border-line font-semibold text-ink shadow-2xs">
+              <Stethoscope className="h-3.5 w-3.5 text-brand" aria-hidden="true" />
+              {isBn ? "১০০% ফ্রি ডাক্তার টেলিমেডিসিন" : "100% Free Doctor Telemedicine"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 lg:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
+          {/* Brand & Mission Column */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center">
               <Wordmark />
             </div>
-            <p className="mt-3 text-sm text-muted leading-relaxed">{t("app.tagline")}</p>
+            <p className="mt-4 text-sm text-muted leading-relaxed max-w-md">
+              {isBn
+                ? "মেডিলিঙ্ক (Medilink) গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের একটি ডিজিটাল স্বাস্থ্য উদ্যোগ। দেশের ৬৪টি জেলায় জরুরি রক্তের তাৎক্ষণিক ম্যাচিং, সম্পূর্ণ বিনামূল্যে বিশেষজ্ঞ ডাক্তারের টেলিমেডিসিন পরামর্শ এবং নির্ভরযোগ্য জাতীয় স্বাস্থ্য নির্দেশিকা পৌঁছে দিতে তৈরি এক সমন্বিত প্ল্যাটফর্ম।"
+                : "Medilink is a Government Digital Health Initiative in Bangladesh, dedicated to real-time emergency blood donor matching across all 64 districts, 100% free doctor telemedicine consultations, and verified medical guidelines."}
+            </p>
+
+            {/* Emergency Hotline Badges */}
+            <div className="mt-6">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2.5">
+                {isBn ? "২৪/৭ জরুরি সরকারি হেল্পলাইন" : "24/7 Government Emergency Helplines"}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href="tel:999"
+                  aria-label={isBn ? "জাতীয় জরুরি সেবা ৯৯৯ এ কল করুন" : "Call National Emergency 999"}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-blood/10 border border-blood/30 px-3 py-1.5 text-xs font-bold text-blood hover:bg-blood hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood"
+                >
+                  <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>৯৯৯ {isBn ? "জরুরি সেবা" : "Emergency"}</span>
+                </a>
+                <a
+                  href="tel:16263"
+                  aria-label={isBn ? "স্বাস্থ্য বাতায়ন ১৬২৬৩ এ কল করুন" : "Call Shastho Batayon 16263"}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-brand/10 border border-brand/30 px-3 py-1.5 text-xs font-bold text-brand hover:bg-brand hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                >
+                  <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>১৬২৬৩ {isBn ? "স্বাস্থ্য বাতায়ন" : "Health Hotline"}</span>
+                </a>
+                <a
+                  href="tel:333"
+                  aria-label={isBn ? "সরকারি তথ্য সেবা ৩৩৩ এ কল করুন" : "Call Government Services 333"}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-surface border border-line px-3 py-1.5 text-xs font-bold text-ink hover:bg-elevated transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                >
+                  <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>৩৩৩ {isBn ? "তথ্য সেবা" : "Citizen Services"}</span>
+                </a>
+              </div>
+            </div>
           </div>
 
-          <nav aria-label="Footer" className="flex flex-wrap gap-x-8 gap-y-3 text-sm font-medium">
-            {(
-              [
-                ["footer.about", "/about"],
-                ["footer.contact", "/contact"],
-                ["footer.helpline", "/helpline"],
-                ["footer.legal", "/legal"],
-                ["nav.complain", "/complain"],
-              ] as const
-            ).map(([key, to]) => (
-              <Link key={to} to={to} className="text-muted hover:text-ink transition-colors">
-                {t(key)}
-              </Link>
-            ))}
-          </nav>
+          {/* Column 1: Citizen Services */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ink mb-4">
+              {isBn ? "নাগরিক স্বাস্থ্য সেবা" : "Citizen Services"}
+            </h3>
+            <ul className="space-y-2.5 text-sm" aria-label={isBn ? "নাগরিক সেবা তালিকা" : "Citizen services list"}>
+              <li>
+                <Link
+                  to="/donors"
+                  className="text-muted hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xs"
+                >
+                  {isBn ? "জরুরি রক্তদাতা খুঁজুন (৬৪ জেলা)" : "Find Blood Donors (64 Districts)"}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/requests/new"
+                  className="text-muted hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xs"
+                >
+                  {isBn ? "রক্তের জরুরি অনুরোধ দিন" : "Request Blood Emergency"}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/doctors"
+                  className="text-muted hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xs"
+                >
+                  {isBn ? "বিনামূল্যে ডাক্তারের পরামর্শ" : "Free Doctor Telemedicine"}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/articles"
+                  className="text-muted hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xs"
+                >
+                  {isBn ? "জাতীয় স্বাস্থ্য নির্দেশিকা ও নিবন্ধ" : "National Health Advisories"}
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 2: Emergency & Helplines */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ink mb-4">
+              {isBn ? "জরুরি ও সহায়তা" : "Emergency & Support"}
+            </h3>
+            <ul className="space-y-2.5 text-sm" aria-label={isBn ? "জরুরি সহায়তা তালিকা" : "Emergency support list"}>
+              <li>
+                <Link
+                  to="/helpline"
+                  className="text-muted hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xs"
+                >
+                  {isBn ? "সার্বক্ষণিক জরুরি হেল্পলাইন" : "24/7 Emergency Helplines"}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/complain"
+                  className="text-muted hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xs"
+                >
+                  {isBn ? "অভিযোগ ও প্রতিকার সেল" : "Grievance Redressal Cell"}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/contact"
+                  className="text-muted hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xs"
+                >
+                  {isBn ? "নাগরিক যোগাযোগ" : "Contact Citizen Support"}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/donors"
+                  className="text-muted hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xs"
+                >
+                  {isBn ? "কাছের ব্লাড ব্যাংক নেটওয়ার্ক" : "Blood Bank Network"}
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 3: About & Governance */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ink mb-4">
+              {isBn ? "পরিচিতি ও নীতিমালা" : "About & Governance"}
+            </h3>
+            <ul className="space-y-2.5 text-sm" aria-label={isBn ? "নীতিমালা ও প্রবেশাধিকার তালিকা" : "Governance and access list"}>
+              <li>
+                <Link
+                  to="/about"
+                  className="text-muted hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xs"
+                >
+                  {isBn ? "মেডিলিঙ্ক সম্পর্কে" : "About Medilink"}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/legal"
+                  className="text-muted hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xs"
+                >
+                  {isBn ? "ব্যবহারের শর্তাবলি ও গোপনীয়তা" : "Terms of Service & Privacy"}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/login"
+                  className="text-muted hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xs"
+                >
+                  {isBn ? "ডাক্তার পোর্টাল" : "Doctor Portal"}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/admin"
+                  className="text-muted hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xs"
+                >
+                  {isBn ? "অ্যাডমিন প্যানেল" : "Admin Panel"}
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
 
-        <div className="mt-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-line pt-6 text-xs text-subtle">
-          <p>
-            © {new Date().getFullYear()} {t("app.name")} · {t("footer.rights")}
-          </p>
-          <p lang="bn" className="text-muted">
-            {t("app.gov")}
-          </p>
+        {/* Bottom copyright & official disclaimer */}
+        <div className="mt-12 pt-6 border-t border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-subtle">
+          <div>
+            <p>
+              © {new Date().getFullYear()} {isBn ? "মেডিলিঙ্ক (Medilink)" : "Medilink"} · {t("footer.rights")}
+            </p>
+            <p className="mt-1 text-muted">
+              {isBn
+                ? "গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের ডিজিটাল স্বাস্থ্য উদ্যোগ · ৬৪টি জেলায় জরুরি রক্ত ও বিনামূল্যে চিকিৎসা সেবা"
+                : "Government Digital Health Initiative of Bangladesh · Emergency Blood Matching & Free Care across 64 Districts"}
+            </p>
+          </div>
+          <div className="text-xs text-muted max-w-sm sm:text-right">
+            <p>{t("footer.notice")}</p>
+          </div>
         </div>
       </div>
     </footer>

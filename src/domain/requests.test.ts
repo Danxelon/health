@@ -34,7 +34,8 @@ import {
   URGENCY_META,
   validateRequestForm,
 } from "./requests.ts";
-import { BLOOD_GROUPS, type RequestUrgency } from "./types.ts";
+import { BLOOD_GROUPS, type RequestResponder, type RequestUrgency } from "./types.ts";
+import { STRINGS } from "../lib/strings.ts";
 
 const TODAY = "2026-10-09";
 
@@ -149,6 +150,35 @@ describe("response states", () => {
   it("records the intent that declining is never penalised", () => {
     assert.equal(DECLINE_IS_NEUTRAL, true);
     assert.deepEqual(RESPONSE_TRANSITIONS.declined, []);
+  });
+
+  it("supports RequestResponder tracking with location, distance, and coordinates", () => {
+    const responder: RequestResponder = {
+      response_id: "resp-1",
+      donor_id: "donor-1",
+      display_name: "Mohammad R.",
+      blood_group: "O+",
+      state: "accepted",
+      invited_at: "2026-10-09T01:00:00Z",
+      responded_at: "2026-10-09T01:15:00Z",
+      upazila_en: "Dhanmondi",
+      upazila_bn: "ধানমন্ডি",
+      district_en: "Dhaka",
+      district_bn: "ঢাকা",
+      division_en: "Dhaka",
+      division_bn: "ঢাকা",
+      address_en: "Road 4, Dhanmondi, Dhaka",
+      address_bn: "রোড ৪, ধানমন্ডি, ঢাকা",
+      distance_km: 1.2,
+      lat: 23.7461,
+      lng: 90.3742,
+    };
+    assert.equal(responder.state, "accepted");
+    assert.equal(responder.distance_km, 1.2);
+    assert.equal(responder.upazila_en, "Dhanmondi");
+    assert.equal(responder.division_bn, "ঢাকা");
+    assert.equal(responder.lat, 23.7461);
+    assert.equal(responder.lng, 90.3742);
   });
 });
 
@@ -330,5 +360,18 @@ describe("label coverage", () => {
   it("sorts the group picker by prevalence without losing a group", () => {
     assert.equal(BLOOD_GROUPS.length, 8);
     assert.equal(new Set(BLOOD_GROUPS).size, 8);
+  });
+});
+
+describe("Medilink branding and platform identity", () => {
+  it("enforces Medilink bilingual branding contract across application strings", () => {
+    assert.equal(STRINGS.app.name.en, "Medilink");
+    assert.equal(STRINGS.app.name.bn, "মেডিলিঙ্ক");
+    assert.ok(STRINGS.app.tagline.en.length > 0);
+    assert.ok(STRINGS.app.tagline.bn.length > 0);
+    assert.match(STRINGS.footer.notice.en, /Medilink/);
+    assert.match(STRINGS.footer.notice.bn, /মেডিলিঙ্ক/);
+    assert.equal(STRINGS.home.heroEyebrow.en, "Medilink");
+    assert.equal(STRINGS.home.heroEyebrow.bn, "মেডিলিঙ্ক");
   });
 });
