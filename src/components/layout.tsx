@@ -419,7 +419,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <img
                   src="/logo.png"
                   alt="medilink"
-                  className="h-9 sm:h-10 w-auto object-contain shrink-0"
+                  className="h-10 sm:h-12 w-auto object-contain shrink-0"
                 />
               </Link>
             ) : (
@@ -606,7 +606,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <img
                 src="/logo.png"
                 alt="medilink"
-                className="h-9 w-auto object-contain shrink-0"
+                className="h-10 w-auto object-contain shrink-0"
               />
               <span className="text-[11px] font-semibold text-muted">
                 {lang === "bn" ? "মেনু" : "Menu"}

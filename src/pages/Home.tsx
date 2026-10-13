@@ -63,7 +63,7 @@ function Hero() {
           data-hero-reveal
           src="/logo.png"
           alt="medilink — মেডিলিঙ্ক"
-          className="mx-auto h-16 sm:h-20 w-auto object-contain"
+          className="mx-auto h-24 sm:h-32 w-auto object-contain"
         />
         {/* medilink National Network Pill */}
         <div
