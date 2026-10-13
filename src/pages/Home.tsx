@@ -52,7 +52,7 @@ function Hero() {
   return (
     <section
       ref={ref}
-      className="relative overflow-hidden pt-12 pb-16 md:pt-20 md:pb-24 border-b border-line bg-gradient-to-b from-surface via-surface to-elevated/40"
+      className="relative overflow-hidden scroll-mt-20 pt-12 pb-16 md:pt-20 md:pb-24 border-b border-line bg-gradient-to-b from-surface via-surface to-elevated/40"
       aria-labelledby="hero-h1"
     >
       <div className="aurora absolute inset-0 -z-10 opacity-70" aria-hidden="true" />
@@ -63,7 +63,7 @@ function Hero() {
           data-hero-reveal
           src="/logo.png"
           alt="medilink — মেডিলিঙ্ক"
-          className="mx-auto h-32 sm:h-44 w-auto object-contain"
+          className="mx-auto h-20 sm:h-24 w-auto max-w-full object-contain"
         />
         {/* medilink National Network Pill */}
         <div
@@ -82,7 +82,7 @@ function Hero() {
         <h1
           id="hero-h1"
           data-hero-reveal
-          className="display mx-auto max-w-5xl text-[clamp(2.5rem,5.5vw,4.75rem)] text-ink leading-[1.05]"
+          className="display mx-auto max-w-5xl text-[clamp(2.5rem,5.5vw,4.75rem)] text-ink leading-[1.05] break-words [overflow-wrap:anywhere] text-balance"
         >
           {lang === "bn" ? (
             <>

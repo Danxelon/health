@@ -426,79 +426,60 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="shrink-0 w-8 sm:w-10" aria-hidden="true" />
             )}
 
-            {/* Center Area: Primary NavLinks when at top, Quick Action buttons when scrolled */}
-            <div className="flex-1 flex items-center justify-center px-2 min-w-0">
-              <div className="relative flex items-center justify-center w-full max-w-lg h-10">
-                {/* Clean primary navigation links (Home, Articles/Health, and Settings if logged in) */}
-                <div
-                  className={`absolute inset-0 hidden md:flex items-center justify-center gap-1 transition-all duration-300 ease-out ${
-                    isScrolled
-                      ? "opacity-0 pointer-events-none -translate-y-2 scale-95 invisible"
-                      : "opacity-100 pointer-events-auto translate-y-0 scale-100 visible"
-                  }`}
-                  aria-hidden={isScrolled}
-                >
-                  <nav aria-label="Desktop Primary" className="flex items-center gap-1">
-                    <ul className="flex items-center gap-1">
-                      {primaryNavItems.map((item) => {
-                        const Icon = item.icon;
-                        const active = isItemActive(item.to);
-                        return (
-                          <li key={item.to}>
-                            <NavLink
-                              to={item.to}
-                              onClick={(e) => handleNavClick(item, e)}
-                              tabIndex={isScrolled ? -1 : 0}
-                              className={`flex items-center gap-2 rounded-full px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                                active
-                                  ? "text-white bg-brand shadow-xs"
-                                  : "text-muted hover:text-ink hover:bg-elevated"
-                              }`}
-                            >
-                              <Icon className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-                              {t(item.key)}
-                            </NavLink>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </nav>
-                </div>
+            {/* Center: one stable group — primary links always visible; scrolled quick-actions append inline */}
+            <div className="flex-1 hidden md:flex items-center justify-center px-2 min-w-0">
+              <nav aria-label="Desktop Primary" className="flex items-center gap-1 min-w-0">
+                <ul className="flex items-center gap-1">
+                  {primaryNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const active = isItemActive(item.to);
+                    return (
+                      <li key={item.to}>
+                        <NavLink
+                          to={item.to}
+                          onClick={(e) => handleNavClick(item, e)}
+                          className={`flex items-center gap-2 rounded-full px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                            active
+                              ? "text-white bg-brand shadow-xs"
+                              : "text-muted hover:text-ink hover:bg-elevated"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+                          {t(item.key)}
+                        </NavLink>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {isScrolled && (
+                  <>
+                    <span aria-hidden="true" className="mx-2 h-5 w-px bg-line shrink-0" />
+                    <div className="flex items-center gap-2 sm:gap-3 animate-fade-in">
+                      <button
+                        type="button"
+                        onClick={() => requireAuth("/donors")}
+                        className="inline-flex min-h-[44px] items-center gap-1.5 sm:gap-2 rounded-full bg-[#4c061d] text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold shadow-xs hover:bg-[#380715] hover:shadow-md transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95"
+                        aria-label={t("nav.donors")}
+                      >
+                        <Droplet className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 fill-current" strokeWidth={1.8} aria-hidden="true" />
+                        <span className="hidden sm:inline">{t("nav.donors")}</span>
+                        <span className="sm:hidden">{lang === "bn" ? "রক্তদাতা" : "Donor"}</span>
+                      </button>
 
-                {/* Scrolled Quick Action Buttons: desktop only — phones use the hamburger drawer */}
-                <div
-                  className={`absolute inset-0 hidden md:flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 ease-out ${
-                    isScrolled
-                      ? "opacity-100 pointer-events-auto translate-y-0 scale-100 visible"
-                      : "opacity-0 pointer-events-none translate-y-2 scale-95 invisible"
-                  }`}
-                  aria-hidden={!isScrolled}
-                >
-                  <button
-                    type="button"
-                    onClick={() => requireAuth("/donors")}
-                    tabIndex={isScrolled ? 0 : -1}
-                    className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#4c061d] text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold shadow-xs hover:bg-[#380715] hover:shadow-md transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95"
-                    aria-label={t("nav.donors")}
-                  >
-                    <Droplet className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 fill-current" strokeWidth={1.8} aria-hidden="true" />
-                    <span className="hidden sm:inline">{t("nav.donors")}</span>
-                    <span className="sm:hidden">{lang === "bn" ? "রক্তদাতা" : "Donor"}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => requireAuth("/doctors?guide=open")}
-                    tabIndex={isScrolled ? 0 : -1}
-                    className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#006d6f] text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold shadow-xs hover:bg-[#005759] hover:shadow-md transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95"
-                    aria-label={t("nav.consultations")}
-                  >
-                    <Stethoscope className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-                    <span className="hidden sm:inline">{t("nav.consultations")}</span>
-                    <span className="sm:hidden">{lang === "bn" ? "ডাক্তার" : "Doctor"}</span>
-                  </button>
-                </div>
-              </div>
+                      <button
+                        type="button"
+                        onClick={() => requireAuth("/doctors?guide=open")}
+                        className="inline-flex min-h-[44px] items-center gap-1.5 sm:gap-2 rounded-full bg-[#006d6f] text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold shadow-xs hover:bg-[#005759] hover:shadow-md transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95"
+                        aria-label={t("nav.consultations")}
+                      >
+                        <Stethoscope className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+                        <span className="hidden sm:inline">{t("nav.consultations")}</span>
+                        <span className="sm:hidden">{lang === "bn" ? "ডাক্তার" : "Doctor"}</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </nav>
             </div>
 
             {/* Right controls */}
