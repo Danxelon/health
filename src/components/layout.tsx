@@ -426,9 +426,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="shrink-0 w-8 sm:w-10" aria-hidden="true" />
             )}
 
-            {/* Center: one stable group — leftmost at the top, centered once scrolled */}
-            <div className={`flex-1 hidden md:flex items-center px-2 min-w-0 ${isScrolled ? "justify-center" : "justify-start"}`}>
-              <nav aria-label="Desktop Primary" className="flex items-center gap-1 min-w-0">
+            {/* Center: one stable group — leftmost at the top, centered once scrolled.
+                Clipped + inner scroll so appended pills can never overlap the right controls. */}
+            <div className={`flex-1 hidden md:flex items-center px-2 min-w-0 overflow-hidden ${isScrolled ? "justify-center" : "justify-start"}`}>
+              <nav aria-label="Desktop Primary" className="flex items-center gap-1 min-w-0 max-w-full overflow-x-auto no-scrollbar">
                 <ul className="flex items-center gap-1">
                   {primaryNavItems.map((item) => {
                     const Icon = item.icon;
@@ -453,8 +454,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </ul>
                 {isScrolled && (
                   <>
-                    <span aria-hidden="true" className="mx-2 h-5 w-px bg-line shrink-0" />
-                    <div className="flex items-center gap-2 sm:gap-3 animate-fade-in">
+                    <span aria-hidden="true" className="mx-2 h-5 w-px bg-line shrink-0 hidden lg:block" />
+                    <div className="hidden lg:flex items-center gap-2 sm:gap-3 shrink-0 animate-fade-in">
                       <button
                         type="button"
                         onClick={() => requireAuth("/donors")}
