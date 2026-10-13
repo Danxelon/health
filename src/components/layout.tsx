@@ -45,20 +45,20 @@ type NavItem = {
 };
 
 
-/** Bilingual wordmark with Medilink logo. */
+/** Bilingual wordmark with medilink logo. */
 function Wordmark({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2.5 whitespace-nowrap shrink-0 select-none ${className}`}>
       <img
         src="/symbol.png"
-        alt="Medilink"
+        alt="medilink"
         className="h-8 w-8 object-contain shrink-0 rounded-lg shadow-2xs"
         width={32}
         height={32}
       />
       <span className="inline-flex items-baseline gap-1.5">
         <span className="font-display text-[1.125rem] font-800 tracking-tight text-ink leading-none">
-          Medilink
+          medilink
         </span>
         <span
           lang="bn"
@@ -343,12 +343,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Brand rule: the full wordmark (symbol + Medilink মেডিলিঙ্ক) lives in the
-  // navbar on the landing page. Other pages keep the navbar compact at the
-  // top (brand stays in the main screen content) until scrolled — then the
-  // same full navbar as before comes back.
-  const isHome = pathname === "/";
-  const showBrand = isHome || isScrolled;
+  // Brand rule: the navbar carries no wordmark at the top. The full
+  // logo.png lives in the main screen (Home hero); once scrolled, the same
+  // logo.png appears in the navbar.
 
   const isItemActive = (to: string) => {
     if (to === "/") return pathname === "/";
@@ -411,15 +408,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 border-b border-line bg-surface/95 backdrop-blur-md transition-shadow pt-[env(safe-area-inset-top)]">
         <nav aria-label="Primary" className="mx-auto max-w-7xl px-3 sm:px-6">
           <div className="flex items-center justify-between h-14 sm:h-[4.5rem] gap-2 sm:gap-6">
-            {/* Logo: full wordmark on landing + whenever scrolled; hidden on
-                other pages at top (brand stays in main screen content) */}
-            {showBrand ? (
+            {/* Logo: logo.png in the navbar only when scrolled; the main
+                screen carries the brand at the top */}
+            {isScrolled ? (
               <Link
                 to="/"
                 className="flex items-center shrink-0 min-w-max"
                 aria-label={t("app.name")}
               >
-                <Wordmark />
+                <img
+                  src="/logo.png"
+                  alt="medilink"
+                  className="h-9 sm:h-10 w-auto object-contain shrink-0"
+                />
               </Link>
             ) : (
               <span className="shrink-0 w-8 sm:w-10" aria-hidden="true" />
@@ -602,7 +603,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             className="md:hidden mx-3 mb-3 rounded-2xl border border-line bg-surface p-4 shadow-xl max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom))] animate-fade-in"
           >
             <div className="flex items-center justify-between pb-3 mb-2 border-b border-line px-1">
-              <Wordmark />
+              <img
+                src="/logo.png"
+                alt="medilink"
+                className="h-9 w-auto object-contain shrink-0"
+              />
               <span className="text-[11px] font-semibold text-muted">
                 {lang === "bn" ? "মেনু" : "Menu"}
               </span>
@@ -724,7 +729,7 @@ function Footer() {
   return (
     <footer
       role="contentinfo"
-      aria-label={isBn ? "মেডিলিঙ্ক ফুটার এবং প্রাতিষ্ঠানিক তথ্য" : "Medilink site footer and information"}
+      aria-label={isBn ? "মেডিলিঙ্ক ফুটার এবং প্রাতিষ্ঠানিক তথ্য" : "medilink site footer and information"}
       className="mt-20 border-t border-line bg-surface"
     >
       {/* Government Digital Health Initiative Banner */}
@@ -762,8 +767,8 @@ function Footer() {
             </div>
             <p className="mt-4 text-sm text-muted leading-relaxed max-w-md">
               {isBn
-                ? "মেডিলিঙ্ক (Medilink) গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের একটি ডিজিটাল স্বাস্থ্য উদ্যোগ। দেশের ৬৪টি জেলায় জরুরি রক্তের তাৎক্ষণিক ম্যাচিং, সম্পূর্ণ বিনামূল্যে বিশেষজ্ঞ ডাক্তারের টেলিমেডিসিন পরামর্শ এবং নির্ভরযোগ্য জাতীয় স্বাস্থ্য নির্দেশিকা পৌঁছে দিতে তৈরি এক সমন্বিত প্ল্যাটফর্ম।"
-                : "Medilink is a Government Digital Health Initiative in Bangladesh, dedicated to real-time emergency blood donor matching across all 64 districts, 100% free doctor telemedicine consultations, and verified medical guidelines."}
+                ? "মেডিলিঙ্ক (medilink) গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের একটি ডিজিটাল স্বাস্থ্য উদ্যোগ। দেশের ৬৪টি জেলায় জরুরি রক্তের তাৎক্ষণিক ম্যাচিং, সম্পূর্ণ বিনামূল্যে বিশেষজ্ঞ ডাক্তারের টেলিমেডিসিন পরামর্শ এবং নির্ভরযোগ্য জাতীয় স্বাস্থ্য নির্দেশিকা পৌঁছে দিতে তৈরি এক সমন্বিত প্ল্যাটফর্ম।"
+                : "medilink is a Government Digital Health Initiative in Bangladesh, dedicated to real-time emergency blood donor matching across all 64 districts, 100% free doctor telemedicine consultations, and verified medical guidelines."}
             </p>
 
             {/* Emergency Hotline Badges */}
@@ -893,7 +898,7 @@ function Footer() {
                   to="/about"
                   className="text-muted hover:text-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xs"
                 >
-                  {isBn ? "মেডিলিঙ্ক সম্পর্কে" : "About Medilink"}
+                  {isBn ? "মেডিলিঙ্ক সম্পর্কে" : "About medilink"}
                 </Link>
               </li>
               <li>
@@ -928,7 +933,7 @@ function Footer() {
         <div className="mt-12 pt-6 border-t border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-subtle">
           <div>
             <p>
-              © {new Date().getFullYear()} {isBn ? "মেডিলিঙ্ক (Medilink)" : "Medilink"} · {t("footer.rights")}
+              © {new Date().getFullYear()} {isBn ? "মেডিলিঙ্ক (medilink)" : "medilink"} · {t("footer.rights")}
             </p>
             <p className="mt-1 text-muted">
               {isBn

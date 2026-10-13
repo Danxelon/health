@@ -1,12 +1,12 @@
-# Medilink (মেডিলিঙ্ক) — System Credentials & Database Setup Guide
+# medilink (মেডিলিঙ্ক) — System Credentials & Database Setup Guide
 
-This document contains official authentication credentials for administrators, verified doctors, and test citizens/donors on the **Medilink (মেডিলিঙ্ক)** National Digital Health & Blood Network, along with instructions for executing the consolidated database setup script in Supabase.
+This document contains official authentication credentials for administrators, verified doctors, and test citizens/donors on the **medilink (মেডিলিঙ্ক)** National Digital Health & Blood Network, along with instructions for executing the consolidated database setup script in Supabase.
 
 ---
 
 ## 1. Platform Administrator Account
 
-The platform administrator possesses complete oversight of the Medilink national healthcare ecosystem: reviewing and verifying doctor BMDC credentials, issuing national health alerts and advisories (DGHS/IEDCR), moderating published medical articles, and managing citizen grievances and SLA resolution.
+The platform administrator possesses complete oversight of the medilink national healthcare ecosystem: reviewing and verifying doctor BMDC credentials, issuing national health alerts and advisories (DGHS/IEDCR), moderating published medical articles, and managing citizen grievances and SLA resolution.
 
 | Field | Value |
 | :--- | :--- |
@@ -21,9 +21,9 @@ The platform administrator possesses complete oversight of the Medilink national
 
 ## 2. Verified Doctor Accounts (BMDC Registered)
 
-> **Important**: In compliance with national health regulations and Medilink medical integrity policies, **only verified doctors** registered with the Bangladesh Medical and Dental Council (BMDC) can write and publish health articles or provide clinical consultations.
+> **Important**: In compliance with national health regulations and medilink medical integrity policies, **only verified doctors** registered with the Bangladesh Medical and Dental Council (BMDC) can write and publish health articles or provide clinical consultations.
 
-All public health consultations under the Medilink government portal are **100% Free** (বিনামূল্যে সরকারি সেবা). All doctors have their password set to `Doctor2026!`.
+All public health consultations under the medilink government portal are **100% Free** (বিনামূল্যে সরকারি সেবা). All doctors have their password set to `Doctor2026!`.
 
 | Doctor Full Name (3-word EN & BN) | Email | Password | Phone | BMDC Reg No. | Specialty | Degrees & Hospital Affiliation | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -67,7 +67,7 @@ This script is fully idempotent (`CREATE IF NOT EXISTS`, `ON CONFLICT DO NOTHING
 
 1. **Open Supabase Dashboard:**
    - Go to [https://supabase.com/dashboard](https://supabase.com/dashboard) and sign in.
-   - Select your Medilink Supabase project.
+   - Select your medilink Supabase project.
 
 2. **Open the SQL Editor:**
    - In the left sidebar navigation bar, click on the **SQL Editor** icon (`>_` icon).

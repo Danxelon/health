@@ -1,5 +1,5 @@
 /**
- * About Page — Medilink (মেডিলিঙ্ক)
+ * About Page — medilink (মেডিলিঙ্ক)
  *
  * Government Digital Health Initiative of Bangladesh
  * - Free doctor telemedicine consultations across 64 districts
@@ -34,11 +34,11 @@ const COPY = {
     bn: "গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের ডিজিটাল স্বাস্থ্য উদ্যোগ",
     en: "Government Digital Health Initiative of Bangladesh",
   },
-  heroTitle: { bn: "মেডিলিঙ্ক — ৬৪ জেলায়", en: "Medilink — Across 64 districts," },
+  heroTitle: { bn: "মেডিলিঙ্ক — ৬৪ জেলায়", en: "medilink — Across 64 districts," },
   heroAccent: { bn: "সবার জন্য ডিজিটাল স্বাস্থ্যসেবা।", en: "life-saving digital healthcare." },
   heroBody: {
-    bn: "মেডিলিঙ্ক (Medilink) বাংলাদেশ সরকারের একটি জাতীয় ডিজিটাল স্বাস্থ্য উদ্যোগ। দেশের ৬৪টি জেলায় জরুরি রক্তের তাৎক্ষণিক ম্যাচিং, সম্পূর্ণ বিনামূল্যে বিশেষজ্ঞ ডাক্তারের টেলিমেডিসিন পরামর্শ এবং নির্ভরযোগ্য জাতীয় স্বাস্থ্য নির্দেশনা — যেকোনো সময়, যেকোনো প্রান্ত থেকে সবার জন্য উন্মুক্ত।",
-    en: "Medilink is a national Government Digital Health Initiative in Bangladesh. Instant emergency blood donor matching across all 64 districts, 100% free verified doctor telemedicine, and trusted medical guidance — accessible to every citizen from any corner of the country.",
+    bn: "মেডিলিঙ্ক (medilink) বাংলাদেশ সরকারের একটি জাতীয় ডিজিটাল স্বাস্থ্য উদ্যোগ। দেশের ৬৪টি জেলায় জরুরি রক্তের তাৎক্ষণিক ম্যাচিং, সম্পূর্ণ বিনামূল্যে বিশেষজ্ঞ ডাক্তারের টেলিমেডিসিন পরামর্শ এবং নির্ভরযোগ্য জাতীয় স্বাস্থ্য নির্দেশনা — যেকোনো সময়, যেকোনো প্রান্ত থেকে সবার জন্য উন্মুক্ত।",
+    en: "medilink is a national Government Digital Health Initiative in Bangladesh. Instant emergency blood donor matching across all 64 districts, 100% free verified doctor telemedicine, and trusted medical guidance — accessible to every citizen from any corner of the country.",
   },
 
   // Hero Quick Badges
@@ -49,18 +49,18 @@ const COPY = {
 
   // Mission
   missionEyebrow: { bn: "আমাদের লক্ষ্য ও অঙ্গীকার", en: "Our Mission & Commitment" },
-  missionTitle: { bn: "জীবন রক্ষায় মেডিলিঙ্কের তিন মূল স্তম্ভ", en: "Medilink's Three Core Pillars" },
+  missionTitle: { bn: "জীবন রক্ষায় মেডিলিঙ্কের তিন মূল স্তম্ভ", en: "medilink's Three Core Pillars" },
   missionSub: {
     bn: "জরুরি রক্তের তাৎক্ষণিক সন্ধান, বিনামূল্যে চিকিৎসাসেবা এবং জাতীয় স্বাস্থ্য তথ্য — প্রতিটি উপজেলায় পৌঁছে দেওয়া।",
     en: "Instant emergency blood matching, free consultations, and verified health guidance — in every upazila.",
   },
   missionCardTitle: {
     bn: "মেডিলিঙ্ক — ৬৪ জেলায় সরকারি ডিজিটাল স্বাস্থ্য বিপ্লব",
-    en: "Medilink — Transforming Public Digital Healthcare Across 64 Districts",
+    en: "medilink — Transforming Public Digital Healthcare Across 64 Districts",
   },
   missionLead: {
     bn: "গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের ডিজিটাল স্বাস্থ্য রূপকল্পের অংশ হিসেবে মেডিলিঙ্ক প্রতিষ্ঠিত। মধ্যরাতে রক্তের সন্ধানে দিশেহারা পরিবার থেকে শুরু করে প্রত্যন্ত অঞ্চলের সাধারণ নাগরিক—সবার জন্য জীবনরক্ষাকারী স্বাস্থ্যসেবা নিশ্চিত করাই আমাদের লক্ষ্য। বিএমডিসি-নিবন্ধিত চিকিৎসকদের বিনামূল্যে পরামর্শ এবং ৬৪ জেলায় স্বয়ংক্রিয় রক্তদাতা ম্যাচিং সম্পূর্ণ জনকল্যাণে নিবেদিত।",
-    en: "Built as part of Bangladesh's national vision for universal digital health, Medilink eliminates geographical and financial barriers. From families desperately searching for blood at midnight to citizens in remote upazilas needing doctor guidance, we ensure immediate, verified care at zero cost.",
+    en: "Built as part of Bangladesh's national vision for universal digital health, medilink eliminates geographical and financial barriers. From families desperately searching for blood at midnight to citizens in remote upazilas needing doctor guidance, we ensure immediate, verified care at zero cost.",
   },
 
   // Three Pillars
@@ -91,7 +91,7 @@ const COPY = {
 
   // Stats
   statsEyebrow: { bn: "জাতীয় পরিসংখ্যান", en: "National Metrics" },
-  statsTitle: { bn: "এক নজরে মেডিলিঙ্ক নেটওয়ার্ক", en: "Medilink Network at a Glance" },
+  statsTitle: { bn: "এক নজরে মেডিলিঙ্ক নেটওয়ার্ক", en: "medilink Network at a Glance" },
   statDistricts: { val: "৬৪", valEn: "64", label: { bn: "জেলা কভারেজ", en: "Districts Covered" } },
   statUpazilas: { val: "৪৯৫+", valEn: "495+", label: { bn: "উপজেলা নেটওয়ার্ক", en: "Upazilas Connected" } },
   statFee: { val: "০ ৳", valEn: "0 ৳", label: { bn: "নাগরিক পরামর্শ ফি (সম্পূর্ণ ফ্রি)", en: "Cost to Citizens (100% Free)" } },
@@ -99,7 +99,7 @@ const COPY = {
 
   // DoGrid
   doEyebrow: { bn: "ডিজিটাল স্বাস্থ্য সেবা", en: "Digital Health Services" },
-  doTitle: { bn: "মেডিলিঙ্কে আপনি যা করতে পারেন", en: "What You Can Do on Medilink" },
+  doTitle: { bn: "মেডিলিঙ্কে আপনি যা করতে পারেন", en: "What You Can Do on medilink" },
   doSub: {
     bn: "জরুরি রক্ত সন্ধান, বিনামূল্যে ডাক্তারের পরামর্শ এবং সরকারি স্বাস্থ্য নির্দেশিকা — তিনটি সহজ সেবা।",
     en: "Three core services — find blood, talk to a doctor for free, and access national health advisories.",

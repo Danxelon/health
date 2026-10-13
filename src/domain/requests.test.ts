@@ -363,15 +363,15 @@ describe("label coverage", () => {
   });
 });
 
-describe("Medilink branding and platform identity", () => {
-  it("enforces Medilink bilingual branding contract across application strings", () => {
-    assert.equal(STRINGS.app.name.en, "Medilink");
+describe("medilink branding and platform identity", () => {
+  it("enforces medilink bilingual branding contract across application strings", () => {
+    assert.equal(STRINGS.app.name.en, "medilink");
     assert.equal(STRINGS.app.name.bn, "মেডিলিঙ্ক");
     assert.ok(STRINGS.app.tagline.en.length > 0);
     assert.ok(STRINGS.app.tagline.bn.length > 0);
-    assert.match(STRINGS.footer.notice.en, /Medilink/);
+    assert.match(STRINGS.footer.notice.en, /medilink/);
     assert.match(STRINGS.footer.notice.bn, /মেডিলিঙ্ক/);
-    assert.equal(STRINGS.home.heroEyebrow.en, "Medilink");
+    assert.equal(STRINGS.home.heroEyebrow.en, "medilink");
     assert.equal(STRINGS.home.heroEyebrow.bn, "মেডিলিঙ্ক");
   });
 });

@@ -21,7 +21,7 @@ export const DEFAULT_LANG: Lang = "bn";
 /** Keys are dot-paths; `t()` walks them so a missing key is a visible string. */
 export const STRINGS = {
   app: {
-    name: { bn: "মেডিলিঙ্ক", en: "Medilink" },
+    name: { bn: "মেডিলিঙ্ক", en: "medilink" },
     tagline: {
       bn: "গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের ডিজিটাল স্বাস্থ্য উদ্যোগ — ৬৪ জেলায় জরুরি রক্তের তাৎক্ষণিক ম্যাচিং ও বিনামূল্যে ডাক্তারের পরামর্শ।",
       en: "Government Digital Health Initiative — emergency blood matching across 64 districts & free doctor telemedicine consultations.",
@@ -78,7 +78,7 @@ export const STRINGS = {
   },
 
   home: {
-    heroEyebrow: { bn: "মেডিলিঙ্ক", en: "Medilink" },
+    heroEyebrow: { bn: "মেডিলিঙ্ক", en: "medilink" },
     heroTitle: { bn: "রক্ত আর জীবন", en: "Blood and life," },
     heroTitleAccent: { bn: "একসাথে।", en: "side by side." },
     heroBody: {
@@ -292,13 +292,13 @@ export const STRINGS = {
   },
 
   footer: {
-    about: { bn: "মেডিলিঙ্ক সম্পর্কে", en: "About Medilink" },
+    about: { bn: "মেডিলিঙ্ক সম্পর্কে", en: "About medilink" },
     contact: { bn: "যোগাযোগ", en: "Contact" },
     helpline: { bn: "হেল্পলাইন", en: "Helpline" },
     legal: { bn: "শর্তাবলি ও গোপনীয়তা", en: "Terms and privacy" },
     notice: {
       bn: "মেডিলিঙ্ক একটি সরকারি ডিজিটাল স্বাস্থ্য উদ্যোগ। স্বাস্থ্য সহায়তা ও ডাক্তারের পরামর্শে ১৬২৬৩ (স্বাস্থ্য বাতায়ন)-এ কল করুন।",
-      en: "Medilink is a government digital health initiative. For health help and doctor consultation, call 16263 (Shasthyo Batayon).",
+      en: "medilink is a government digital health initiative. For health help and doctor consultation, call 16263 (Shasthyo Batayon).",
     },
     rights: { bn: "সর্বস্বত্ব সংরক্ষিত", en: "All rights reserved" },
   },

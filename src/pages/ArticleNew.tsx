@@ -1,5 +1,5 @@
 /**
- * Medical Article Publishing Portal — Medilink / মেডিলিঙ্ক.
+ * Medical Article Publishing Portal — medilink / মেডিলিঙ্ক.
  *
  * Restricted strictly to verified medical practitioners with BMDC registration.
  * Non-doctors cannot publish articles to ensure clinical integrity.
@@ -32,7 +32,7 @@ import { publishArticle } from "@/api/articles.ts";
 import { getDoctorAuthorProfile } from "@/domain/doctor-profiles.ts";
 
 /**
- * Standard categories required by Medilink / মেডিলিঙ্ক editorial guidelines.
+ * Standard categories required by medilink / মেডিলিঙ্ক editorial guidelines.
  */
 const CATEGORY_TAGS = [
   { id: "dengue", labelBn: "ডেঙ্গু", labelEn: "Dengue" },
@@ -348,8 +348,8 @@ export default function ArticleNew() {
 
       setSuccessMessage(
         isBn
-          ? "মেডিলিঙ্ক (Medilink) মেডিকেল আর্টিকেল সফলভাবে প্রকাশিত হয়েছে! নিবন্ধ তালিকায় নিয়ে যাওয়া হচ্ছে..."
-          : "Medilink medical article published successfully! Redirecting to articles feed..."
+          ? "মেডিলিঙ্ক (medilink) মেডিকেল আর্টিকেল সফলভাবে প্রকাশিত হয়েছে! নিবন্ধ তালিকায় নিয়ে যাওয়া হচ্ছে..."
+          : "medilink medical article published successfully! Redirecting to articles feed..."
       );
 
       // Smooth redirect to /articles
@@ -375,29 +375,29 @@ export default function ArticleNew() {
           </div>
 
           <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand-soft/60 px-3.5 py-1 text-xs font-bold text-brand-deep">
-            <span>{isBn ? "মেডিলিঙ্ক · Medilink" : "Medilink · মেডিলিঙ্ক"}</span>
+            <span>{isBn ? "মেডিলিঙ্ক · medilink" : "medilink · মেডিলিঙ্ক"}</span>
           </div>
 
           <h1 className="mt-4 text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
             {lang === "bn" ? "ডাক্তারদের জন্য সংরক্ষিত পোর্টাল" : "Doctor Publishing Portal"}
           </h1>
 
-          {/* Exact required barrier phrasing referencing Medilink / মেডিলিঙ্ক */}
+          {/* Exact required barrier phrasing referencing medilink / মেডিলিঙ্ক */}
           <div className="mt-4 rounded-2xl border border-brand/20 bg-brand-soft/50 p-5 text-center">
             <p className="text-base font-bold text-brand-deep">
               {lang === "bn"
-                ? "শুধুমাত্র BMDC নিবন্ধিত অনুমোদিত ডাক্তারগণ মেডিলিঙ্ক (Medilink) প্ল্যাটফর্মে আর্টিকেল প্রকাশ করতে পারেন।"
-                : "Only verified doctors registered with BMDC can publish articles on Medilink (মেডিলিঙ্ক) to maintain clinical integrity."}
+                ? "শুধুমাত্র BMDC নিবন্ধিত অনুমোদিত ডাক্তারগণ মেডিলিঙ্ক (medilink) প্ল্যাটফর্মে আর্টিকেল প্রকাশ করতে পারেন।"
+                : "Only verified doctors registered with BMDC can publish articles on medilink (মেডিলিঙ্ক) to maintain clinical integrity."}
             </p>
             <p className="mt-1 text-xs text-muted">
-              (Only verified doctors registered with BMDC can publish articles on Medilink / মেডিলিঙ্ক to maintain clinical integrity).
+              (Only verified doctors registered with BMDC can publish articles on medilink / মেডিলিঙ্ক to maintain clinical integrity).
             </p>
           </div>
 
           <p className="mt-4 text-sm text-muted leading-relaxed">
             {lang === "bn"
-              ? "স্বাস্থ্য নিরাপত্তা ও ক্লিনিক্যাল তথ্যের নির্ভুলতা রক্ষায় মেডিলিঙ্ক (Medilink) প্ল্যাটফর্মে প্রতিটি স্বাস্থ্য নিবন্ধ বাংলাদেশ মেডিকেল অ্যান্ড ডেন্টাল কাউন্সিল (BMDC) সনদপ্রাপ্ত চিকিৎসকের স্বাক্ষরে প্রকাশিত হয় এবং নাগরিকদের জন্য ১০০% বিনামূল্যে পরামর্শ সুবিধা যুক্ত থাকে।"
-              : "To protect clinical integrity and patient safety, all medical literature and advisories published on Medilink (মেডিলিঙ্ক) are strictly authored by BMDC-registered practitioners with free consultation access."}
+              ? "স্বাস্থ্য নিরাপত্তা ও ক্লিনিক্যাল তথ্যের নির্ভুলতা রক্ষায় মেডিলিঙ্ক (medilink) প্ল্যাটফর্মে প্রতিটি স্বাস্থ্য নিবন্ধ বাংলাদেশ মেডিকেল অ্যান্ড ডেন্টাল কাউন্সিল (BMDC) সনদপ্রাপ্ত চিকিৎসকের স্বাক্ষরে প্রকাশিত হয় এবং নাগরিকদের জন্য ১০০% বিনামূল্যে পরামর্শ সুবিধা যুক্ত থাকে।"
+              : "To protect clinical integrity and patient safety, all medical literature and advisories published on medilink (মেডিলিঙ্ক) are strictly authored by BMDC-registered practitioners with free consultation access."}
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -433,7 +433,7 @@ export default function ArticleNew() {
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              <span>{lang === "bn" ? "সকল মেডিলিঙ্ক আর্টিকেলে ফিরে যান" : "Return to Medilink articles feed"}</span>
+              <span>{lang === "bn" ? "সকল মেডিলিঙ্ক আর্টিকেলে ফিরে যান" : "Return to medilink articles feed"}</span>
             </Link>
           </div>
         </div>
@@ -454,10 +454,10 @@ export default function ArticleNew() {
             className="inline-flex items-center gap-2 text-xs font-bold text-brand-deep hover:text-brand transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>{lang === "bn" ? "সকল মেডিলিঙ্ক আর্টিকেলে ফিরে যান" : "Back to Medilink Articles"}</span>
+            <span>{lang === "bn" ? "সকল মেডিলিঙ্ক আর্টিকেলে ফিরে যান" : "Back to medilink Articles"}</span>
           </Link>
           <span className="text-xs font-semibold text-muted flex items-center gap-1.5">
-            <span className="font-bold text-brand">{isBn ? "মেডিলিঙ্ক" : "Medilink"}</span>
+            <span className="font-bold text-brand">{isBn ? "মেডিলিঙ্ক" : "medilink"}</span>
             <span>·</span>
             <span>{lang === "bn" ? "মেডিকেল পাবলিশিং ড্যাশবোর্ড" : "Medical Publishing Dashboard"}</span>
           </span>
@@ -495,7 +495,7 @@ export default function ArticleNew() {
                   <span>{doctorSpecialty}</span>
                   <span>·</span>
                   <span className="text-emerald-700 font-medium">
-                    {lang === "bn" ? "মেডিলিঙ্ক অনুমোদিত অথর" : "Medilink Verified Author"}
+                    {lang === "bn" ? "মেডিলিঙ্ক অনুমোদিত অথর" : "medilink Verified Author"}
                   </span>
                   <span>·</span>
                   <span className="inline-flex items-center gap-1 font-semibold text-emerald-800">
@@ -554,15 +554,15 @@ export default function ArticleNew() {
           <div className="rounded-3xl border border-line bg-surface p-6 sm:p-8 space-y-7 shadow-xs">
             <div>
               <div className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand-soft/60 px-3 py-0.5 text-[11px] font-bold text-brand-deep mb-2">
-                <span>{isBn ? "মেডিলিঙ্ক পোর্টাল" : "Medilink Portal"}</span>
+                <span>{isBn ? "মেডিলিঙ্ক পোর্টাল" : "medilink Portal"}</span>
               </div>
               <h1 className="text-2xl font-extrabold text-ink tracking-tight">
-                {lang === "bn" ? "মেডিলিঙ্ক মেডিকেল আর্টিকেল প্রকাশনা ফর্ম" : "Medilink Medical Article Publishing"}
+                {lang === "bn" ? "মেডিলিঙ্ক মেডিকেল আর্টিকেল প্রকাশনা ফর্ম" : "medilink Medical Article Publishing"}
               </h1>
               <p className="text-xs text-muted mt-1 leading-relaxed">
                 {lang === "bn"
-                  ? "মেডিলিঙ্ক (Medilink) প্ল্যাটফর্মে বাংলা ও ইংরেজি উভয় ভাষায় ক্লিনিক্যাল তথ্য প্রকাশ করুন যাতে সাধারণ মানুষ ও রোগীরা উপকৃত হতে পারেন।"
-                  : "Draft clear, clinically accurate medical guidance in Bengali and English on Medilink (মেডিলিঙ্ক) for citizens."}
+                  ? "মেডিলিঙ্ক (medilink) প্ল্যাটফর্মে বাংলা ও ইংরেজি উভয় ভাষায় ক্লিনিক্যাল তথ্য প্রকাশ করুন যাতে সাধারণ মানুষ ও রোগীরা উপকৃত হতে পারেন।"
+                  : "Draft clear, clinically accurate medical guidance in Bengali and English on medilink (মেডিলিঙ্ক) for citizens."}
               </p>
             </div>
 
@@ -866,8 +866,8 @@ export default function ArticleNew() {
                 <Info className="h-4 w-4 text-muted shrink-0" />
                 <span>
                   {lang === "bn"
-                    ? "মেডিলিঙ্ক (Medilink) প্রকাশিত নিবন্ধে আপনার ৩ শব্দের পূর্ণ নাম (ডা. মাহমুদুর রহমান / Dr. Mahmudur Rahman), BMDC সনদ ও বিনামূল্যে পরামর্শ সুবিধা দৃশ্যমান থাকবে।"
-                    : "Articles published on Medilink (মেডিলিঙ্ক) display your full 3-word name in both languages, BMDC badge, and free consultation tag."}
+                    ? "মেডিলিঙ্ক (medilink) প্রকাশিত নিবন্ধে আপনার ৩ শব্দের পূর্ণ নাম (ডা. মাহমুদুর রহমান / Dr. Mahmudur Rahman), BMDC সনদ ও বিনামূল্যে পরামর্শ সুবিধা দৃশ্যমান থাকবে।"
+                    : "Articles published on medilink (মেডিলিঙ্ক) display your full 3-word name in both languages, BMDC badge, and free consultation tag."}
                 </span>
               </div>
 

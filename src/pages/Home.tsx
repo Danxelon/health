@@ -1,6 +1,6 @@
 /**
  * Home — AIDA Structure & High-End Design
- * Rebranded for Medilink (মেডিলিঙ্ক) with seamless theme & language reactivity
+ * Rebranded for medilink (মেডিলিঙ্ক) with seamless theme & language reactivity
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -58,7 +58,14 @@ function Hero() {
       <div className="aurora absolute inset-0 -z-10 opacity-70" aria-hidden="true" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 text-center">
-        {/* Medilink National Network Pill */}
+        {/* medilink full logo in the main screen */}
+        <img
+          data-hero-reveal
+          src="/logo.png"
+          alt="medilink — মেডিলিঙ্ক"
+          className="mx-auto h-16 sm:h-20 w-auto object-contain"
+        />
+        {/* medilink National Network Pill */}
         <div
           data-hero-reveal
           className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-soft/80 px-4 py-1.5 text-xs font-bold text-brand-deep mb-4 shadow-2xs backdrop-blur-xs"
@@ -67,7 +74,7 @@ function Hero() {
           <span>
             {lang === "bn"
               ? "মেডিলিঙ্ক — জাতীয় ডিজিটাল স্বাস্থ্য ও জরুরি রক্তসেবা"
-              : "Medilink — National Digital Health & Blood Network"}
+              : "medilink — National Digital Health & Blood Network"}
           </span>
         </div>
 
@@ -202,7 +209,7 @@ function ActionOptions() {
               <Droplet className="h-7 w-7 fill-current" strokeWidth={2} aria-hidden="true" />
             </span>
             <span className="text-xs font-bold uppercase tracking-wider bg-brand-soft text-brand-deep px-3.5 py-1.5 rounded-full border border-brand/20">
-              {lang === "bn" ? "মেডিলিঙ্ক ব্লাড ম্যাচ" : "Medilink Blood Match"}
+              {lang === "bn" ? "মেডিলিঙ্ক ব্লাড ম্যাচ" : "medilink Blood Match"}
             </span>
           </div>
 
@@ -213,7 +220,7 @@ function ActionOptions() {
             <p className="mt-3 text-base text-muted max-w-md">
               {lang === "bn"
                 ? "মেডিলিঙ্ক দ্রুততম অ্যালগরিদমে আপনার নিকটের সক্রিয় ও উপযুক্ত রক্তদাতাদের খুঁজে দেয় এবং সরাসরি যোগাযোগের পথ সুগম করে।"
-                : "Medilink connects you with verified nearby blood donors across all districts in seconds with compatibility-first matching."}
+                : "medilink connects you with verified nearby blood donors across all districts in seconds with compatibility-first matching."}
             </p>
             <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-white bg-brand hover:bg-brand-deep px-5 py-2.5 rounded-full transition-colors shadow-xs">
               {t("common.search")}
@@ -242,7 +249,7 @@ function ActionOptions() {
               <Stethoscope className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
             </span>
             <span className="text-xs font-bold uppercase tracking-wider bg-ink-brand-soft text-ink-brand px-3.5 py-1.5 rounded-full border border-ink-brand/20">
-              {lang === "bn" ? "মেডিলিঙ্ক টেলিমেডিসিন" : "Medilink Telemedicine"}
+              {lang === "bn" ? "মেডিলিঙ্ক টেলিমেডিসিন" : "medilink Telemedicine"}
             </span>
           </div>
 
@@ -253,7 +260,7 @@ function ActionOptions() {
             <p className="mt-3 text-base text-muted max-w-md">
               {lang === "bn"
                 ? "লক্ষণ ও রোগ অনুযায়ী সঠিক বিশেষজ্ঞ বেছে নিতে মেডিলিঙ্ক ইন্টারেক্টিভ গাইড ব্যবহার করুন — সম্পূর্ণ সরকারি বিনামূল্যে সেবা।"
-                : "Use Medilink's interactive specialty guide to find the right BMDC-verified doctor — 100% free public healthcare."}
+                : "Use medilink's interactive specialty guide to find the right BMDC-verified doctor — 100% free public healthcare."}
             </p>
             <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-white bg-ink-brand hover:opacity-90 px-5 py-2.5 rounded-full transition-colors shadow-xs">
               {lang === "bn" ? "পরামর্শ গাইড চালু করুন" : "Open Doctor Guide"}
@@ -305,7 +312,7 @@ function DoctorSpecialtyBanner() {
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-ink-brand/30 bg-ink-brand-soft px-3.5 py-1 text-xs font-bold text-ink-brand mb-4">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>{lang === "bn" ? "মেডিলিঙ্ক স্পেশালিটি গাইড" : "Medilink Specialty Guide"}</span>
+              <span>{lang === "bn" ? "মেডিলিঙ্ক স্পেশালিটি গাইড" : "medilink Specialty Guide"}</span>
             </div>
             <h2 id="guide-banner-title" className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-ink leading-tight">
               {lang === "bn"
@@ -315,7 +322,7 @@ function DoctorSpecialtyBanner() {
             <p className="mt-3 text-base text-muted leading-relaxed">
               {lang === "bn"
                 ? "মেডিলিঙ্ক-এর ইন্টারেক্টিভ সিম্পটম গাইড আপনাকে উপসর্গ বিশ্লেষণ করে সঠিক চিকিৎসা বিভাগ ও বিশেষজ্ঞ ডাক্তারের কাছে পৌঁছে দেবে — সম্পূর্ণ বিনামূল্যে সরকারি স্বাস্থ্যসেবায়।"
-                : "Medilink's interactive symptom guide guides you to the right medical department and BMDC-verified doctor in seconds — 100% free public service."}
+                : "medilink's interactive symptom guide guides you to the right medical department and BMDC-verified doctor in seconds — 100% free public service."}
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-4 text-xs sm:text-sm font-semibold text-muted">
@@ -475,7 +482,7 @@ function ArticlesRail({ items, loading }: { items: ArticleFeedItem[]; loading: b
       <div className="flex items-center justify-between">
         <div>
           <span className="text-xs font-bold uppercase tracking-widest text-brand">
-            {lang === "bn" ? "মেডিলিঙ্ক স্বাস্থ্য" : "Medilink Health"}
+            {lang === "bn" ? "মেডিলিঙ্ক স্বাস্থ্য" : "medilink Health"}
           </span>
           <h2 id="articles-h2" className="text-2xl sm:text-3xl font-extrabold text-ink mt-1">
             {t("home.articlesTitle")}

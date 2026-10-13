@@ -5,7 +5,7 @@
  *   English: "Dr. <First> <Last>" (e.g. "Dr. Mahmudur Rahman")
  *   Bengali: "ডা. <First> <Last>" (e.g. "ডা. মাহমুদুর রহমান")
  *
- * Used across the Medilink / মেডিলিঙ্ক medical publication portal and feeds.
+ * Used across the medilink / মেডিলিঙ্ক medical publication portal and feeds.
  */
 
 export interface DoctorAuthorProfile {

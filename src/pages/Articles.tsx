@@ -380,18 +380,18 @@ export default function Articles() {
               className="reveal-init inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-soft/70 px-4 py-1.5 text-xs font-bold text-brand-deep mb-4 shadow-2xs"
             >
               <Sparkles className="h-3.5 w-3.5 text-brand" />
-              <span>{isBn ? "মেডিলিঙ্ক স্বাস্থ্য প্রকাশনা পোর্টাল (Medilink Health)" : "Medilink Health Publications (মেডিলিঙ্ক)"}</span>
+              <span>{isBn ? "মেডিলিঙ্ক স্বাস্থ্য প্রকাশনা পোর্টাল (medilink Health)" : "medilink Health Publications (মেডিলিঙ্ক)"}</span>
             </div>
             <h1
               data-masthead
               className="reveal-init display max-w-6xl text-[clamp(2.25rem,5.2vw,4.25rem)] text-ink"
             >
-              {isBn ? "মেডিলিঙ্ক স্বাস্থ্য নিবন্ধ" : "Medilink Health Articles"}
+              {isBn ? "মেডিলিঙ্ক স্বাস্থ্য নিবন্ধ" : "medilink Health Articles"}
             </h1>
             <p data-masthead className="reveal-init mt-4 max-w-2xl text-base text-muted sm:text-lg">
               {isBn
-                ? "মেডিলিঙ্ক (Medilink) প্ল্যাটফর্মে BMDC সনদপ্রাপ্ত বিশেষজ্ঞ চিকিৎসকদের দ্বারা যাচাইকৃত স্বাস্থ্য নির্দেশিকা ও বিনামূল্যে পরামর্শ।"
-                : "Verified clinical health advisories authored by BMDC-registered doctors on Medilink (মেডিলিঙ্ক) with free consultation access."}
+                ? "মেডিলিঙ্ক (medilink) প্ল্যাটফর্মে BMDC সনদপ্রাপ্ত বিশেষজ্ঞ চিকিৎসকদের দ্বারা যাচাইকৃত স্বাস্থ্য নির্দেশিকা ও বিনামূল্যে পরামর্শ।"
+                : "Verified clinical health advisories authored by BMDC-registered doctors on medilink (মেডিলিঙ্ক) with free consultation access."}
             </p>
           </div>
 
@@ -404,7 +404,7 @@ export default function Articles() {
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white transition-transform group-hover:rotate-90">
                   <Plus className="h-4 w-4" strokeWidth={2.6} />
                 </div>
-                <span>{isBn ? "মেডিলিঙ্কে নতুন আর্টিকেল লিখুন" : "Write Article on Medilink"}</span>
+                <span>{isBn ? "মেডিলিঙ্কে নতুন আর্টিকেল লিখুন" : "Write Article on medilink"}</span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white backdrop-blur-xs">
                   <ShieldCheck className="h-3 w-3" />
                   <span>{isBn ? "ডাক্তার পোর্টাল" : "Doctor Portal"}</span>
@@ -416,7 +416,7 @@ export default function Articles() {
                 className="inline-flex h-12 items-center gap-2.5 rounded-full bg-brand px-6 text-sm font-bold text-white shadow-md hover:bg-brand-deep hover:shadow-lg active:scale-95 transition-all shrink-0 self-start sm:self-auto cursor-pointer"
               >
                 <Plus className="h-4 w-4" strokeWidth={2.4} />
-                <span>{isBn ? "মেডিলিঙ্কে আর্টিকেল লিখুন (Publish Article)" : "Publish Article on Medilink (মেডিলিঙ্ক)"}</span>
+                <span>{isBn ? "মেডিলিঙ্কে আর্টিকেল লিখুন (Publish Article)" : "Publish Article on medilink (মেডিলিঙ্ক)"}</span>
               </Link>
             )}
           </div>
@@ -444,7 +444,7 @@ export default function Articles() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isBn ? "মেডিলিঙ্ক নিবন্ধ, ডাক্তার, BMDC খুঁজুন..." : "Search Medilink articles, doctors, BMDC..."}
+              placeholder={isBn ? "মেডিলিঙ্ক নিবন্ধ, ডাক্তার, BMDC খুঁজুন..." : "Search medilink articles, doctors, BMDC..."}
               className="h-11 w-full rounded-full border border-line bg-surface pl-10 pr-9 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-hidden focus:ring-1 focus:ring-brand shadow-2xs"
             />
             {searchQuery && (
@@ -562,15 +562,15 @@ export default function Articles() {
             <div className="max-w-xl">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft text-brand-deep px-3 py-1 text-xs font-bold mb-3 border border-brand/20">
                 <Stethoscope className="h-3.5 w-3.5" />
-                <span>{isBn ? "মেডিলিঙ্ক টেলিমেডিসিন · ১০০% বিনামূল্যে" : "Medilink Telemedicine · 100% Free"}</span>
+                <span>{isBn ? "মেডিলিঙ্ক টেলিমেডিসিন · ১০০% বিনামূল্যে" : "medilink Telemedicine · 100% Free"}</span>
               </div>
               <h2 className="display text-[clamp(1.75rem,3.4vw,2.75rem)] text-ink">
                 {t("doctors.title")}
               </h2>
               <p className="mt-3 text-[15px] text-muted">
                 {isBn
-                  ? "মেডিলিঙ্ক (Medilink) এর মাধ্যমে সরাসরি BMDC অনুমোদিত বিশেষজ্ঞ ডাক্তারের সাথে বিনামূল্যে টেলিমেডিসিন পরামর্শ নিন।"
-                  : "Connect directly with BMDC-verified specialist physicians for 100% free telemedicine consultations on Medilink (মেডিলিঙ্ক)."}
+                  ? "মেডিলিঙ্ক (medilink) এর মাধ্যমে সরাসরি BMDC অনুমোদিত বিশেষজ্ঞ ডাক্তারের সাথে বিনামূল্যে টেলিমেডিসিন পরামর্শ নিন।"
+                  : "Connect directly with BMDC-verified specialist physicians for 100% free telemedicine consultations on medilink (মেডিলিঙ্ক)."}
               </p>
             </div>
             <Link
