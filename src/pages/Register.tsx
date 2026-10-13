@@ -319,9 +319,6 @@ export default function Register() {
                 {otpError}
               </p>
             )}
-            <p className="text-xs text-muted">
-              {lang === "bn" ? "ডেমো কোড: 123456" : "Demo code: 123456"}
-            </p>
             {!sent ? (
               <button
                 type="button"
