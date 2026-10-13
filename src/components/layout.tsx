@@ -426,8 +426,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="shrink-0 w-8 sm:w-10" aria-hidden="true" />
             )}
 
-            {/* Center: one stable group — primary links always visible; scrolled quick-actions append inline */}
-            <div className="flex-1 hidden md:flex items-center justify-center px-2 min-w-0">
+            {/* Center: one stable group — leftmost at the top, centered once scrolled */}
+            <div className={`flex-1 hidden md:flex items-center px-2 min-w-0 ${isScrolled ? "justify-center" : "justify-start"}`}>
               <nav aria-label="Desktop Primary" className="flex items-center gap-1 min-w-0">
                 <ul className="flex items-center gap-1">
                   {primaryNavItems.map((item) => {
