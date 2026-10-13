@@ -228,10 +228,12 @@ export async function fetchAdminComplaints(): Promise<AdminComplaintRow[]> {
   if (error) throw error;
   return ((data ?? []) as Array<Record<string, unknown>>).map((c, i) => {
     const rawTarget = String(c["target_type"] ?? "platform");
+    // DB complaint_target enum has no 'donor' — complainant type 'user' means a donor in the UI.
+    const normalizedTarget = rawTarget === "user" ? "donor" : rawTarget;
     const targetType = (["doctor", "donor", "blood_bank", "platform"] as const).includes(
-      rawTarget as "doctor"
+      normalizedTarget as "doctor"
     )
-      ? (rawTarget as AdminComplaintRow["targetType"])
+      ? (normalizedTarget as AdminComplaintRow["targetType"])
       : "platform";
     const status = String(c["status"] ?? "open");
     const sev = toNum(c["severity"], 2);

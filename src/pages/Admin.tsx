@@ -7,7 +7,7 @@
  * Official Administrator: showystore2026@gmail.com
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   AlertCircle,
@@ -41,6 +41,13 @@ import {
 
 import { useAppShell } from "@/state/app-shell.tsx";
 import { useAuth } from "@/state/auth-context.tsx";
+import {
+  fetchAdminArticles,
+  fetchAdminComplaints,
+  fetchAdminDoctors,
+  fetchAdminUpdates,
+} from "@/api/admin.ts";
+import { supabase } from "@/lib/supabase.ts";
 
 interface PendingDoctor {
   id: string;
@@ -702,6 +709,8 @@ export default function Admin() {
   const [updates, setUpdates] = useState<AdminHealthUpdate[]>(INITIAL_HEALTH_UPDATES);
   const [articles, setArticles] = useState<AdminArticle[]>(INITIAL_ARTICLES);
   const [complaints, setComplaints] = useState<AdminComplaint[]>(INITIAL_COMPLAINTS);
+  const [dataSource, setDataSource] = useState<"demo" | "db">("demo");
+  const [dbLoading, setDbLoading] = useState(false);
 
   // Search filter
   const [doctorSearch, setDoctorSearch] = useState("");
@@ -728,6 +737,69 @@ export default function Admin() {
 
   // Permission Guard
   const isAdmin = isLoggedIn && user?.role === "admin";
+
+  // Live data: replace demo stores with DB rows when available (silent fallback to demo).
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    (async () => {
+      setDbLoading(true);
+      try {
+        const [doctorsRes, updatesRes, articlesRes, complaintsRes] =
+          await Promise.allSettled([
+            fetchAdminDoctors(),
+            fetchAdminUpdates(),
+            fetchAdminArticles(),
+            fetchAdminComplaints(),
+          ]);
+        if (cancelled) return;
+        let usedDb = false;
+        if (doctorsRes.status === "fulfilled" && doctorsRes.value) {
+          const { pending, verified } = doctorsRes.value;
+          if (Array.isArray(pending) && pending.length > 0) {
+            setPendingDoctors(pending);
+            usedDb = true;
+          }
+          if (Array.isArray(verified) && verified.length > 0) {
+            setVerifiedDoctors(verified);
+            usedDb = true;
+          }
+        }
+        if (
+          updatesRes.status === "fulfilled" &&
+          Array.isArray(updatesRes.value) &&
+          updatesRes.value.length > 0
+        ) {
+          setUpdates(updatesRes.value);
+          usedDb = true;
+        }
+        if (
+          articlesRes.status === "fulfilled" &&
+          Array.isArray(articlesRes.value) &&
+          articlesRes.value.length > 0
+        ) {
+          setArticles(articlesRes.value);
+          usedDb = true;
+        }
+        if (
+          complaintsRes.status === "fulfilled" &&
+          Array.isArray(complaintsRes.value) &&
+          complaintsRes.value.length > 0
+        ) {
+          setComplaints(complaintsRes.value);
+          usedDb = true;
+        }
+        if (usedDb) setDataSource("db");
+      } catch (err) {
+        console.warn("[Admin] live data unavailable, keeping demo data:", err);
+      } finally {
+        if (!cancelled) setDbLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin]);
 
   // 1. Unauthenticated or Non-Admin Screen
   if (!isAdmin) {
@@ -794,7 +866,7 @@ export default function Admin() {
 
   // --- Handlers ---
   // Tab 1: Doctor Verification
-  const handleApproveDoctor = (id: string) => {
+  const handleApproveDoctor = async (id: string) => {
     const doc = pendingDoctors.find((d) => d.id === id);
     if (!doc) return;
 
@@ -813,9 +885,15 @@ export default function Admin() {
         ? `${doc.nameBn} সফলভাবে অনুমোদিত হয়েছেন!`
         : `${doc.name} has been successfully verified and approved!`
     );
+    // Best-effort DB persistence — never blocks the local update/toast above.
+    try {
+      await supabase?.from("doctors").update({ verification: "verified" }).eq("user_id", id);
+    } catch {
+      /* keep demo/local state on DB failure */
+    }
   };
 
-  const handleRejectDoctor = (id: string) => {
+  const handleRejectDoctor = async (id: string) => {
     const pendingDoc = pendingDoctors.find((d) => d.id === id);
     if (pendingDoc) {
       setPendingDoctors((prev) =>
@@ -826,6 +904,11 @@ export default function Admin() {
           ? `${pendingDoc.nameBn}-এর নিবন্ধন আবেদন প্রত্যাখ্যাত হয়েছে।`
           : `Registration application for ${pendingDoc.name} has been rejected.`
       );
+      try {
+        await supabase?.from("doctors").update({ verification: "rejected" }).eq("user_id", id);
+      } catch {
+        /* keep demo/local state on DB failure */
+      }
       return;
     }
 
@@ -841,6 +924,11 @@ export default function Admin() {
           ? `${verifiedDoc.nameBn}-এর অনুমোদন প্রত্যাহার করা হয়েছে।`
           : `Verification for ${verifiedDoc.name} has been revoked.`
       );
+      try {
+        await supabase?.from("doctors").update({ verification: "rejected" }).eq("user_id", id);
+      } catch {
+        /* keep demo/local state on DB failure */
+      }
     }
   };
 
@@ -1017,6 +1105,21 @@ export default function Admin() {
 
             {/* Right: Admin email badge & Quick actions */}
             <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+              <span
+                className={
+                  dbLoading
+                    ? "rounded-full border border-line bg-elevated px-2.5 py-1 text-[11px] font-bold text-muted"
+                    : dataSource === "db"
+                      ? "rounded-full border border-emerald-300/50 bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                      : "rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-300"
+                }
+              >
+                {dbLoading
+                  ? l("লাইভ ডেটা লোড হচ্ছে…", "Loading live data…")
+                  : dataSource === "db"
+                    ? l("লাইভ ডিবি", "Live DB")
+                    : l("ডেমো ডেটা", "Demo data")}
+              </span>
               <div className="rounded-xl border border-line bg-elevated px-3 py-1.5 text-right">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-ink justify-end">
                   <Sparkles className="h-3 w-3 text-amber-500" />

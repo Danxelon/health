@@ -14,7 +14,6 @@ import {
   Megaphone,
   Stethoscope,
   ShieldCheck,
-  HeartPulse,
   Sparkles,
   CheckCircle2,
 } from "lucide-react";
@@ -516,18 +515,12 @@ function ArticlesRail({ items, loading }: { items: ArticleFeedItem[]; loading: b
               className="group overflow-hidden rounded-3xl border border-line bg-surface hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
             >
               <div className="relative aspect-[16/9] overflow-hidden bg-elevated">
-                {article.cover_image_path ? (
-                  <img
-                    src={article.cover_image_path}
-                    alt=""
-                    loading="lazy"
-                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  />
-                ) : (
-                  <div className="h-full w-full bg-gradient-to-br from-brand-soft to-ink-brand-soft flex items-center justify-center">
-                    <HeartPulse className="h-10 w-10 text-brand opacity-40" />
-                  </div>
-                )}
+                <img
+                  src={article.cover_image_path ?? `https://picsum.photos/seed/${article.slug}/640/400`}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                />
                 {article.tags?.[0] && (
                   <span className="absolute left-3 top-3 rounded-full bg-surface/90 px-3 py-1 text-xs font-bold text-ink backdrop-blur">
                     {article.tags[0]}

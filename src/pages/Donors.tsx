@@ -65,8 +65,10 @@ export default function Donors() {
   const [contactModalDonor, setContactModalDonor] = useState<DonorCard | null>(null);
   const [copiedPhone, setCopiedPhone] = useState(false);
 
-  // Right Horizontal Section (Map & Address Drawer) state
+  // Rail selection (right-rail highlight + detail) — independent from drawer.
   const [selectedMapDonor, setSelectedMapDonor] = useState<DonorCard | null>(null);
+  // Drawer donor (full map lives in DonorAddressMapDrawer).
+  const [mapDonor, setMapDonor] = useState<DonorCard | null>(null);
 
   const handleCopyPhone = (phone: string) => {
     try {
@@ -82,13 +84,14 @@ export default function Donors() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        if (mapDonor) setMapDonor(null);
         if (selectedMapDonor) setSelectedMapDonor(null);
         if (contactModalDonor) setContactModalDonor(null);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedMapDonor, contactModalDonor]);
+  }, [mapDonor, selectedMapDonor, contactModalDonor]);
 
   // Require login on page load: redirect unauthenticated users
   useEffect(() => {
@@ -477,7 +480,55 @@ export default function Donors() {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex flex-col lg:flex-row gap-6">
+                {/* Mobile: horizontal scroll strip of all donors */}
+                <div
+                  className="lg:hidden -mx-4 px-4 overflow-x-auto no-scrollbar"
+                  role="group"
+                  aria-label={lang === "bn" ? "কাছের রক্তদাতা" : "Nearby donors"}
+                >
+                  <div className="flex gap-2 pb-1 w-max">
+                    {sortedDonors.map((d) => {
+                      const stripName = lang === "bn"
+                        ? (d.full_name_bn || d.display_name_bn || d.display_name)
+                        : (d.full_name || d.display_name);
+                      const isStripSelected = selectedMapDonor?.donor_id === d.donor_id;
+                      return (
+                        <button
+                          key={d.donor_id}
+                          type="button"
+                          onClick={() => setSelectedMapDonor(d)}
+                          aria-pressed={isStripSelected}
+                          aria-current={isStripSelected || undefined}
+                          className={`flex shrink-0 w-56 items-center gap-2 rounded-2xl border px-2.5 py-2 text-left transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                            isStripSelected
+                              ? "bg-brand-soft/60 border-brand/40"
+                              : "border-line bg-surface hover:border-brand/40"
+                          }`}
+                        >
+                          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-deep font-black text-xs tnum">
+                            {d.blood_group}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-xs font-bold text-ink">{stripName}</span>
+                            <span className="block text-[11px] text-muted truncate">
+                              {d.distance_km != null
+                                ? (lang === "bn" ? `${toBengaliDigits(d.distance_km)} কিমি` : `${d.distance_km} km`)
+                                : (lang === "bn" ? "বাংলাদেশ" : "Bangladesh")}
+                            </span>
+                          </span>
+                          <span
+                            className={`h-2 w-2 shrink-0 rounded-full ${d.can_give_now ? "bg-emerald-500" : "bg-line-strong"}`}
+                            title={d.can_give_now ? t("donors.readyNow") : t("donors.unavailable")}
+                            aria-hidden="true"
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {sortedDonors.map((d) => {
                   const primaryName = lang === "bn"
                     ? (d.full_name_bn || d.display_name_bn || d.display_name)
@@ -487,10 +538,15 @@ export default function Donors() {
                     : (d.full_name_bn || d.display_name_bn || d.display_name);
                   const showSecondary = Boolean(secondaryName && secondaryName !== primaryName);
 
+                  const isSelected = selectedMapDonor?.donor_id === d.donor_id;
+
                   return (
                     <div
                       key={d.donor_id}
-                      className="group flex flex-col gap-3 sm:gap-4 p-4 sm:p-6 rounded-3xl border border-line bg-surface hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                      aria-current={isSelected || undefined}
+                      className={`group flex flex-col gap-3 sm:gap-4 p-4 sm:p-6 rounded-3xl border bg-surface hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${
+                        isSelected ? "ring-2 ring-brand border-brand" : "border-line"
+                      }`}
                     >
                       <div className="flex items-start gap-3">
                         <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-brand-deep font-black text-base tnum shadow-2xs mt-0.5">
@@ -544,11 +600,17 @@ export default function Donors() {
                       <div
                         role="button"
                         tabIndex={0}
-                        onClick={() => setSelectedMapDonor(d)}
+                        aria-pressed={isSelected}
+                        aria-current={isSelected || undefined}
+                        onClick={() => {
+                          setSelectedMapDonor(d);
+                          setMapDonor(d);
+                        }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
                             setSelectedMapDonor(d);
+                            setMapDonor(d);
                           }
                         }}
                         className="flex items-start gap-2.5 rounded-2xl bg-brand-soft/25 hover:bg-brand-soft/60 p-3 border border-brand/20 hover:border-brand/40 transition-all cursor-pointer group/addr shadow-2xs"
@@ -617,6 +679,137 @@ export default function Donors() {
                     </div>
                   );
                 })}
+                </div>
+
+                {/* Desktop: permanent right rail */}
+                <aside
+                  className="hidden lg:block lg:w-80 lg:shrink-0 lg:sticky lg:top-24 self-start rounded-3xl border border-line bg-surface p-4 shadow-xs"
+                  aria-label={lang === "bn" ? "কাছের রক্তদাতা" : "Nearby donors"}
+                >
+                  <h2 className="text-sm font-black text-ink">
+                    {lang === "bn" ? "কাছের রক্তদাতা" : "Nearby donors"}
+                  </h2>
+                  <p className="mt-0.5 text-[11px] text-muted font-medium">
+                    {lang === "bn"
+                      ? `${toBengaliDigits(sortedDonors.length)} জন রক্তদাতা`
+                      : `${sortedDonors.length} donors`}
+                  </p>
+
+                  {selectedMapDonor ? (
+                    <div
+                      key={selectedMapDonor.donor_id}
+                      className="donor-rail-detail mt-3 rounded-2xl border border-line bg-elevated/50 p-3"
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-deep font-black text-sm tnum">
+                          {selectedMapDonor.blood_group}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-bold text-ink">
+                            {lang === "bn"
+                              ? (selectedMapDonor.full_name_bn || selectedMapDonor.display_name_bn || selectedMapDonor.display_name)
+                              : (selectedMapDonor.full_name || selectedMapDonor.display_name)}
+                          </span>
+                          <span className="block truncate text-[11px] text-muted">
+                            {lang === "bn"
+                              ? (selectedMapDonor.full_name || selectedMapDonor.display_name)
+                              : (selectedMapDonor.full_name_bn || selectedMapDonor.display_name_bn || selectedMapDonor.display_name)}
+                          </span>
+                          <span className="mt-1 block text-[11px] text-muted">
+                            {selectedMapDonor.age != null && (
+                              <span className="font-bold text-brand">
+                                {lang === "bn"
+                                  ? `${toBengaliDigits(selectedMapDonor.age)} বছর`
+                                  : `${selectedMapDonor.age} yrs`}
+                              </span>
+                            )}
+                            {selectedMapDonor.age != null && selectedMapDonor.distance_km != null && (
+                              <span aria-hidden="true"> • </span>
+                            )}
+                            {selectedMapDonor.distance_km != null
+                              ? (lang === "bn"
+                                  ? `${toBengaliDigits(selectedMapDonor.distance_km)} কিমি`
+                                  : `${selectedMapDonor.distance_km} km`)
+                              : (lang === "bn" ? "বাংলাদেশ" : "Bangladesh")}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="mt-2 text-[11px] text-muted leading-relaxed">
+                        {selectedMapDonor.address_en ||
+                          `${selectedMapDonor.upazila_en}, ${selectedMapDonor.district_en}`}
+                      </p>
+                      <p className="mt-1 font-mono text-xs font-bold text-ink truncate">
+                        {selectedMapDonor.phone || "+8801712345678"}
+                      </p>
+                      <div className="mt-2.5 grid grid-cols-2 gap-2">
+                        <a
+                          href={`tel:${selectedMapDonor.phone || "+8801712345678"}`}
+                          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                        >
+                          <PhoneCall className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                          <span>{lang === "bn" ? "কল করুন" : "Call Now"}</span>
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (selectedMapDonor) setMapDonor(selectedMapDonor);
+                          }}
+                          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-brand/30 bg-surface text-xs font-bold text-brand hover:bg-brand-soft/60 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        >
+                          <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                          <span>{lang === "bn" ? "ম্যাপ" : "Map"}</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-3 rounded-2xl border border-dashed border-line px-3 py-4 text-xs text-muted leading-relaxed">
+                      {lang === "bn"
+                        ? "বিস্তারিত দেখতে তালিকা থেকে একজন রক্তদাতা বেছে নিন।"
+                        : "Pick a donor from the list to see details here."}
+                    </p>
+                  )}
+
+                  <ul className="mt-3 space-y-2 max-h-[480px] overflow-y-auto pr-0.5">
+                    {sortedDonors.map((d) => {
+                      const railName = lang === "bn"
+                        ? (d.full_name_bn || d.display_name_bn || d.display_name)
+                        : (d.full_name || d.display_name);
+                      const isRailSelected = selectedMapDonor?.donor_id === d.donor_id;
+                      return (
+                        <li key={d.donor_id}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedMapDonor(d)}
+                            aria-pressed={isRailSelected}
+                            aria-current={isRailSelected || undefined}
+                            className={`flex w-full items-center gap-2 rounded-2xl border px-2.5 py-2 text-left transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                              isRailSelected
+                                ? "bg-brand-soft/60 border-brand/40"
+                                : "border-line bg-surface hover:border-brand/40"
+                            }`}
+                          >
+                            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-deep font-black text-xs tnum">
+                              {d.blood_group}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-xs font-bold text-ink">{railName}</span>
+                              <span className="block text-[11px] text-muted truncate">
+                                {d.distance_km != null
+                                  ? (lang === "bn" ? `${toBengaliDigits(d.distance_km)} কিমি` : `${d.distance_km} km`)
+                                  : (lang === "bn" ? "বাংলাদেশ" : "Bangladesh")}
+                              </span>
+                            </span>
+                            <span
+                              className={`h-2 w-2 shrink-0 rounded-full ${d.can_give_now ? "bg-emerald-500" : "bg-line-strong"}`}
+                              title={d.can_give_now ? t("donors.readyNow") : t("donors.unavailable")}
+                              aria-hidden="true"
+                            />
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </aside>
               </div>
             )}
           </>
@@ -839,14 +1032,14 @@ export default function Donors() {
 
       {/* Right Horizontal Map & Full Address Drawer */}
       <DonorAddressMapDrawer
-        donor={selectedMapDonor}
-        onClose={() => setSelectedMapDonor(null)}
+        donor={mapDonor}
+        onClose={() => setMapDonor(null)}
         onCall={(donor: DonorCard) => {
-          setSelectedMapDonor(null);
+          setMapDonor(null);
           setContactModalDonor(donor);
         }}
         onRequest={(donor: DonorCard) => {
-          setSelectedMapDonor(null);
+          setMapDonor(null);
           navigate(`/requests/new?group=${donor.blood_group}&donor=${donor.donor_id}`);
         }}
       />

@@ -56,7 +56,7 @@ export default function Register() {
     () => [...new Set(DEMO_UPAZILAS.map((u) => u.division_en))].sort(),
     []
   );
-  const districts = district === "" ? [] : districtsOf(division);
+  const districts = division === "" ? [] : districtsOf(division);
   const upazilas = district === "" ? [] : upazilasOf(district);
 
   const step1Ok = nidIssue(nid) === null && phoneOk && dob.length === 10 && !issue;
@@ -225,7 +225,7 @@ export default function Register() {
                 ))}
               </select>
             </label>
-            {district !== "" && (
+            {division !== "" && (
               <label className="block text-sm font-semibold text-ink">
                 {lang === "bn" ? "জেলা" : "District"}
                 <select
@@ -324,7 +324,7 @@ export default function Register() {
                 type="button"
                 onClick={sendOtp}
                 disabled={!step2Ok}
-                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand px-7 text-[15px] font-semibold text-white hover:bg-brand-deep transition-colors cursor-pointer"
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand px-7 text-[15px] font-semibold text-white disabled:opacity-40 hover:bg-brand-deep transition-colors cursor-pointer"
               >
                 {t("auth.sendOtp")}
               </button>

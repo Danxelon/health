@@ -49,6 +49,7 @@
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
 
   /* --- Motion ------------------------------------------------------------ */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
   --ease-drawer: cubic-bezier(0.16, 1, 0.3, 1);
@@ -566,6 +567,28 @@ svg {
   will-change: opacity;
 }
 
+/* -----------------------------------------------------------------------------
+   3. Donor rail detail mount (Donors right rail)
+   Occasional state-indication: bridges the teleport when rail selection changes.
+   Transform + opacity only, keyed by donor id so each donor re-mounts it.
+   -------------------------------------------------------------------------- */
+
+@keyframes donor-rail-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.donor-rail-detail {
+  animation: donor-rail-detail-in 220ms var(--ease-out) both;
+  will-change: transform, opacity;
+}
+
 :root[data-theme="dark"] .drawer-right,
 :root[data-theme="dark"] .animate-drawer-in,
 :root[data-theme="dark"] .animate-slide-in-right,
@@ -614,6 +637,13 @@ svg {
   .animate-in.fade-in {
     animation: none !important;
     opacity: 1 !important;
+    will-change: auto !important;
+  }
+
+  .donor-rail-detail {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
     will-change: auto !important;
   }
 
