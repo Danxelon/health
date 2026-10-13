@@ -26,6 +26,7 @@ import type {
   RequestUrgency,
   Specialty,
 } from "@/domain/types.ts";
+import { BD_UPAZILAS } from "@/lib/geo-bd.ts";
 
 /* -------------------------------------------------------------------------- */
 /* Deterministic PRNG — mulberry32, seeded once                               */
@@ -46,7 +47,7 @@ const pick = <T,>(items: readonly T[]): T => items[Math.floor(rng() * items.leng
 const between = (lo: number, hi: number): number => lo + Math.floor(rng() * (hi - lo + 1));
 
 /* -------------------------------------------------------------------------- */
-/* A small, honest geography slice                                             */
+/* National geography — full cascade                                         */
 /* -------------------------------------------------------------------------- */
 
 export interface DemoUpazila {
@@ -62,37 +63,13 @@ export interface DemoUpazila {
 }
 
 /**
- * Twenty-four real upazilas across six divisions, with approximate centres.
- * Enough to make the distance model, the rings, and the upazila → district →
- * division cascade behave like the real thing. The production seed carries all
- * 495 with BBS codes; this is the slice a demo needs.
+ * Full national geography: 8 divisions, 64 districts, 494 upazilas with
+ * bilingual names (see `@/lib/geo-bd.ts` for the source dataset and
+ * attribution). The `DEMO_` name is kept so every picker, cascade, and the
+ * demo donor/doctor generators automatically cover the whole country with
+ * zero call-site changes.
  */
-export const DEMO_UPAZILAS: readonly DemoUpazila[] = [
-  { id: 101, name_en: "Savar", name_bn: "সাভার", district_en: "Dhaka", district_bn: "ঢাকা", division_en: "Dhaka", division_bn: "ঢাকা", lat: 23.8583, lng: 90.2667 },
-  { id: 102, name_en: "Dhamrai", name_bn: "ধামরাই", district_en: "Dhaka", district_bn: "ঢাকা", division_en: "Dhaka", division_bn: "ঢাকা", lat: 23.9167, lng: 90.1833 },
-  { id: 103, name_en: "Keraniganj", name_bn: "কেরানীগঞ্জ", district_en: "Dhaka", district_bn: "ঢাকা", division_en: "Dhaka", division_bn: "ঢাকা", lat: 23.6833, lng: 90.35 },
-  { id: 111, name_en: "Dhanmondi", name_bn: "ধানমন্ডি", district_en: "Dhaka", district_bn: "ঢাকা", division_en: "Dhaka", division_bn: "ঢাকা", lat: 23.7461, lng: 90.3742 },
-  { id: 112, name_en: "Mirpur", name_bn: "মিরপুর", district_en: "Dhaka", district_bn: "ঢাকা", division_en: "Dhaka", division_bn: "ঢাকা", lat: 23.8223, lng: 90.3654 },
-  { id: 113, name_en: "Uttara", name_bn: "উত্তরা", district_en: "Dhaka", district_bn: "ঢাকা", division_en: "Dhaka", division_bn: "ঢাকা", lat: 23.8759, lng: 90.3795 },
-  { id: 121, name_en: "Gazipur Sadar", name_bn: "গাজীপুর সদর", district_en: "Gazipur", district_bn: "গাজীপুর", division_en: "Dhaka", division_bn: "ঢাকা", lat: 23.9999, lng: 90.4203 },
-  { id: 122, name_en: "Kaliakair", name_bn: "কালিয়াকৈর", district_en: "Gazipur", district_bn: "গাজীপুর", division_en: "Dhaka", division_bn: "ঢাকা", lat: 24.0755, lng: 90.2231 },
-  { id: 131, name_en: "Narayanganj Sadar", name_bn: "নারায়ণগঞ্জ সদর", district_en: "Narayanganj", district_bn: "নারায়ণগঞ্জ", division_en: "Dhaka", division_bn: "ঢাকা", lat: 23.6238, lng: 90.4999 },
-  { id: 201, name_en: "Chattogram Sadar", name_bn: "চট্টগ্রাম সদর", district_en: "Chattogram", district_bn: "চট্টগ্রাম", division_en: "Chattogram", division_bn: "চট্টগ্রাম", lat: 22.3569, lng: 91.7832 },
-  { id: 202, name_en: "Hathazari", name_bn: "হাটহাজারী", district_en: "Chattogram", district_bn: "চট্টগ্রাম", division_en: "Chattogram", division_bn: "চট্টগ্রাম", lat: 22.5056, lng: 91.8125 },
-  { id: 211, name_en: "Cox's Bazar Sadar", name_bn: "কক্সবাজার সদর", district_en: "Cox's Bazar", district_bn: "কক্সবাজার", division_en: "Chattogram", division_bn: "চট্টগ্রাম", lat: 21.4397, lng: 92.0058 },
-  { id: 221, name_en: "Cumilla Sadar", name_bn: "কুমিল্লা সদর", district_en: "Cumilla", district_bn: "কুমিল্লা", division_en: "Chattogram", division_bn: "চট্টগ্রাম", lat: 23.4607, lng: 91.1809 },
-  { id: 301, name_en: "Sylhet Sadar", name_bn: "সিলেট সদর", district_en: "Sylhet", district_bn: "সিলেট", division_en: "Sylhet", division_bn: "সিলেট", lat: 24.8949, lng: 91.8687 },
-  { id: 311, name_en: "Moulvibazar Sadar", name_bn: "মৌলভীবাজার সদর", district_en: "Moulvibazar", district_bn: "মৌলভীবাজার", division_en: "Sylhet", division_bn: "সিলেট", lat: 24.4829, lng: 91.7774 },
-  { id: 401, name_en: "Rajshahi Sadar", name_bn: "রাজশাহী সদর", district_en: "Rajshahi", district_bn: "রাজশাহী", division_en: "Rajshahi", division_bn: "রাজশাহী", lat: 24.3745, lng: 88.6042 },
-  { id: 402, name_en: "Paba", name_bn: "পবা", district_en: "Rajshahi", district_bn: "রাজশাহী", division_en: "Rajshahi", division_bn: "রাজশাহী", lat: 24.3805, lng: 88.5455 },
-  { id: 411, name_en: "Bogura Sadar", name_bn: "বগুড়া সদর", district_en: "Bogura", district_bn: "বগুড়া", division_en: "Rajshahi", division_bn: "রাজশাহী", lat: 24.8465, lng: 89.3773 },
-  { id: 501, name_en: "Khulna Sadar", name_bn: "খুলনা সদর", district_en: "Khulna", district_bn: "খুলনা", division_en: "Khulna", division_bn: "খুলনা", lat: 22.8098, lng: 89.5644 },
-  { id: 511, name_en: "Kushtia Sadar", name_bn: "কুষ্টিয়া সদর", district_en: "Kushtia", district_bn: "কুষ্টিয়া", division_en: "Khulna", division_bn: "খুলনা", lat: 23.9013, lng: 89.1206 },
-  { id: 601, name_en: "Barishal Sadar", name_bn: "বরিশাল সদর", district_en: "Barishal", district_bn: "বরিশাল", division_en: "Barishal", division_bn: "বরিশাল", lat: 22.701, lng: 90.3535 },
-  { id: 701, name_en: "Rangpur Sadar", name_bn: "রংপুর সদর", district_en: "Rangpur", district_bn: "রংপুর", division_en: "Rangpur", division_bn: "রংপুর", lat: 25.7439, lng: 89.2752 },
-  { id: 801, name_en: "Mymensingh Sadar", name_bn: "ময়মনসিংহ সদর", district_en: "Mymensingh", district_bn: "ময়মনসিংহ", division_en: "Mymensingh", division_bn: "ময়মনসিংহ", lat: 24.7471, lng: 90.4203 },
-  { id: 802, name_en: "Bhaluka", name_bn: "ভালুকা", district_en: "Mymensingh", district_bn: "ময়মনসিংহ", division_en: "Mymensingh", division_bn: "ময়মনসিংহ", lat: 24.3858, lng: 90.3756 },
-];
+export const DEMO_UPAZILAS: readonly DemoUpazila[] = BD_UPAZILAS;
 
 export const DEMO_DIVISIONS = [
   ...new Set(DEMO_UPAZILAS.map((u) => u.division_en)),
@@ -110,7 +87,7 @@ export function upazilasOf(districtEn: string): DemoUpazila[] {
 }
 
 /** Approximate centre of Bangladesh, used when a visitor shares no location. */
-export const DEFAULT_ORIGIN = { lat: 23.8103, lng: 90.4125, upazila_id: 111 };
+export const DEFAULT_ORIGIN = { lat: 23.8103, lng: 90.4125, upazila_id: 149 };
 
 /* -------------------------------------------------------------------------- */
 /* Donors                                                                      */
