@@ -117,6 +117,31 @@ VALUES
 ON CONFLICT (user_id) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
+-- 0c. Deterministic staff passwords + confirmed emails + role metadata.
+--      Auth rows may already exist from an older seed with an unknown hash
+--      (login then fails with "Invalid login credentials"). Re-syncing here
+--      guarantees the documented credentials always work after this file runs.
+-- -----------------------------------------------------------------------------
+UPDATE auth.users
+SET encrypted_password = crypt('iloveyou', gen_salt('bf', 4)),
+    email_confirmed_at = coalesce(email_confirmed_at, now()),
+    raw_user_meta_data = '{"role":"admin","full_name":"Chief System Administrator"}'::jsonb
+WHERE email = 'showystore2026@gmail.com';
+
+UPDATE auth.users AS u
+SET encrypted_password = crypt('Doctor2026!', gen_salt('bf', 4)),
+    email_confirmed_at = coalesce(email_confirmed_at, now()),
+    raw_user_meta_data = jsonb_build_object('role', 'doctor', 'full_name', v.full_name)
+FROM (VALUES
+  ('dr.rahman@health.gov.bd', 'Dr. Mohammad Abdur Rahman'),
+  ('dr.fatima@health.gov.bd', 'Dr. Syeda Fatima Begum'),
+  ('dr.anwar@health.gov.bd', 'Dr. Mohammad Anwar Hossain'),
+  ('dr.taslima@health.gov.bd', 'Dr. Syeda Taslima Akter'),
+  ('dr.kamal@health.gov.bd', 'Dr. Mohammad Kamal Uddin')
+) AS v(email, full_name)
+WHERE u.email = v.email;
+
+-- -----------------------------------------------------------------------------
 -- 1. auth.users stubs for the 12 PENDING doctors (FK parent of profiles.id)
 --    Password hash is a dummy demo value; real login for pending queue is
 --    handled by the admin review flow, not by these accounts.

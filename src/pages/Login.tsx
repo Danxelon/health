@@ -513,6 +513,9 @@ export default function Login() {
                     {otpError}
                   </p>
                 )}
+                <p className="mt-2 text-xs text-muted">
+                  {lang === "bn" ? "ডেমো কোড: 123456" : "Demo code: 123456"}
+                </p>
 
                 <button
                   type="button"
