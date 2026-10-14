@@ -94,6 +94,7 @@ const COPY = {
   },
   doctorHotline: { bn: "ডাক্তার হটলাইন নম্বর", en: "Doctor hotline number" },
   directCall: { bn: "সরাসরি ফোন কল (Direct Call)", en: "Direct Call" },
+  whatsappCall: { bn: "হোয়াটসঅ্যাপে কল করুন", en: "WhatsApp Call" },
   startAudioCall: { bn: "অনলাইন অডিও কল (Start Audio Call)", en: "Start Audio Call" },
   callDoctor: { bn: "ডাক্তারকে কল করুন (Call Doctor)", en: "Call Doctor" },
   connecting: { bn: "সংযোগ স্থাপন করা হচ্ছে... (Connecting...)", en: "Connecting..." },
@@ -690,13 +691,28 @@ export default function ConsultationsDetail() {
                 <span className="font-mono text-sm sm:text-base font-bold text-ink">
                   {doctorHotline}
                 </span>
-                <a
-                  href={directCallTel}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-emerald-700 active:scale-95"
-                >
-                  <Phone className="h-3.5 w-3.5" />
-                  <span>{COPY.directCall[lang]}</span>
-                </a>
+                <div className="flex flex-wrap items-center gap-2">
+                  <a
+                    href={directCallTel}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-emerald-700 active:scale-95"
+                  >
+                    <Phone className="h-3.5 w-3.5" />
+                    <span>{COPY.directCall[lang]}</span>
+                  </a>
+                  <a
+                    href={`https://wa.me/${rawDoctorPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                      lang === "bn"
+                        ? `আসসালামু আলাইকুম ${doctorName}, আমি আপনার পরামর্শের রোগী। ফোনে কথা বলতে চাই।`
+                        : `Hello ${doctorName}, I am your consultation patient. I would like to talk on call.`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-xs transition-colors hover:bg-emerald-600 hover:text-white active:scale-95"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    <span>{COPY.whatsappCall[lang]}</span>
+                  </a>
+                </div>
               </div>
             </div>
 

@@ -72,6 +72,7 @@ const COPY = {
   chat: { bn: "বার্তা পাঠান (Chat)", en: "Message (Chat)" },
   chatLoading: { bn: "চ্যাট খোলা হচ্ছে…", en: "Opening chat…" },
   call: { bn: "কল করুন (Call)", en: "Call" },
+  whatsapp: { bn: "হোয়াটসঅ্যাপে কল করুন", en: "WhatsApp Call" },
   bmdcLabel: { bn: "বিএমডিসি", en: "BMDC" },
   expLabel: { bn: "অভিজ্ঞতা", en: "Exp" },
   ageLabel: { bn: "বয়স", en: "Age" },
@@ -657,14 +658,30 @@ export default function Doctors() {
                           )}
                         </button>
                         {d.phone && (
-                          <a
-                            href={`tel:${d.phone}`}
-                            aria-label={COPY.call[lang]}
-                            title={COPY.call[lang]}
-                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition-colors"
-                          >
-                            <Phone className="h-4 w-4" strokeWidth={1.8} />
-                          </a>
+                          <>
+                            <a
+                              href={`tel:${d.phone}`}
+                              aria-label={COPY.call[lang]}
+                              title={COPY.call[lang]}
+                              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition-colors"
+                            >
+                              <Phone className="h-4 w-4" strokeWidth={1.8} />
+                            </a>
+                            <a
+                              href={`https://wa.me/${d.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                                lang === "bn"
+                                  ? `আসসালামু আলাইকুম, আমি একজন রোগী। আপনার সাথে পরামর্শ করতে চাই।`
+                                  : `Hello, I am a patient. I would like a consultation with you.`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={COPY.whatsapp[lang]}
+                              title={COPY.whatsapp[lang]}
+                              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors"
+                            >
+                              <MessageCircle className="h-4 w-4" strokeWidth={1.8} />
+                            </a>
+                          </>
                         )}
                       </div>
                     </article>
