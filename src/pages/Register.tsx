@@ -69,7 +69,7 @@ export default function Register() {
   };
 
   const verifyOtp = async () => {
-    if (otp !== "123456") {
+    if (otp !== "201222") {
       setOtpError(
         lang === "bn"
           ? "কোডটি সঠিক নয়। আবার চেষ্টা করুন।"

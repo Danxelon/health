@@ -2,7 +2,8 @@
  * Citizen registration — every UI account lands in the database.
  *
  * Supabase phone-OTP (SMS) is not configured on this project, so the
- * development OTP gate (`123456`, see CREDENTIALS.md) stays as the human
+ * development OTP gate (`201222` for every number, no SMS is sent — see
+ * CREDENTIALS.md) stays as the human
  * verification step. What changes: after the code is accepted the client
  * provisions a REAL Supabase auth user (deterministic email derived from the
  * phone number, so returning citizens get the same account) and writes the

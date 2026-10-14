@@ -1,7 +1,8 @@
 /**
  * Login — Dual-mode login interface:
  * 1. Citizen / Donor (Mobile OTP) [নাগরিক / রক্তদাতা]
- *    Fast 2-step phone number + 6-digit OTP ("123456") flow. After the code
+ *    Fast 2-step phone number + 6-digit OTP ("201222" for every number,
+ *    no SMS is sent) flow. After the code
  *    is accepted a REAL Supabase session + profile row is provisioned (see
  *    `@/api/registration.ts`), so the account exists in the database.
  * 2. Admin & Doctor Login [অ্যাডমিন ও ডাক্তার লগইন]
@@ -46,8 +47,8 @@ type Step = 1 | 2;
  *  a language switch mid-error re-renders in the new language. */
 type OtpIssue = "length" | "wrong" | null;
 
-/** The development gate code — the register screen uses the same value. */
-const GATE_CODE = "123456";
+/** The universal gate code — same for every phone number, no SMS is sent. */
+const GATE_CODE = "201222";
 
 const COPY = {
   tabCitizen: {

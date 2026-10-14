@@ -37,14 +37,15 @@ All public health consultations under the medilink government portal are **100% 
 
 ## 3. Citizen & Blood Donor Test Accounts
 
-Citizens and blood donors authenticate via **Mobile Number + 6-digit OTP** (One-Time Password). In local development and demo mode, enter any pre-seeded mobile number with the default OTP code `123456`.
+Citizens and blood donors authenticate via **Mobile Number + 6-digit OTP** (One-Time Password). No SMS is sent: enter any mobile number with the universal OTP code `201222`.
 
 | Account Type | Sample 3-Word Name | Mobile Number | OTP Code | Blood Group | Date of Birth / Age | Capabilities |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Citizen (Patient)** | **Mohammad Rafiqul Islam**<br>(মোহাম্মদ রফিকুল ইসলাম) | `01711000000` | `123456` | — | 1988-04-12 (38 yrs) | Search blood donors, submit emergency blood requests, consult doctors, live telemedicine chat & audio calls. |
-| **Emergency Blood Donor** | **Tanvir Ahmed Chowdhury**<br>(তানভীর আহমেদ চৌধুরী) | `01812000001` | `123456` | `O+` (Positive) | 1995-08-20 (31 yrs) | Respond to blood emergency requests, log donation history, manage donor availability toggle. |
-| **Donor (Rare Group)** | **Kazi Ashraful Haque**<br>(কাজী আশরাফুল হক) | `01913000002` | `123456` | `AB-` (Negative) | 1992-11-05 (33 yrs) | Emergency rare blood donor alerts and regional matching. |
-| **Pre-seeded Citizen** | **Syeda Nusrat Jahan**<br>(সৈয়দা নুসরাত জাহান) | `01300000000` | `123456` | `B+` (Positive) | 1999-02-14 (27 yrs) | General patient health dashboard, appointment booking, article bookmarking. |
+| **Citizen (Patient)** | **Mohammad Rafiqul Islam**<br>(মোহাম্মদ রফিকুল ইসলাম) | `01711000000` | `201222` | — | 1988-04-12 (38 yrs) | Search blood donors, submit emergency blood requests, consult doctors, live telemedicine chat & audio calls. |
+| **Emergency Blood Donor** | **Tanvir Ahmed Chowdhury**<br>(তানভীর আহমেদ চৌধুরী) | `01812000001` | `201222` | `O+` (Positive) | 1995-08-20 (31 yrs) | Respond to blood emergency requests, log donation history, manage donor availability toggle. |
+| **Donor (Rare Group)** | **Kazi Ashraful Haque**<br>(কাজী আশরাফুল হক) | `01913000002` | `201222` | `AB-` (Negative) | 1992-11-05 (33 yrs) | Emergency rare blood donor alerts and regional matching. |
+| **Pre-seeded Citizen** | **Syeda Nusrat Jahan**<br>(সৈয়দা নুসরাত জাহান) | `01300000000` | `201222` | `B+` (Positive) | 1999-02-14 (27 yrs) | General patient health dashboard, appointment booking, article bookmarking. |
+| **Citizen (AB+ Donor)** | **Md. Rawfe Al Araf**<br>(মোঃ রাফে আল আরাফ) | `01706012443` | `201222` | `AB+` (Positive) | 2008-11-24 (17 yrs) | Blood donor search and emergency requests; donor card shows real profile info. |
 
 ---
 
@@ -127,7 +128,7 @@ This script is fully idempotent (`CREATE IF NOT EXISTS`, `ON CONFLICT DO NOTHING
 ### C. Logging in as Citizen / Blood Donor:
 1. Navigate to [`/login`](http://localhost:5173/login).
 2. In the **"Mobile OTP Login"** tab, enter phone number (e.g., `01711000000` or `01812000001`).
-3. Enter OTP code `123456`.
+3. Enter OTP code `201222`.
 4. You are now logged in to:
    - Search nearby blood donors with smart ring-radius distance sorting and bilingual display at [`/donors`](http://localhost:5173/donors).
    - Post emergency blood requests with blood group, hospital location, and urgency level at [`/requests/new`](http://localhost:5173/requests/new).
