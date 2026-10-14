@@ -214,6 +214,14 @@ on conflict (user_id) do update set
   verified_at = coalesce(public.doctors.verified_at, now());
 
 -- 4. Verify — expect 1 row each ----------------------------------------------
+-- Auth repair (same as 0014): manual auth.users rows carry NULL GoTrue
+-- tokens, which breaks every email lookup for them. Backfill once.
+update auth.users set confirmation_token = '' where confirmation_token is null;
+update auth.users set recovery_token = '' where recovery_token is null;
+update auth.users set email_change_token_current = '' where email_change_token_current is null;
+update auth.users set email_change_token_new = '' where email_change_token_new is null;
+update auth.users set phone_change_token = '' where phone_change_token is null;
+
 select id, full_name, blood_group, home_upazila_id,
        present_address from public.profiles
 where id in ('0a9e4539-9eb7-4330-b6f3-cf1a20b64d70'::uuid,

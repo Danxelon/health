@@ -2047,3 +2047,12 @@ begin
   raise notice 'All tables, triggers, age columns, and RPCs are ready!';
   raise notice '=======================================================';
 end $$;
+
+-- Auth repair: rows inserted above via SQL leave GoTrue token columns NULL,
+-- and GoTrue scans them as non-nullable strings ("Database error finding
+-- user: Scan error ... confirmation token"). Backfill once, idempotently.
+update auth.users set confirmation_token = '' where confirmation_token is null;
+update auth.users set recovery_token = '' where recovery_token is null;
+update auth.users set email_change_token_current = '' where email_change_token_current is null;
+update auth.users set email_change_token_new = '' where email_change_token_new is null;
+update auth.users set phone_change_token = '' where phone_change_token is null;
