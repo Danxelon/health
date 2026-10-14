@@ -939,7 +939,14 @@ begin
   left join districts d on d.id = u.district_id
   where p.blood_group = any (v_groups)
     and p.id <> coalesce(auth.uid(), '00000000-0000-0000-0000-000000000000'::uuid)
-  order by can_give_now desc, dn.total_donations desc
+  -- Featured pin: Md. Rasheduzzaman first, but ONLY for AB+ searches.
+  -- Every other group keeps the existing ready-first order.
+  order by
+    case
+      when p_recipient_group = 'AB+' and p.full_name ilike '%rasheduzzaman%' then 0
+      else 1
+    end asc,
+    can_give_now desc, dn.total_donations desc
   limit p_limit;
 end;
 $$;

@@ -11,9 +11,10 @@
 
 import type { BloodComponent, BloodGroup, DonorCard, DonorCounts, RequestUrgency } from "@/domain/types.ts";
 import { rankDonors, groupByRing, scoreDonor, maxRingFor } from "@/domain/matching.ts";
+import { pinFeaturedDonor } from "@/domain/featured-donor.ts";
 import { acceptableDonorsFor } from "@/domain/blood.ts";
 import { DEMO_DONORS, DEMO_UPAZILAS, type DemoUpazila } from "@/lib/demo-data.ts";
-import { callRpc, DEMO_MODE, hasSupabaseAuthSession } from "@/lib/supabase.ts";
+import { callRpc, DEMO_MODE } from "@/lib/supabase.ts";
 
 export interface SearchDonorsArgs {
   recipientGroup: BloodGroup;
@@ -107,74 +108,77 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
 
   const ranked = rankDonors(donors);
 
+  // Featured account: Md. Rasheduzzaman stays first for AB+ searches.
+  // pinFeaturedDonor is a stable partition — every other donor keeps the
+  // ranked order, so Best Match still works for the rest of the list.
+  const pinned = pinFeaturedDonor(ranked, args.recipientGroup);
+
   return {
-    donors: ranked,
+    donors: pinned,
     counts: {
-      total: ranked.length,
-      ready_now: ranked.filter((d) => d.can_give_now).length,
+      total: pinned.length,
+      ready_now: pinned.filter((d) => d.can_give_now).length,
       radius_km: maxRingFor(args.urgency) === 6 ? 50 : [3, 10, 25, 50][maxRingFor(args.urgency) - 1] ?? 10,
       for_group: args.recipientGroup,
       accepts_from: [...compatible],
     },
-    groups: groupByRing(ranked),
+    groups: groupByRing(pinned),
     searchedAt: new Date().toISOString(),
   };
 }
 
 export async function searchDonors(args: SearchDonorsArgs): Promise<SearchResults> {
-  const hasSession = await hasSupabaseAuthSession();
-  if (DEMO_MODE || !hasSession) {
-    // When in demo mode or without an active Supabase JWT session, use the rich deterministic
-    // dataset directly without firing an unauthenticated network request that triggers HTTP 400.
+  if (DEMO_MODE) {
+    // No backend configured — local deterministic dataset only.
     await new Promise((resolve) => setTimeout(resolve, 200));
     return buildResults(args);
   }
 
-  try {
-    const rows = await callRpc<DonorCard[]>("search_nearby_donors", {
-      p_recipient_group: args.recipientGroup,
-      p_lat: args.lat,
-      p_lng: args.lng,
-      p_urgency: args.urgency,
-      p_upazila_id: args.upazilaId,
-      p_component: args.component ?? "whole_blood",
-    });
+  // LIVE DATABASE ONLY: every row comes from `search_nearby_donors`.
+  // No demo fallback here — when Supabase is configured the UI must show
+  // real rows (including the Md. Rasheduzzaman account) or a real error,
+  // never synthetic donors mistaken for real people.
+  const rows = await callRpc<DonorCard[]>("search_nearby_donors", {
+    p_recipient_group: args.recipientGroup,
+    p_lat: args.lat,
+    p_lng: args.lng,
+    p_urgency: args.urgency,
+    p_upazila_id: args.upazilaId,
+    p_component: args.component ?? "whole_blood",
+  });
 
-    // The RPC already returns donors in the documented order; re-ranking
-    // here would require `metres` the projection does not expose.
-    const ranked: DonorCard[] = [...rows]
-      .map((r, i) => ({
-        ...r,
-        phone: r.phone ?? `+88017${(10000000 + i * 24680) % 90000000}`,
-        division_en: r.division_en ?? null,
-        division_bn: r.division_bn ?? null,
-        address_en: r.address_en ?? (r.upazila_en && r.district_en ? `${r.upazila_en}, ${r.district_en}` : null),
-        address_bn: r.address_bn ?? (r.upazila_bn && r.district_bn ? `${r.upazila_bn}, ${r.district_bn}` : null),
-        lat: r.lat ?? null,
-        lng: r.lng ?? null,
-      }))
-      .sort((a, b) => {
+  // The RPC already returns donors in the documented order; re-ranking
+  // here would require `metres` the projection does not expose.
+  const ranked: DonorCard[] = [...rows]
+    .map((r, i) => ({
+      ...r,
+      phone: r.phone ?? `+88017${(10000000 + i * 24680) % 90000000}`,
+      division_en: r.division_en ?? null,
+      division_bn: r.division_bn ?? null,
+      address_en: r.address_en ?? (r.upazila_en && r.district_en ? `${r.upazila_en}, ${r.district_en}` : null),
+      address_bn: r.address_bn ?? (r.upazila_bn && r.district_bn ? `${r.upazila_bn}, ${r.district_bn}` : null),
+      lat: r.lat ?? null,
+      lng: r.lng ?? null,
+    }))
+    .sort((a, b) => {
       if (a.ring !== b.ring) return a.ring - b.ring;
       if (b.score !== a.score) return b.score - a.score;
       return a.donor_id < b.donor_id ? -1 : a.donor_id > b.donor_id ? 1 : 0;
     });
-    return {
-      donors: ranked,
-      counts: {
-        total: ranked.length,
-        ready_now: ranked.filter((d) => d.can_give_now).length,
-        radius_km: maxRingFor(args.urgency) === 6 ? 50 : 10,
-        for_group: args.recipientGroup,
-        accepts_from: acceptableDonorsFor(args.recipientGroup),
-      },
-      groups: groupByRing(ranked),
-      searchedAt: new Date().toISOString(),
-    };
-  } catch (err) {
-    // When Supabase RPC returns 400/RJ401 (e.g. unauthenticated backend query)
-    // or when the database is unavailable, gracefully fall back to local dataset
-    // so donors are ALWAYS displayed and the UI never crashes!
-    console.warn("search_nearby_donors RPC fallback activated:", err);
-    return buildResults(args);
-  }
+  // Featured account: Md. Rasheduzzaman stays first for AB+ searches even
+  // when the rows came from Supabase. Stable partition — other rows keep
+  // their order so every sort still behaves for the rest.
+  const pinned = pinFeaturedDonor(ranked, args.recipientGroup);
+  return {
+    donors: pinned,
+    counts: {
+      total: pinned.length,
+      ready_now: pinned.filter((d) => d.can_give_now).length,
+      radius_km: maxRingFor(args.urgency) === 6 ? 50 : 10,
+      for_group: args.recipientGroup,
+      accepts_from: acceptableDonorsFor(args.recipientGroup),
+    },
+    groups: groupByRing(pinned),
+    searchedAt: new Date().toISOString(),
+  };
 }

@@ -30,6 +30,7 @@ import { useAppShell } from "@/state/app-shell.tsx";
 import { useAuth } from "@/state/auth-context.tsx";
 import { Badge, DistanceChip, SectionHeader } from "@/components/ui.tsx";
 import { searchDonors, type SearchDonorsArgs, type SearchResults } from "@/api/donors.ts";
+import { pinFeaturedDonor } from "@/domain/featured-donor.ts";
 import { fetchDoctors } from "@/api/doctors.ts";
 import type { BloodGroup, DoctorCard, DonorCard, RequestUrgency } from "@/domain/types.ts";
 import { URGENCY_LABELS } from "@/lib/strings.ts";
@@ -182,7 +183,10 @@ export default function Donors() {
     });
   }, [isLoggedIn]);
 
-  // Sort displayed donors according to user preference
+  // Sort displayed donors according to user preference.
+  // Featured account Md. Rasheduzzaman is re-pinned to the very first slot
+  // AFTER every sort, so Best Match / Ready First / By Name all keep working
+  // for the rest of the list while the featured card never moves.
   const sortedDonors = useMemo(() => {
     if (!results?.donors) return [];
     const list = [...results.donors];
@@ -197,8 +201,10 @@ export default function Donors() {
       });
     }
     // "match" uses default ranked order from backend/domain
-    return list;
-  }, [results, sortBy, lang]);
+    // Re-pin AFTER sorting so the featured donor survives every sort mode.
+    if (!selectedGroup) return list;
+    return pinFeaturedDonor(list, selectedGroup);
+  }, [results, sortBy, lang, selectedGroup]);
 
   // If not logged in, show auth gate prompt
   if (!isLoggedIn) {
