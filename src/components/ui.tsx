@@ -64,7 +64,7 @@ export function Badge({
 /** A distance, shown as a band label with the km when known. */
 export function DistanceChip({ km, band }: { km: number | null; band: DistanceBand }) {
   const { lang, tb } = useAppShell();
-  const label = distanceLabel(km, band);
+  const label = distanceLabel(km, band) ?? { en: "Distance unknown", bn: "দূরত্ব অজানা" };
   const { bn, en } = label;
   const text = lang === "bn" ? bn : en;
   return (

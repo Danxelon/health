@@ -95,7 +95,10 @@ const BAND_LABELS: Record<DistanceBand, { en: string; bn: string }> = {
 };
 
 export function bandLabel(band: DistanceBand): { en: string; bn: string } {
-  return BAND_LABELS[band];
+  // The live `search_nearby_donors` RPC has historically returned
+  // non-canonical bands ('within_district', 'under_3km'). Never crash the
+  // card on an unknown band — fall back to the neutral label instead.
+  return BAND_LABELS[band as DistanceBand] ?? BAND_LABELS.unknown;
 }
 
 /** The band label a card actually renders: rounded km when we have it. */

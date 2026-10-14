@@ -72,6 +72,17 @@ describe("distance bands", () => {
       assert.ok(label.bn.length > 0, `${band} has no Bengali label`);
     }
   });
+
+  it("never crashes on non-canonical bands returned by older RPCs", () => {
+    // The consolidated setup RPC returns 'within_district' / 'under_3km'.
+    // Cards must render a neutral label, never throw during render.
+    for (const band of ["within_district", "under_3km", "", "SOME_FUTURE_BAND"] as const) {
+      const label = bandLabel(band as never);
+      assert.ok(label && label.en.length > 0 && label.bn.length > 0, `${band} must fall back`);
+      const viaDistance = distanceLabel(null, band as never);
+      assert.ok(viaDistance.en.length > 0);
+    }
+  });
 });
 
 describe("ring policy", () => {
