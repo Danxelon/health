@@ -664,6 +664,7 @@ select
   coalesce(pr.full_name_bn, pr.full_name) as display_name,
   pr.full_name                            as full_name,
   pr.full_name_bn                         as full_name_bn,
+  pr.phone                                as phone,
   pr.avatar_url,
   doc.bmdc_reg_no,
   array_to_string(doc.degrees, ', ')      as degrees,

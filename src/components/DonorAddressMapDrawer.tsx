@@ -124,7 +124,9 @@ export function DonorAddressMapDrawer({
 
   const fullAddressText = `${streetHolding}, ${upazila}, ${district}, ${division}`;
   const coordsFormatted = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  const phone = donor.phone || "+8801712345678";
+  // Real number only — never a fake fallback. Hidden-number donors show the
+  // locked state and the call/sms/whatsapp actions stay disabled.
+  const phone: string | null = donor.phone ?? null;
 
   const handleCopyAddress = () => {
     try {
@@ -147,6 +149,7 @@ export function DonorAddressMapDrawer({
   };
 
   const handleCopyPhone = () => {
+    if (!phone) return;
     try {
       navigator.clipboard.writeText(phone);
       setCopiedPhone(true);
@@ -530,58 +533,70 @@ export function DonorAddressMapDrawer({
               <span className="text-xs font-bold uppercase tracking-wider text-muted">
                 {lang === "bn" ? "রক্তদাতার মোবাইল নম্বর" : "Direct Phone Number"}
               </span>
-              <button
-                type="button"
-                onClick={handleCopyPhone}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3 py-1.5 text-xs font-bold text-ink hover:bg-elevated transition-colors cursor-pointer"
-              >
-                {copiedPhone ? (
-                  <>
-                    <Check className="h-3.5 w-3.5 text-emerald-600" />
-                    <span className="text-emerald-600 font-bold">{lang === "bn" ? "কপি হয়েছে!" : "Copied!"}</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-3.5 w-3.5 text-muted" />
-                    <span>{lang === "bn" ? "নম্বর কপি করুন" : "Copy Phone"}</span>
-                  </>
-                )}
-              </button>
+              {phone && (
+                <button
+                  type="button"
+                  onClick={handleCopyPhone}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3 py-1.5 text-xs font-bold text-ink hover:bg-elevated transition-colors cursor-pointer"
+                >
+                  {copiedPhone ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                      <span className="text-emerald-600 font-bold">{lang === "bn" ? "কপি হয়েছে!" : "Copied!"}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5 text-muted" />
+                      <span>{lang === "bn" ? "নম্বর কপি করুন" : "Copy Phone"}</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
             <div className="flex items-center justify-between rounded-2xl bg-elevated/60 border border-line/70 px-4 py-2.5">
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-emerald-600" />
-                <span className="font-mono text-base font-black text-ink">{phone}</span>
+                <span className="font-mono text-base font-black text-ink">
+                  {phone || (lang === "bn" ? "নম্বর লুকানো" : "Number hidden")}
+                </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5 pt-1">
-              <a
-                href={`sms:${phone}?body=${encodeURIComponent(
-                  lang === "bn"
-                    ? `জরুরি রক্তের প্রয়োজন: ${donor.blood_group}। আপনি কি রক্ত দিতে পারবেন?`
-                    : `Emergency blood needed: ${donor.blood_group}. Are you available to donate?`
-                )}`}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-xs font-bold text-ink hover:bg-elevated transition-colors cursor-pointer"
-              >
-                <MessageSquare className="h-4 w-4 text-muted" />
-                <span>{lang === "bn" ? "এসএমএস পাঠান" : "Send SMS"}</span>
-              </a>
+            {phone ? (
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
+                <a
+                  href={`sms:${phone}?body=${encodeURIComponent(
+                    lang === "bn"
+                      ? `জরুরি রক্তের প্রয়োজন: ${donor.blood_group}। আপনি কি রক্ত দিতে পারবেন?`
+                      : `Emergency blood needed: ${donor.blood_group}. Are you available to donate?`
+                  )}`}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-xs font-bold text-ink hover:bg-elevated transition-colors cursor-pointer"
+                >
+                  <MessageSquare className="h-4 w-4 text-muted" />
+                  <span>{lang === "bn" ? "এসএমএস পাঠান" : "Send SMS"}</span>
+                </a>
 
-              <a
-                href={`https://wa.me/${phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                  lang === "bn"
-                    ? `জরুরি রক্তের প্রয়োজন: ${donor.blood_group}। আপনি কি রক্ত দিতে পারবেন?`
-                    : `Emergency blood needed: ${donor.blood_group}. Are you available to donate?`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-xs font-bold text-emerald-600 hover:bg-elevated transition-colors cursor-pointer"
-              >
-                <span>WhatsApp</span>
-              </a>
-            </div>
+                <a
+                  href={`https://wa.me/${phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                    lang === "bn"
+                      ? `জরুরি রক্তের প্রয়োজন: ${donor.blood_group}। আপনি কি রক্ত দিতে পারবেন?`
+                      : `Emergency blood needed: ${donor.blood_group}. Are you available to donate?`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-xs font-bold text-emerald-600 hover:bg-elevated transition-colors cursor-pointer"
+                >
+                  <span>WhatsApp</span>
+                </a>
+              </div>
+            ) : (
+              <p className="rounded-2xl border border-dashed border-line px-4 py-3 text-xs text-muted leading-relaxed text-center">
+                {lang === "bn"
+                  ? "নম্বরটি সুরক্ষিত। রক্তের অনুরোধ পাঠালে রক্তদাতা নম্বর শেয়ার করবেন।"
+                  : "This number is protected. Send a blood request and the donor will share it."}
+              </p>
+            )}
           </section>
 
           {/* 5. Medical Advice Alert */}
@@ -606,15 +621,22 @@ export function DonorAddressMapDrawer({
 
         {/* 5. Sticky Action Footer */}
         <footer className="shrink-0 sticky bottom-0 p-4 sm:p-5 bg-surface/95 backdrop-blur-md border-t border-line flex flex-col sm:flex-row items-center gap-3 z-10 shadow-lg">
-          {/* Call Right Now Button */}
-          <a
-            href={`tel:${phone}`}
-            onClick={handleCall}
-            className="w-full sm:flex-1 inline-flex h-12 items-center justify-center gap-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm shadow-md hover:shadow-lg transition-all active:scale-98 cursor-pointer"
-          >
-            <PhoneCall className="h-4.5 w-4.5 fill-white" />
-            <span>{lang === "bn" ? "সরাসরি কল করুন" : "Call Right Now"}</span>
-          </a>
+          {/* Call Right Now Button — real number only */}
+          {phone ? (
+            <a
+              href={`tel:${phone}`}
+              onClick={handleCall}
+              className="w-full sm:flex-1 inline-flex h-12 items-center justify-center gap-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm shadow-md hover:shadow-lg transition-all active:scale-98 cursor-pointer"
+            >
+              <PhoneCall className="h-4.5 w-4.5 fill-white" />
+              <span>{lang === "bn" ? "সরাসরি কল করুন" : "Call Right Now"}</span>
+            </a>
+          ) : (
+            <span className="w-full sm:flex-1 inline-flex h-12 items-center justify-center gap-2.5 rounded-2xl bg-elevated text-muted font-black text-sm cursor-not-allowed">
+              <PhoneCall className="h-4.5 w-4.5" />
+              <span>{lang === "bn" ? "নম্বর লুকানো" : "Number hidden"}</span>
+            </span>
+          )}
 
           {/* Request Blood Now Button */}
           <button

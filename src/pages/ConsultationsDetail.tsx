@@ -413,14 +413,20 @@ export default function ConsultationsDetail() {
   const scheduledAt = consultation.scheduled_at;
   const canSend = state === "ready" && !sending && input.trim().length > 0;
 
-  // Hotline and facility info
-  const rawDoctorPhone = (doctor as { _phone?: string } | null)?._phone || "+8801711990001";
-  const doctorHotline = rawDoctorPhone.startsWith("+8801")
-    ? `+880 ${rawDoctorPhone.slice(4, 8)}-${rawDoctorPhone.slice(8)}`
-    : rawDoctorPhone;
-  const directCallTel = rawDoctorPhone.startsWith("+880")
-    ? `tel:0${rawDoctorPhone.slice(4)}`
-    : telHref(rawDoctorPhone);
+  // Hotline and facility info — real number only. The view now exposes
+  // profiles.phone; a missing number renders as hidden, never a fake fallback.
+  const rawDoctorPhone = (doctor as { _phone?: string } | null)?._phone
+    ?? doctor?.phone ?? null;
+  const doctorHotline = !rawDoctorPhone
+    ? (isBn ? "নম্বর লুকানো" : "Number hidden")
+    : rawDoctorPhone.startsWith("+8801")
+      ? `+880 ${rawDoctorPhone.slice(4, 8)}-${rawDoctorPhone.slice(8)}`
+      : rawDoctorPhone;
+  const directCallTel = !rawDoctorPhone
+    ? null
+    : rawDoctorPhone.startsWith("+880")
+      ? `tel:0${rawDoctorPhone.slice(4)}`
+      : telHref(rawDoctorPhone);
 
   const doctorHospital = doctor?.practice_address
     ? `${doctor.practice_address}`
@@ -692,26 +698,36 @@ export default function ConsultationsDetail() {
                   {doctorHotline}
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
-                  <a
-                    href={directCallTel}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-emerald-700 active:scale-95"
-                  >
-                    <Phone className="h-3.5 w-3.5" />
-                    <span>{COPY.directCall[lang]}</span>
-                  </a>
-                  <a
-                    href={`https://wa.me/${rawDoctorPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                      lang === "bn"
-                        ? `আসসালামু আলাইকুম ${doctorName}, আমি আপনার পরামর্শের রোগী। ফোনে কথা বলতে চাই।`
-                        : `Hello ${doctorName}, I am your consultation patient. I would like to talk on call.`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-xs transition-colors hover:bg-emerald-600 hover:text-white active:scale-95"
-                  >
-                    <MessageCircle className="h-3.5 w-3.5" />
-                    <span>{COPY.whatsappCall[lang]}</span>
-                  </a>
+                  {directCallTel && rawDoctorPhone ? (
+                    <>
+                      <a
+                        href={directCallTel}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-emerald-700 active:scale-95"
+                      >
+                        <Phone className="h-3.5 w-3.5" />
+                        <span>{COPY.directCall[lang]}</span>
+                      </a>
+                      <a
+                        href={`https://wa.me/${rawDoctorPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                          lang === "bn"
+                            ? `আসসালামু আলাইকুম ${doctorName}, আমি আপনার পরামর্শের রোগী। ফোনে কথা বলতে চাই।`
+                            : `Hello ${doctorName}, I am your consultation patient. I would like to talk on call.`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-xs transition-colors hover:bg-emerald-600 hover:text-white active:scale-95"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        <span>{COPY.whatsappCall[lang]}</span>
+                      </a>
+                    </>
+                  ) : (
+                    <span className="text-[11px] font-medium text-muted">
+                      {lang === "bn"
+                        ? "ডাক্তার নম্বর শেয়ার করলে এখানে কল বাটন আসবে।"
+                        : "Call buttons appear here once the doctor shares a number."}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
