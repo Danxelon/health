@@ -52,6 +52,7 @@ import {
 } from "@/api/consultations.ts";
 import { DomainError, type ConsultationMessage, type ConsultationStatus } from "@/domain/types.ts";
 import { initialsOf, telHref, toBengaliDigits } from "@/domain/profile.ts";
+import { supabase } from "@/lib/supabase.ts";
 import type { Lang } from "@/lib/strings.ts";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -163,6 +164,9 @@ export default function ConsultationsDetail() {
 
   const [thread, setThread] = useState<ConsultationThread | null>(null);
   const [messages, setMessages] = useState<ConsultationMessage[]>([]);
+  // Backup doctor number: if the directory view predates the phone column,
+  // read profiles.phone directly so the call buttons still appear.
+  const [fallbackPhone, setFallbackPhone] = useState<string | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "notfound" | "error">("loading");
   const [reloadKey, setReloadKey] = useState(0);
   const [input, setInput] = useState("");
@@ -211,6 +215,33 @@ export default function ConsultationsDetail() {
       cancelled = true;
     };
   }, [id, reloadKey]);
+
+  // Backup number fetch — only fires when the thread's doctor card carries
+  // no phone (view migration not run yet). Clears on thread change.
+  const threadDoctorId = thread?.doctor?.user_id ?? null;
+  const threadDoctorPhone = thread?.doctor?.phone ?? null;
+  useEffect(() => {
+    setFallbackPhone(null);
+    if (threadDoctorPhone || !threadDoctorId || !supabase) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("phone")
+          .eq("id", threadDoctorId)
+          .maybeSingle();
+        if (!cancelled && data && typeof (data as { phone?: unknown }).phone === "string") {
+          setFallbackPhone((data as { phone: string }).phone);
+        }
+      } catch {
+        /* RLS-blocked or offline — the hidden state stays, honestly. */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [threadDoctorId, threadDoctorPhone]);
 
   /* ------------------------------ auto-scroll ----------------------------- */
 
@@ -416,7 +447,7 @@ export default function ConsultationsDetail() {
   // Hotline and facility info — real number only. The view now exposes
   // profiles.phone; a missing number renders as hidden, never a fake fallback.
   const rawDoctorPhone = (doctor as { _phone?: string } | null)?._phone
-    ?? doctor?.phone ?? null;
+    ?? doctor?.phone ?? fallbackPhone ?? null;
   const doctorHotline = !rawDoctorPhone
     ? (isBn ? "নম্বর লুকানো" : "Number hidden")
     : rawDoctorPhone.startsWith("+8801")
