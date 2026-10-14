@@ -2048,11 +2048,17 @@ begin
   raise notice '=======================================================';
 end $$;
 
--- Auth repair: rows inserted above via SQL leave GoTrue token columns NULL,
+-- Auth repair: rows inserted above via SQL leave GoTrue text columns NULL,
 -- and GoTrue scans them as non-nullable strings ("Database error finding
--- user: Scan error ... confirmation token"). Backfill once, idempotently.
-update auth.users set confirmation_token = '' where confirmation_token is null;
-update auth.users set recovery_token = '' where recovery_token is null;
-update auth.users set email_change_token_current = '' where email_change_token_current is null;
-update auth.users set email_change_token_new = '' where email_change_token_new is null;
-update auth.users set phone_change_token = '' where phone_change_token is null;
+-- user: Scan error ... converting NULL to string is unsupported"). Backfill
+-- every known token/change column that exists, idempotently.
+do $$
+declare
+  c text;
+begin
+  foreach c in array array['confirmation_token','recovery_token','email_change_token_current','email_change_token_new','email_change','phone_change','phone_change_token','reauthentication_token'] loop
+    if exists (select 1 from information_schema.columns where table_schema = 'auth' and table_name = 'users' and column_name = c) then
+      execute format('update auth.users set %I = %L where %I is null', c, '', c);
+    end if;
+  end loop;
+end $$;

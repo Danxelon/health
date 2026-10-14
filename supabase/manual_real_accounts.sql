@@ -214,13 +214,18 @@ on conflict (user_id) do update set
   verified_at = coalesce(public.doctors.verified_at, now());
 
 -- 4. Verify — expect 1 row each ----------------------------------------------
--- Auth repair (same as 0014): manual auth.users rows carry NULL GoTrue
--- tokens, which breaks every email lookup for them. Backfill once.
-update auth.users set confirmation_token = '' where confirmation_token is null;
-update auth.users set recovery_token = '' where recovery_token is null;
-update auth.users set email_change_token_current = '' where email_change_token_current is null;
-update auth.users set email_change_token_new = '' where email_change_token_new is null;
-update auth.users set phone_change_token = '' where phone_change_token is null;
+-- Auth repair (same as 0014/0015): manual auth.users rows carry NULL GoTrue
+-- text columns, which breaks every email lookup for them. Backfill once.
+do $$
+declare
+  c text;
+begin
+  foreach c in array array['confirmation_token','recovery_token','email_change_token_current','email_change_token_new','email_change','phone_change','phone_change_token','reauthentication_token'] loop
+    if exists (select 1 from information_schema.columns where table_schema = 'auth' and table_name = 'users' and column_name = c) then
+      execute format('update auth.users set %I = %L where %I is null', c, '', c);
+    end if;
+  end loop;
+end $$;
 
 select id, full_name, blood_group, home_upazila_id,
        present_address from public.profiles
