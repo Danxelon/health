@@ -172,6 +172,9 @@ export default function Login() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [otpIssue, setOtpIssue] = useState<OtpIssue>(null);
+  // Backend failure after a CORRECT code (session/provisioning). Shown
+  // separately so a database problem never looks like a mistyped code.
+  const [provisionError, setProvisionError] = useState<string | null>(null);
   const [requested, setRequested] = useState(false);
   const [submittingOtp, setSubmittingOtp] = useState(false);
 
@@ -201,6 +204,7 @@ export default function Login() {
     if (!phoneOk) return;
     setOtp("");
     setOtpIssue(null);
+    setProvisionError(null);
     setRequested(false);
     setStep(2);
   };
@@ -212,9 +216,12 @@ export default function Login() {
     }
     if (otp !== GATE_CODE) {
       setOtpIssue("wrong");
+      setProvisionError(null);
       return;
     }
     setSubmittingOtp(true);
+    setOtpIssue(null);
+    setProvisionError(null);
     try {
       // Real account: provision (or reuse) the Supabase session for this
       // number so the citizen exists in the database, then cache locally.
@@ -224,8 +231,9 @@ export default function Login() {
       const next = new URLSearchParams(window.location.search).get("next") || "/donors";
       navigate(next, { replace: true });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "That code is not correct. Try again.";
-      setOtpIssue("wrong");
+      // The code was right — the backend call failed. Say so explicitly.
+      const message = err instanceof Error ? err.message : "Login failed. Try again.";
+      setProvisionError(message);
       console.warn("Citizen session provisioning failed:", message);
     } finally {
       setSubmittingOtp(false);
@@ -235,6 +243,7 @@ export default function Login() {
   const requestNewCode = () => {
     setOtp("");
     setOtpIssue(null);
+    setProvisionError(null);
     setRequested(true);
   };
 
@@ -502,16 +511,23 @@ export default function Login() {
                   onChange={(e) => {
                     setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
                     setOtpIssue(null);
+                    setProvisionError(null);
                     setRequested(false);
                   }}
                   placeholder="000000"
-                  aria-invalid={otpError !== null}
-                  aria-describedby={otpError ? "login-otp-error" : undefined}
+                  aria-invalid={otpError !== null || provisionError !== null}
+                  aria-describedby={otpError || provisionError ? "login-otp-error" : undefined}
                   className="tnum mt-3 w-full rounded-xl border border-line bg-surface px-4 py-3 text-center text-2xl tracking-[0.5em] text-ink outline-none transition-colors focus:border-brand"
                 />
                 {otpError && (
                   <p id="login-otp-error" role="alert" className="mt-2 text-xs text-blood-deep">
                     {otpError}
+                  </p>
+                )}
+                {provisionError && (
+                  <p role="alert" className="mt-2 text-xs text-blood-deep">
+                    {lang === "bn" ? "কোড সঠিক, কিন্তু অ্যাকাউন্ট তৈরি হয়নি: " : "Code accepted, but sign-in failed: "}
+                    {provisionError}
                   </p>
                 )}
 
