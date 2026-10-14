@@ -106,6 +106,20 @@ do $$ begin
   end if;
 end $$;
 
+-- The live DB was first created from 0001_schema, whose contact_visibility
+-- lacks 'public'. The seeds and RPCs use 'public', so add it when missing.
+-- (CREATE TYPE IF NOT EXISTS above cannot add a value to an existing type —
+-- that gap is exactly SQLSTATE 22P02 on the donors seed.)
+do $$ begin
+  if not exists (
+    select 1 from pg_enum e
+    join pg_type t on t.oid = e.enumtypid
+    where t.typname = 'contact_visibility' and e.enumlabel = 'public'
+  ) then
+    alter type public.contact_visibility add value 'public';
+  end if;
+end $$;
+
 -- =============================================================================
 -- STEP 3: REFERENCE GEOGRAPHY & SPECIALTIES
 -- =============================================================================

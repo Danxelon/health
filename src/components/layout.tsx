@@ -6,7 +6,7 @@
  * - Primary navigation with authentication guards for key features (Find Blood, Consult Doctor)
  * - Settings option strictly hidden until the citizen is logged in
  * - Quick action buttons smoothly present on scroll
- * - Integrated Login Prompt Modal for instant 1-click or mobile login
+ * - Integrated Login Prompt Modal for mobile login
  */
 
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -23,7 +23,6 @@ import {
   Settings,
   Shield,
   ShieldCheck,
-  Sparkles,
   Stethoscope,
   Sun,
   User,
@@ -196,16 +195,12 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
 /** Login Prompt Modal triggered when an unauthenticated citizen attempts an action */
 function LoginPromptModal() {
   const { t, lang } = useAppShell();
-  const { loginModalOpen, closeLoginModal, login, redirectAfterLogin } = useAuth();
+  const { loginModalOpen, closeLoginModal, redirectAfterLogin } = useAuth();
   const navigate = useNavigate();
 
   if (!loginModalOpen) return null;
 
   const targetPath = redirectAfterLogin || "/donors";
-
-  const handleDemoLogin = () => {
-    login("01711000000", "Demo User");
-  };
 
   const handlePhoneLogin = () => {
     closeLoginModal();
@@ -248,25 +243,13 @@ function LoginPromptModal() {
           </p>
 
           <div className="mt-6 w-full space-y-3">
-            {/* Quick 1-Click Demo Login */}
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              className="w-full inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-bold text-white shadow-md hover:bg-brand-deep hover:shadow-lg transition-all cursor-pointer active:scale-98"
-            >
-              <Sparkles className="h-4 w-4 fill-white" />
-              <span>
-                {lang === "bn" ? "১-ক্লিকে তাৎক্ষণিক লগ ইন (ডেমো)" : "One-Click Instant Demo Login"}
-              </span>
-            </button>
-
-            {/* Regular Phone Login */}
+            {/* Mobile-number login — provisions a real database account */}
             <button
               type="button"
               onClick={handlePhoneLogin}
-              className="w-full inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-line bg-surface px-5 text-sm font-bold text-ink hover:bg-elevated hover:border-line-strong transition-all cursor-pointer"
+              className="w-full inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-bold text-white shadow-md hover:bg-brand-deep hover:shadow-lg transition-all cursor-pointer active:scale-98"
             >
-              <Phone className="h-4 w-4 text-muted" />
+              <Phone className="h-4 w-4" />
               <span>
                 {lang === "bn" ? "মোবাইল নম্বর দিয়ে লগ ইন" : "Log in with Mobile Number"}
               </span>

@@ -1,11 +1,12 @@
 /**
  * Login — Dual-mode login interface:
  * 1. Citizen / Donor (Mobile OTP) [নাগরিক / রক্তদাতা]
- *    Keeps the fast 2-step phone number + 6-digit OTP ("123456") flow intact.
- *    Clean, friendly, masked phone number and instant 1-click demo login.
+ *    Fast 2-step phone number + 6-digit OTP ("123456") flow. After the code
+ *    is accepted a REAL Supabase session + profile row is provisioned (see
+ *    `@/api/registration.ts`), so the account exists in the database.
  * 2. Admin & Doctor Login [অ্যাডমিন ও ডাক্তার লগইন]
- *    Institutional credentials flow using Email and Password.
- *    Pre-filled quick-fill hint badges for Demo Admin and Demo Doctor.
+ *    Institutional credentials flow using Email and Password against the
+ *    live database. Quick-fill badges insert the seeded staff emails.
  *    Direct role-based routing: Admin -> /admin, Doctor -> /articles (or next).
  */
 
@@ -33,6 +34,7 @@ import {
 
 import { useAppShell } from "@/state/app-shell.tsx";
 import { useAuth } from "@/state/auth-context.tsx";
+import { ensureCitizenSession } from "@/api/registration.ts";
 import { isValidPhoneBD, maskPhone, normalisePhoneBD } from "@/domain/profile.ts";
 
 gsap.registerPlugin(useGSAP);
@@ -44,8 +46,8 @@ type Step = 1 | 2;
  *  a language switch mid-error re-renders in the new language. */
 type OtpIssue = "length" | "wrong" | null;
 
-/** The demo gate code — the register screen uses the same value. */
-const DEMO_CODE = "123456";
+/** The development gate code — the register screen uses the same value. */
+const GATE_CODE = "123456";
 
 const COPY = {
   tabCitizen: {
@@ -77,8 +79,8 @@ const COPY = {
     en: "Password",
   },
   quickFillTitle: {
-    bn: "দ্রুত টেস্ট লগইন বাটন:",
-    en: "Quick Demo Credentials:",
+    bn: "সংরক্ষিত স্টাফ অ্যাকাউন্ট:",
+    en: "Seeded staff accounts:",
   },
   demoAdmin: {
     bn: "Demo Admin",
@@ -202,22 +204,31 @@ export default function Login() {
     setStep(2);
   };
 
-  const verifyOtp = () => {
+  const verifyOtp = async () => {
     if (otp.length !== 6) {
       setOtpIssue("length");
       return;
     }
+    if (otp !== GATE_CODE) {
+      setOtpIssue("wrong");
+      return;
+    }
     setSubmittingOtp(true);
-    window.setTimeout(() => {
+    try {
+      // Real account: provision (or reuse) the Supabase session for this
+      // number so the citizen exists in the database, then cache locally.
+      await ensureCitizenSession(phone);
+      const displayName = normalisePhoneBD(phone) ?? phone;
+      login(phone || "01711000000", displayName, "citizen");
+      const next = new URLSearchParams(window.location.search).get("next") || "/donors";
+      navigate(next, { replace: true });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "That code is not correct. Try again.";
+      setOtpIssue("wrong");
+      console.warn("Citizen session provisioning failed:", message);
+    } finally {
       setSubmittingOtp(false);
-      if (otp === DEMO_CODE) {
-        login(phone || "01711000000", "Citizen User", "citizen");
-        const next = new URLSearchParams(window.location.search).get("next") || "/donors";
-        navigate(next, { replace: true });
-      } else {
-        setOtpIssue("wrong");
-      }
-    }, 500);
+    }
   };
 
   const requestNewCode = () => {
@@ -442,19 +453,8 @@ export default function Login() {
                   <ArrowRight className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
                 </button>
 
-                <div className="mt-4 pt-4 border-t border-line text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      login("01711000000", "Demo User", "citizen");
-                      const next = new URLSearchParams(window.location.search).get("next") || "/donors";
-                      navigate(next, { replace: true });
-                    }}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline cursor-pointer"
-                  >
-                    <span>✨ {lang === "bn" ? "১-ক্লিকে তাৎক্ষণিক ডেমো লগ ইন করুন" : "One-Click Instant Demo Login"}</span>
-                  </button>
-                </div>
+                {/* Every citizen signs in with the OTP code above — the
+                    account is provisioned in the database on first login. */}
               </div>
             </section>
 

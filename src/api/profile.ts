@@ -1,12 +1,15 @@
 /**
- * Profile API — the signed-in citizen's own settings.
+ * Profile API — the signed-in citizen's own settings, live database only.
  *
  * `fetchMyProfile` is the projection the Settings screen renders: contact
  * visibility, donor availability, masked PII, and a completeness score that
  * nudges the citizen toward a usable donor record. Contacts shown here are
  * already-unlocked recipients (`my_unlock_history`), never a searchable list.
+ * No synthetic profile: without a signed-in session the calls throw
+ * NOT_AUTHENTICATED instead of inventing data.
  */
 
+import { DomainError } from "@/domain/types.ts";
 import { callRpc, DEMO_MODE, hasSupabaseAuthSession } from "@/lib/supabase.ts";
 
 export type ContactVisibility = "on_accept" | "private_admin";
@@ -29,68 +32,43 @@ export interface UnlockHistoryItem {
   requester_label: string;
 }
 
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-/* -------------------------------------------------------------------------- */
-/* Demo dataset — deterministic, mutated by the setters so a later fetch       */
-/* reflects the change.                                                        */
-/* -------------------------------------------------------------------------- */
-
-const demoProfile: ProfileSummary = {
-  user_id: "demo-self",
-  display_name: "ডেমো ব্যবহারকারী",
-  blood_group: "B+",
-  phone_masked: "0171••••1234",
-  nid_last4: "1234",
-  upazila_label: "Dhanmondi, Dhaka",
-  contact_visibility: "on_accept",
-  completeness: 82,
-  donor_status: "available",
-};
-
-const demoUnlockHistory: UnlockHistoryItem[] = [
-  { id: "demo-unlock-1", unlocked_at: "2026-10-08T11:24:00+06:00", requester_label: "রাফসান জামান" },
-  { id: "demo-unlock-2", unlocked_at: "2026-10-05T16:40:00+06:00", requester_label: "অনন্যা দেব" },
-];
+async function requireSession(): Promise<void> {
+  if (DEMO_MODE) {
+    throw new DomainError({
+      code: "UNKNOWN",
+      message_en: "No backend is configured.",
+      message_bn: "কোনো ব্যাকএন্ড সংযোগ নেই।",
+    });
+  }
+  if (!(await hasSupabaseAuthSession())) {
+    throw new DomainError({
+      code: "NOT_AUTHENTICATED",
+      message_en: "Please log in to view your profile.",
+      message_bn: "প্রোফাইল দেখতে অনুগ্রহ করে লগ ইন করুন।",
+    });
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 /* Profile                                                                    */
 /* -------------------------------------------------------------------------- */
 
 export async function fetchMyProfile(): Promise<ProfileSummary> {
-  const hasSession = await hasSupabaseAuthSession();
-  if (DEMO_MODE || !hasSession) {
-    await delay(250);
-    return { ...demoProfile };
-  }
+  await requireSession();
   return callRpc<ProfileSummary>("my_profile");
 }
 
 export async function setContactVisibility(v: ContactVisibility): Promise<void> {
-  const hasSession = await hasSupabaseAuthSession();
-  if (DEMO_MODE || !hasSession) {
-    await delay(200);
-    demoProfile.contact_visibility = v;
-    return;
-  }
+  await requireSession();
   await callRpc<null>("set_contact_visibility", { p_visibility: v });
 }
 
 export async function setDonorAvailability(status: string): Promise<void> {
-  const hasSession = await hasSupabaseAuthSession();
-  if (DEMO_MODE || !hasSession) {
-    await delay(200);
-    demoProfile.donor_status = status;
-    return;
-  }
+  await requireSession();
   await callRpc<null>("set_donor_availability", { p_status: status });
 }
 
 export async function fetchUnlockHistory(): Promise<UnlockHistoryItem[]> {
-  const hasSession = await hasSupabaseAuthSession();
-  if (DEMO_MODE || !hasSession) {
-    await delay(250);
-    return [...demoUnlockHistory];
-  }
+  await requireSession();
   return callRpc<UnlockHistoryItem[]>("my_unlock_history");
 }

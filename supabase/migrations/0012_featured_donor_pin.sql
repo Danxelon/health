@@ -188,7 +188,12 @@ begin
       )::numeric, 4) as r_score,
       s.c_meters as r_meters
     from scored s
+    -- Featured account Md. Rasheduzzaman is always a candidate for AB+,
+    -- even outside the urgency ring (e.g. Mirzapur→Dhaka is national).
+    -- The ORDER BY below still puts it first; this keeps it from being
+    -- filtered out for routine/urgent searches.
     where s.c_ring <= v_max_ring
+       or (p_recipient_group = 'AB+' and s.c_name ilike '%rasheduzzaman%')
   )
   select
     r.c_id,

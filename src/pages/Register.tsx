@@ -11,6 +11,7 @@ import { ArrowLeft, ArrowRight, ShieldCheck, Smartphone } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
 import { useAuth } from "@/state/auth-context.tsx";
+import { registerCitizenProfile } from "@/api/registration.ts";
 import { acceptableDonorsFor, isRareGroup } from "@/domain/blood.ts";
 import { nidIssue, normalisePhoneBD } from "@/domain/profile.ts";
 import { DEMO_UPAZILAS, districtsOf, upazilasOf } from "@/lib/demo-data.ts";
@@ -67,16 +68,33 @@ export default function Register() {
     setOtpError(null);
   };
 
-  const verifyOtp = () => {
-    if (otp === "123456") {
-      login(phone || "01711000000", fullName || "Registered Citizen");
-      navigate("/donors", { replace: true });
-    } else {
+  const verifyOtp = async () => {
+    if (otp !== "123456") {
       setOtpError(
         lang === "bn"
           ? "কোডটি সঠিক নয়। আবার চেষ্টা করুন।"
           : "That code is not correct. Try again."
       );
+      return;
+    }
+    // Real account: session + profile row + donor row in the database.
+    // Re-runs keep the existing rows — the database is the record.
+    try {
+      await registerCitizenProfile({
+        phone: phone || "01711000000",
+        nid,
+        fullName: fullName.trim() || "Registered Citizen",
+        fullNameBn: null,
+        dateOfBirth: dob || null,
+        gender: null,
+        bloodGroup,
+        homeUpazilaId: upazila,
+        presentAddress: null,
+      });
+      login(phone || "01711000000", fullName || "Registered Citizen");
+      navigate("/donors", { replace: true });
+    } catch (err: unknown) {
+      setOtpError(err instanceof Error ? err.message : "Registration failed. Try again.");
     }
   };
 

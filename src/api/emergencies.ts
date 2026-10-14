@@ -7,8 +7,7 @@
  */
 
 import type { EmergencyFeedItem } from "@/domain/types.ts";
-import { DEMO_EMERGENCIES } from "@/lib/demo-data.ts";
-import { DEMO_MODE, requireSupabase, toDomainError } from "@/lib/supabase.ts";
+import { requireSupabase, toDomainError } from "@/lib/supabase.ts";
 
 const rank = { critical: 0, urgent: 1, routine: 2 } as const;
 const sortFeed = (a: EmergencyFeedItem, b: EmergencyFeedItem) => {
@@ -18,11 +17,7 @@ const sortFeed = (a: EmergencyFeedItem, b: EmergencyFeedItem) => {
 };
 
 export async function fetchEmergencyFeed(): Promise<EmergencyFeedItem[]> {
-  if (DEMO_MODE) {
-    await new Promise((resolve) => setTimeout(resolve, 260));
-    return [...DEMO_EMERGENCIES].sort(sortFeed);
-  }
-
+  // Live board only: open critical/urgent requests. Empty means none open.
   const client = requireSupabase();
   const { data, error } = await client.from("emergency_feed").select("*");
   if (error) throw toDomainError(error);

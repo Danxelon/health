@@ -263,7 +263,7 @@ export default function ArticleNew() {
     });
   };
 
-  // Helper quick doctor login for seamless evaluator testing
+  // Seeded doctor sign-in for the publishing portal (live database account)
   const handleQuickDemoDoctorLogin = async () => {
     await loginWithCredentials("dr.rahman@health.gov.bd", "Doctor2026!");
   };
@@ -338,12 +338,6 @@ export default function ArticleNew() {
         bodyEn: contentEn.trim() || contentBn.trim(),
         bodyBn: contentBn.trim() || undefined,
         tags: tagsWithFreeConsult,
-        authorId: user?.phone || "doctor-verified",
-        authorName: doctorNameEn,
-        authorDegrees: "MBBS, FCPS, MD",
-        specialtyEn: doctorSpecialtyEn,
-        specialtyBn: doctorSpecialtyBn,
-        bmdcRegNo: doctorBmdc,
       });
 
       setSuccessMessage(
@@ -415,15 +409,15 @@ export default function ArticleNew() {
               </span>
             </button>
 
-            {/* Quick 1-click Test Doctor Login Button */}
+            {/* Quick 1-click Seeded Doctor Login Button */}
             <button
               type="button"
               onClick={handleQuickDemoDoctorLogin}
               className="w-full sm:w-auto inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-6 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition-all"
-              title="Instant test login with Demo Doctor credentials"
+              title="Sign in with the seeded cardiologist account"
             >
               <Sparkles className="h-4 w-4 text-emerald-600" />
-              <span>{lang === "bn" ? `১-ক্লিকে টেস্ট ডাক্তার (${docProfile.nameBn})` : `Instant Demo Doctor (${docProfile.nameEn})`}</span>
+              <span>{lang === "bn" ? `১-ক্লিকে ডাক্তার লগইন (${docProfile.nameBn})` : `Doctor Login (${docProfile.nameEn})`}</span>
             </button>
           </div>
 

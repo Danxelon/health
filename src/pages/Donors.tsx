@@ -642,35 +642,47 @@ export default function Donors() {
                       </div>
 
                       <div className="mt-auto pt-3 border-t border-line space-y-2.5">
-                        {/* Contact Number Display with Quick Copy */}
+                        {/* Contact Number Display with Quick Copy — real number only */}
                         <div className="flex items-center justify-between rounded-xl bg-elevated/60 px-3 py-1.5 border border-line/60">
                           <div className="flex items-center gap-1.5 min-w-0">
                             <Phone className="h-3 w-3 text-muted shrink-0" />
                             <span className="font-mono text-xs font-bold text-ink truncate">
-                              {d.phone || "+8801712345678"}
+                              {d.phone || (lang === "bn" ? "নম্বর লুকানো" : "Number hidden")}
                             </span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleCopyPhone(d.phone || "+8801712345678")}
-                            aria-label={lang === "bn" ? "নম্বর কপি করুন" : "Copy phone number"}
-                            className="ml-2 shrink-0 inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 py-1 text-[11px] font-bold text-brand hover:underline cursor-pointer whitespace-nowrap"
-                            title={lang === "bn" ? "নম্বর কপি করুন" : "Copy number"}
-                          >
-                            {copiedPhone ? (lang === "bn" ? "কপি হয়েছে" : "Copied!") : (lang === "bn" ? "কপি" : "Copy")}
-                          </button>
+                          {d.phone && (
+                            <button
+                              type="button"
+                              onClick={() => handleCopyPhone(d.phone as string)}
+                              aria-label={lang === "bn" ? "নম্বর কপি করুন" : "Copy phone number"}
+                              className="ml-2 shrink-0 inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 py-1 text-[11px] font-bold text-brand hover:underline cursor-pointer whitespace-nowrap"
+                              title={lang === "bn" ? "নম্বর কপি করুন" : "Copy number"}
+                            >
+                              {copiedPhone ? (lang === "bn" ? "কপি হয়েছে" : "Copied!") : (lang === "bn" ? "কপি" : "Copy")}
+                            </button>
+                          )}
                         </div>
 
                         {/* Direct Call Now & Needed Right Now */}
                         <div className="grid grid-cols-2 gap-2">
-                          <a
-                            href={`tel:${d.phone || "+8801712345678"}`}
-                            className="inline-flex h-11 min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition-colors cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                            title={lang === "bn" ? "সরাসরি কল করুন" : "Direct Call"}
-                          >
-                            <PhoneCall className="h-3.5 w-3.5 fill-white shrink-0" />
-                            <span>{lang === "bn" ? "কল করুন" : "Call Now"}</span>
-                          </a>
+                          {d.phone ? (
+                            <a
+                              href={`tel:${d.phone}`}
+                              className="inline-flex h-11 min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition-colors cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                              title={lang === "bn" ? "সরাসরি কল করুন" : "Direct Call"}
+                            >
+                              <PhoneCall className="h-3.5 w-3.5 fill-white shrink-0" />
+                              <span>{lang === "bn" ? "কল করুন" : "Call Now"}</span>
+                            </a>
+                          ) : (
+                            <span
+                              className="inline-flex h-11 min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-elevated text-muted text-xs font-bold cursor-not-allowed"
+                              title={lang === "bn" ? "অনুরোধে নম্বর পাওয়া যাবে" : "Number shared on request"}
+                            >
+                              <PhoneCall className="h-3.5 w-3.5 shrink-0" />
+                              <span>{lang === "bn" ? "অনুরোধ করুন" : "Request"}</span>
+                            </span>
+                          )}
 
                           <button
                             type="button"
@@ -745,16 +757,23 @@ export default function Donors() {
                           `${selectedMapDonor.upazila_en}, ${selectedMapDonor.district_en}`}
                       </p>
                       <p className="mt-1 font-mono text-xs font-bold text-ink truncate">
-                        {selectedMapDonor.phone || "+8801712345678"}
+                        {selectedMapDonor.phone || (lang === "bn" ? "নম্বর লুকানো" : "Number hidden")}
                       </p>
                       <div className="mt-2.5 grid grid-cols-2 gap-2">
-                        <a
-                          href={`tel:${selectedMapDonor.phone || "+8801712345678"}`}
-                          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                        >
-                          <PhoneCall className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                          <span>{lang === "bn" ? "কল করুন" : "Call Now"}</span>
-                        </a>
+                        {selectedMapDonor.phone ? (
+                          <a
+                            href={`tel:${selectedMapDonor.phone}`}
+                            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                          >
+                            <PhoneCall className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            <span>{lang === "bn" ? "কল করুন" : "Call Now"}</span>
+                          </a>
+                        ) : (
+                          <span className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-elevated text-muted text-xs font-bold cursor-not-allowed">
+                            <PhoneCall className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            <span>{lang === "bn" ? "অনুরোধ করুন" : "Request"}</span>
+                          </span>
+                        )}
                         <button
                           type="button"
                           onClick={() => {
@@ -958,65 +977,77 @@ export default function Donors() {
                 </span>
                 <div className="mt-1 flex items-center justify-between gap-2">
                   <span className="text-lg sm:text-xl font-black tracking-wide text-ink font-mono">
-                    {contactModalDonor.phone || "+8801712345678"}
+                    {contactModalDonor.phone || (lang === "bn" ? "নম্বর লুকানো" : "Number hidden")}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyPhone(contactModalDonor.phone || "+8801712345678")}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1 text-xs font-bold text-ink hover:bg-elevated transition-colors cursor-pointer"
-                  >
-                    {copiedPhone ? (
-                      <>
-                        <Check className="h-3.5 w-3.5 text-emerald-600" />
-                        <span className="text-emerald-600">{lang === "bn" ? "কপি হয়েছে" : "Copied!"}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-3.5 w-3.5 text-muted" />
-                        <span>{lang === "bn" ? "কপি করুন" : "Copy"}</span>
-                      </>
-                    )}
-                  </button>
+                  {contactModalDonor.phone && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopyPhone(contactModalDonor.phone as string)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1 text-xs font-bold text-ink hover:bg-elevated transition-colors cursor-pointer"
+                    >
+                      {copiedPhone ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 text-emerald-600" />
+                          <span className="text-emerald-600">{lang === "bn" ? "কপি হয়েছে" : "Copied!"}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5 text-muted" />
+                          <span>{lang === "bn" ? "কপি করুন" : "Copy"}</span>
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
 
               {/* Call Now and Instant Actions */}
               <div className="mt-5 w-full space-y-2.5">
-                <a
-                  href={`tel:${contactModalDonor.phone || "+8801712345678"}`}
-                  className="w-full inline-flex h-13 items-center justify-center gap-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base shadow-md hover:shadow-lg transition-all active:scale-98 cursor-pointer"
-                >
-                  <PhoneCall className="h-5 w-5 fill-white" />
-                  <span>{lang === "bn" ? "এখনই কল করুন" : "Call Right Now"}</span>
-                </a>
+                {contactModalDonor.phone ? (
+                  <>
+                    <a
+                      href={`tel:${contactModalDonor.phone}`}
+                      className="w-full inline-flex h-13 items-center justify-center gap-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base shadow-md hover:shadow-lg transition-all active:scale-98 cursor-pointer"
+                    >
+                      <PhoneCall className="h-5 w-5 fill-white" />
+                      <span>{lang === "bn" ? "এখনই কল করুন" : "Call Right Now"}</span>
+                    </a>
 
-                {/* SMS & WhatsApp buttons */}
-                <div className="grid grid-cols-2 gap-2">
-                  <a
-                    href={`sms:${contactModalDonor.phone || "+8801712345678"}?body=${encodeURIComponent(
-                      lang === "bn"
-                        ? `জরুরি রক্তের প্রয়োজন: ${contactModalDonor.blood_group}। আপনি কি রক্ত দিতে পারবেন?`
-                        : `Emergency blood needed: ${contactModalDonor.blood_group}. Are you available to donate?`
-                    )}`}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-xs font-bold text-ink hover:bg-elevated transition-colors cursor-pointer"
-                  >
-                    <MessageSquare className="h-4 w-4 text-muted" />
-                    <span>{lang === "bn" ? "এসএমএস পাঠান" : "Send SMS"}</span>
-                  </a>
+                    {/* SMS & WhatsApp buttons */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <a
+                        href={`sms:${contactModalDonor.phone}?body=${encodeURIComponent(
+                          lang === "bn"
+                            ? `জরুরি রক্তের প্রয়োজন: ${contactModalDonor.blood_group}। আপনি কি রক্ত দিতে পারবেন?`
+                            : `Emergency blood needed: ${contactModalDonor.blood_group}. Are you available to donate?`
+                        )}`}
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-xs font-bold text-ink hover:bg-elevated transition-colors cursor-pointer"
+                      >
+                        <MessageSquare className="h-4 w-4 text-muted" />
+                        <span>{lang === "bn" ? "এসএমএস পাঠান" : "Send SMS"}</span>
+                      </a>
 
-                  <a
-                    href={`https://wa.me/${(contactModalDonor.phone || "+8801712345678").replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                      lang === "bn"
-                        ? `জরুরি রক্তের প্রয়োজন: ${contactModalDonor.blood_group}। আপনি কি রক্ত দিতে পারবেন?`
-                        : `Emergency blood needed: ${contactModalDonor.blood_group}. Are you available to donate?`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-xs font-bold text-ink hover:bg-elevated transition-colors cursor-pointer"
-                  >
-                    <span className="text-emerald-600 font-bold">WhatsApp</span>
-                  </a>
-                </div>
+                      <a
+                        href={`https://wa.me/${(contactModalDonor.phone as string).replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                          lang === "bn"
+                            ? `জরুরি রক্তের প্রয়োজন: ${contactModalDonor.blood_group}। আপনি কি রক্ত দিতে পারবেন?`
+                            : `Emergency blood needed: ${contactModalDonor.blood_group}. Are you available to donate?`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-xs font-bold text-ink hover:bg-elevated transition-colors cursor-pointer"
+                      >
+                        <span className="text-emerald-600 font-bold">WhatsApp</span>
+                      </a>
+                    </div>
+                  </>
+                ) : (
+                  <p className="rounded-2xl border border-dashed border-line px-4 py-3 text-xs text-muted leading-relaxed text-center">
+                    {lang === "bn"
+                      ? "নম্বরটি সুরক্ষিত। রক্তের অনুরোধ পাঠালে রক্তদাতা নম্বর শেয়ার করবেন।"
+                      : "This number is protected. Send a blood request and the donor will share it."}
+                  </p>
+                )}
               </div>
 
               {/* Alternative Request Option */}

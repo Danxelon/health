@@ -1,18 +1,19 @@
 /**
  * Featured donor pin — "Md. Rasheduzzaman" always first for AB+ searches.
  *
- * The account already exists in the database (AB+ donor). Ranking alone cannot
- * guarantee it stays first because score/ring/distance decide the order, and
- * the "Ready First" / "By Name" sorts would move it. This module is the single
- * source of truth for detecting that account and pinning it to the top while
- * leaving every other donor in their existing (sorted/ranked) order.
+ * The account lives in the live database (AB+ donor, Mirzapur Tangail).
+ * Ranking alone cannot guarantee it stays first because score/ring/distance
+ * decide the order, and the "Ready First" / "By Name" sorts would move it.
+ * This module is the single source of truth for detecting that account and
+ * pinning it to the top while leaving every other donor in their existing
+ * (sorted/ranked) order. Detection is name-based so it matches the real row
+ * (`Md. Rasheduzzaman Shobuj`) no matter which backend returned it.
  *
  * Rules:
  * - Only applies when the recipient searched for "AB+".
  * - Match is name-based (case-insensitive, dot/space tolerant) on ANY name
- *   field the card carries, plus the stable demo id, so it works whether the
- *   backend returns a full name ("Md. Rasheduzzaman") or a masked display
- *   name, and whether the row came from Supabase or the demo dataset.
+ *   field the card carries, so it works whether the backend returns a full
+ *   name or a masked display name.
  * - Never mutates the input; returns a new array.
  * - When no featured donor is present, returns the input order untouched so
  *   all sort options keep working exactly as before.
@@ -20,10 +21,13 @@
 
 import type { BloodGroup, DonorCard } from "./types.ts";
 
-/** Canonical English name of the featured account. */
+/** Canonical English name fragment of the featured account. */
 export const FEATURED_DONOR_NAME_EN = "Md. Rasheduzzaman";
 
-/** Stable demo id for the synthetic featured card (see `@/lib/demo-data.ts`). */
+/**
+ * Legacy synthetic id, kept as a fallback matcher so rows cached from older
+ * builds still pin. The live account is detected by name (see below).
+ */
 export const FEATURED_DONOR_ID = "demo-donor-rasheduzzaman";
 
 /** Recipient groups that trigger the pin. Currently only AB+. */

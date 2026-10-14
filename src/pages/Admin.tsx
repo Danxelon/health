@@ -134,540 +134,6 @@ interface AdminComplaint {
   resolutionNoteBn?: string;
 }
 
-const INITIAL_PENDING_DOCTORS: PendingDoctor[] = [
-  {
-    id: "doc-pend-1",
-    name: "Dr. Sadia Afroze Sultana",
-    nameBn: "ডা. সাদিয়া আফরোজ সুলতানা",
-    bmdc: "BMDC-A-91021",
-    specialty: "Gynecology & Obstetrics",
-    specialtyBn: "স্ত্রী ও প্রসূতি রোগ",
-    degrees: "MBBS, FCPS (Gynae & Obs)",
-    hospital: "Dhaka Medical College Hospital",
-    experience: 8,
-    dateOfBirth: "1990-03-14",
-    age: 36,
-    phone: "01723456781",
-    appliedAt: "Today, 9:30 AM",
-    appliedAtBn: "আজ, সকাল ৯:৩০",
-    status: "pending",
-  },
-  {
-    id: "doc-pend-2",
-    name: "Dr. Mohammad Tanvir Ahmed",
-    nameBn: "ডা. মোহাম্মদ তানভীর আহমেদ",
-    bmdc: "BMDC-A-92144",
-    specialty: "Cardiology",
-    specialtyBn: "কার্ডিওলজি (হৃদরোগ)",
-    degrees: "MBBS, MD (Cardiology)",
-    hospital: "NICVD, Dhaka",
-    experience: 12,
-    dateOfBirth: "1985-07-22",
-    age: 41,
-    phone: "01823456782",
-    appliedAt: "Today, 11:15 AM",
-    appliedAtBn: "আজ, সকাল ১১:১৫",
-    status: "pending",
-  },
-  {
-    id: "doc-pend-3",
-    name: "Dr. Nusrat Jahan Chowdhury",
-    nameBn: "ডা. নুসরাত জাহান চৌধুরী",
-    bmdc: "BMDC-A-93012",
-    specialty: "Pediatrics",
-    specialtyBn: "শিশু রোগ বিশেষজ্ঞ",
-    degrees: "MBBS, DCH, FCPS",
-    hospital: "Dhaka Shishu Hospital",
-    experience: 6,
-    dateOfBirth: "1992-11-05",
-    age: 34,
-    phone: "01923456783",
-    appliedAt: "Yesterday, 4:00 PM",
-    appliedAtBn: "গতকাল, বিকাল ৪:০০",
-    status: "pending",
-  },
-  {
-    id: "doc-pend-4",
-    name: "Dr. Mahmudur Rahman Khan",
-    nameBn: "ডা. মাহমুদুর রহমান খান",
-    bmdc: "BMDC-A-94185",
-    specialty: "Internal Medicine",
-    specialtyBn: "মেডিসিন বিশেষজ্ঞ",
-    degrees: "MBBS, FCPS (Medicine)",
-    hospital: "Sir Salimullah Medical College",
-    experience: 10,
-    dateOfBirth: "1987-05-18",
-    age: 39,
-    phone: "01623456784",
-    appliedAt: "Yesterday, 6:20 PM",
-    appliedAtBn: "গতকাল, সন্ধ্যা ৬:২০",
-    status: "pending",
-  },
-  {
-    id: "doc-pend-5",
-    name: "Dr. Rehana Parvin Sultana",
-    nameBn: "ডা. রেহানা পারভীন সুলতানা",
-    bmdc: "BMDC-A-95301",
-    specialty: "Orthopedics",
-    specialtyBn: "অর্থোপেডিক সার্জারি",
-    degrees: "MBBS, MS (Orthopedics)",
-    hospital: "NITOR (Pongu Hospital), Dhaka",
-    experience: 14,
-    dateOfBirth: "1983-09-30",
-    age: 43,
-    phone: "01712345671",
-    appliedAt: "2 days ago",
-    appliedAtBn: "২ দিন আগে",
-    status: "pending",
-  },
-  {
-    id: "doc-pend-6",
-    name: "Dr. Shahriar Kabir Ahmed",
-    nameBn: "ডা. শাহরিয়ার কবির আহমেদ",
-    bmdc: "BMDC-A-96420",
-    specialty: "Neurology",
-    specialtyBn: "নিউরোমেডিসিন",
-    degrees: "MBBS, MD (Neurology)",
-    hospital: "NINS, Agargaon, Dhaka",
-    experience: 9,
-    dateOfBirth: "1988-02-12",
-    age: 38,
-    phone: "01812345672",
-    appliedAt: "2 days ago",
-    appliedAtBn: "২ দিন আগে",
-    status: "pending",
-  },
-  {
-    id: "doc-pend-7",
-    name: "Dr. Syeda Farzana Yasmin",
-    nameBn: "ডা. সৈয়দা ফারজানা ইয়াসমিন",
-    bmdc: "BMDC-A-97155",
-    specialty: "Dermatology",
-    specialtyBn: "চর্ম ও যৌন রোগ",
-    degrees: "MBBS, DDV, FCPS",
-    hospital: "BSMMU, Shahbag, Dhaka",
-    experience: 7,
-    dateOfBirth: "1991-08-19",
-    age: 35,
-    phone: "01912345673",
-    appliedAt: "3 days ago",
-    appliedAtBn: "৩ দিন আগে",
-    status: "pending",
-  },
-  {
-    id: "doc-pend-8",
-    name: "Dr. Mohammad Tariqul Islam",
-    nameBn: "ডা. মোহাম্মদ তারিকুল ইসলাম",
-    bmdc: "BMDC-A-98234",
-    specialty: "General Surgery",
-    specialtyBn: "জেনারেল সার্জারি",
-    degrees: "MBBS, FCPS (Surgery)",
-    hospital: "Chittagong Medical College Hospital",
-    experience: 15,
-    dateOfBirth: "1980-04-25",
-    age: 46,
-    phone: "01612345674",
-    appliedAt: "3 days ago",
-    appliedAtBn: "৩ দিন আগে",
-    status: "pending",
-  },
-  {
-    id: "doc-pend-9",
-    name: "Dr. Mehedi Hasan Khan",
-    nameBn: "ডা. মেহেদী হাসান খান",
-    bmdc: "BMDC-A-89412",
-    specialty: "Nephrology",
-    specialtyBn: "কিডনি রোগ বিশেষজ্ঞ",
-    degrees: "MBBS, MD (Nephrology)",
-    hospital: "National Institute of Kidney Diseases",
-    experience: 11,
-    dateOfBirth: "1986-12-08",
-    age: 40,
-    phone: "01734567891",
-    appliedAt: "4 days ago",
-    appliedAtBn: "৪ দিন আগে",
-    status: "pending",
-  },
-  {
-    id: "doc-pend-10",
-    name: "Dr. Sharmin Sultana Ritu",
-    nameBn: "ডা. শারমিন সুলতানা ঋতু",
-    bmdc: "BMDC-A-90188",
-    specialty: "Ophthalmology",
-    specialtyBn: "চক্ষু বিশেষজ্ঞ",
-    degrees: "MBBS, FCPS (Ophthalmology)",
-    hospital: "National Institute of Ophthalmology",
-    experience: 8,
-    dateOfBirth: "1989-06-15",
-    age: 37,
-    phone: "01834567892",
-    appliedAt: "4 days ago",
-    appliedAtBn: "৪ দিন আগে",
-    status: "pending",
-  },
-  {
-    id: "doc-pend-11",
-    name: "Dr. Kazi Moniruzzaman Khan",
-    nameBn: "ডা. কাজী মনিরুজ্জামান খান",
-    bmdc: "BMDC-A-92841",
-    specialty: "ENT & Head Neck Surgery",
-    specialtyBn: "নাক, কান ও গলা বিশেষজ্ঞ",
-    degrees: "MBBS, DLO, MS (ENT)",
-    hospital: "Shaheed Suhrawardy Medical College",
-    experience: 13,
-    dateOfBirth: "1984-10-03",
-    age: 42,
-    phone: "01934567893",
-    appliedAt: "5 days ago",
-    appliedAtBn: "৫ দিন আগে",
-    status: "pending",
-  },
-  {
-    id: "doc-pend-12",
-    name: "Dr. Anika Tabassum Nipa",
-    nameBn: "ডা. আনিকা তাবাসসুম নিপা",
-    bmdc: "BMDC-A-94762",
-    specialty: "Hematology",
-    specialtyBn: "রক্ত রোগ ও থ্যালাসেমিয়া",
-    degrees: "MBBS, FCPS (Hematology)",
-    hospital: "Dhaka Medical College Hospital",
-    experience: 5,
-    dateOfBirth: "1993-01-27",
-    age: 33,
-    phone: "01634567894",
-    appliedAt: "5 days ago",
-    appliedAtBn: "৫ দিন আগে",
-    status: "pending",
-  },
-];
-
-const INITIAL_VERIFIED_DOCTORS: PendingDoctor[] = [
-  {
-    id: "doc-ver-1",
-    name: "Dr. Mohammad Azizur Rahman",
-    nameBn: "ডা. মোহাম্মদ আজিজুর রহমান",
-    bmdc: "BMDC-A-88101",
-    specialty: "Cardiology",
-    specialtyBn: "কার্ডিওলজি (হৃদরোগ)",
-    degrees: "MBBS, FCPS (Cardiology), FACC",
-    hospital: "National Heart Foundation, Dhaka",
-    experience: 18,
-    dateOfBirth: "1975-03-10",
-    age: 51,
-    phone: "01711990001",
-    appliedAt: "Verified: Jan 15, 2026",
-    appliedAtBn: "যাচাইকৃত: ১৫ জানুয়ারি ২০২৬",
-    status: "verified",
-  },
-  {
-    id: "doc-ver-2",
-    name: "Dr. Fatima Begum Chowdhury",
-    nameBn: "ডা. ফাতিমা বেগম চৌধুরী",
-    bmdc: "BMDC-A-88102",
-    specialty: "Pediatrics",
-    specialtyBn: "শিশু রোগ বিশেষজ্ঞ",
-    degrees: "MBBS, MD (Pediatrics), FCPS",
-    hospital: "Dhaka Shishu Hospital",
-    experience: 14,
-    dateOfBirth: "1982-08-14",
-    age: 44,
-    phone: "01711990002",
-    appliedAt: "Verified: Jan 20, 2026",
-    appliedAtBn: "যাচাইকৃত: ২০ জানুয়ারি ২০২৬",
-    status: "verified",
-  },
-  {
-    id: "doc-ver-3",
-    name: "Dr. Mohammad Anwar Hossain",
-    nameBn: "ডা. মোহাম্মদ আনোয়ার হোসেন",
-    bmdc: "BMDC-A-88103",
-    specialty: "Internal Medicine & Dengue",
-    specialtyBn: "মেডিসিন ও ডেঙ্গু বিশেষজ্ঞ",
-    degrees: "MBBS, FCPS (Internal Medicine)",
-    hospital: "Kurmitola General Hospital",
-    experience: 16,
-    dateOfBirth: "1979-11-20",
-    age: 47,
-    phone: "01711990003",
-    appliedAt: "Verified: Feb 1, 2026",
-    appliedAtBn: "যাচাইকৃত: ১ ফেব্রুয়ারি ২০২৬",
-    status: "verified",
-  },
-  {
-    id: "doc-ver-4",
-    name: "Dr. Syeda Taslima Akter",
-    nameBn: "ডা. সৈয়দা তাসলিমা আক্তার",
-    bmdc: "BMDC-A-88104",
-    specialty: "Gynecology & Obstetrics",
-    specialtyBn: "স্ত্রী ও প্রসূতি রোগ বিশেষজ্ঞ",
-    degrees: "MBBS, MS (Gynae & Obs), MRCOG",
-    hospital: "Bangabandhu Sheikh Mujib Medical University",
-    experience: 12,
-    dateOfBirth: "1985-04-05",
-    age: 41,
-    phone: "01711990004",
-    appliedAt: "Verified: Feb 10, 2026",
-    appliedAtBn: "যাচাইকৃত: ১০ ফেব্রুয়ারি ২০২৬",
-    status: "verified",
-  },
-  {
-    id: "doc-ver-5",
-    name: "Dr. Mohammad Kamal Uddin",
-    nameBn: "ডা. মোহাম্মদ কামাল উদ্দিন",
-    bmdc: "BMDC-A-88105",
-    specialty: "Hematology & Blood Disorders",
-    specialtyBn: "হেমাটোলজি ও রক্ত রোগ",
-    degrees: "MBBS, FCPS (Hematology), MPhil",
-    hospital: "Dhaka Medical College Hospital",
-    experience: 20,
-    dateOfBirth: "1973-09-17",
-    age: 53,
-    phone: "01711990005",
-    appliedAt: "Verified: Feb 18, 2026",
-    appliedAtBn: "যাচাইকৃত: ১৮ ফেব্রুয়ারি ২০২৬",
-    status: "verified",
-  },
-  {
-    id: "doc-ver-6",
-    name: "Dr. Mohammad Rashedul Islam",
-    nameBn: "ডা. মোহাম্মদ রাশেদুল ইসলাম",
-    bmdc: "BMDC-A-88106",
-    specialty: "Endocrinology & Diabetes",
-    specialtyBn: "ডায়াবেটিস ও হরমোন বিশেষজ্ঞ",
-    degrees: "MBBS, MD (Endocrinology)",
-    hospital: "BIRDEM General Hospital",
-    experience: 15,
-    dateOfBirth: "1981-06-29",
-    age: 45,
-    phone: "01711990006",
-    appliedAt: "Verified: Mar 1, 2026",
-    appliedAtBn: "যাচাইকৃত: ১ মার্চ ২০২৬",
-    status: "verified",
-  },
-];
-
-const INITIAL_HEALTH_UPDATES: AdminHealthUpdate[] = [
-  {
-    id: "upd-1",
-    title: "National Dengue Call-to-Action 2026",
-    titleBn: "জাতীয় ডেঙ্গু প্রতিরোধ ও বিশেষ সতর্কতা ২০২৬",
-    body: "All 64 district hospitals instructed to maintain 24/7 dedicated dengue corners. Platelet stocks and emergency NS1 testing are prioritized.",
-    bodyBn: "সকল জেলা সদর হাসপাতালে ২৪/৭ ডেঙ্গু কর্নার সচল রাখতে স্বাস্থ্য অধিদপ্তরের বিশেষ নির্দেশনা। প্লাটিলেট মজুদ ও এনএস১ পরীক্ষা জোরদার করা হয়েছে।",
-    kind: "alert",
-    source: "DGHS",
-    effectiveFrom: "Active Today",
-    effectiveFromBn: "সক্রিয় (আজ)",
-    expiresAt: "2026-11-30",
-  },
-  {
-    id: "upd-2",
-    title: "IEDCR Nipah Virus Precautionary Guidelines",
-    titleBn: "আইইডিসিআর নিপাহ ভাইরাস প্রতিরোধ ও সুরক্ষা নির্দেশিকা",
-    body: "Strict advisory against consuming raw date palm sap or partially eaten fruits. Report suspected fever and encephalitis immediately.",
-    bodyBn: "কাঁচা খেজুরের রস পান বা বাদুড়ে খাওয়া ফল খাওয়া থেকে সম্পূর্ণ বিরত থাকুন। জ্বর ও স্নায়বিক লক্ষণ দেখা দিলে দ্রুত নিকটস্থ হাসপাতালে যোগাযোগ করুন।",
-    kind: "alert",
-    source: "IEDCR",
-    effectiveFrom: "Active This Week",
-    effectiveFromBn: "সক্রিয় (এই সপ্তাহ)",
-    expiresAt: "2026-12-15",
-  },
-  {
-    id: "upd-3",
-    title: "Nationwide Routine EPI Vaccination Drive",
-    titleBn: "সারাদেশে সম্প্রসারিত টিকাদান কর্মসূচি (EPI) জোরদারকরণ",
-    body: "Routine immunisation sessions resume across all 495 upazilas. Zero dose tracking active for infants and pregnant mothers.",
-    bodyBn: "সকল উপজেলা স্বাস্থ্য কমপ্লেক্স এবং ইউনিয়ন স্বাস্থ্যকেন্দ্রে নিয়মিত ইপিআই টিকা প্রদান কার্যক্রম সম্পূর্ণ স্বাভাবিক রয়েছে।",
-    kind: "campaign",
-    source: "EPI",
-    effectiveFrom: "Ongoing",
-    effectiveFromBn: "চলমান",
-    expiresAt: "2026-12-31",
-  },
-  {
-    id: "upd-4",
-    title: "Severe Heatwave & Hydration Advisory",
-    titleBn: "তীব্র তাপদাহে স্বাস্থ্যঝুঁকি ও পানিশূন্যতা রোধে সতর্কতা",
-    body: "Outdoor workers and children should hydrate hourly and avoid midday sun from 12 PM to 3:30 PM. Heat stroke emergency lines active.",
-    bodyBn: "খোলা স্থানে কর্মরত শ্রমিক ও শিশুদের পর্যাপ্ত খাবার পানি ও স্যালাইন পানের পরামর্শ। দুপুর ১২টা থেকে ৩:৩০টা পর্যন্ত কড়া রোদ এড়িয়ে চলুন।",
-    kind: "notice",
-    source: "BMD",
-    effectiveFrom: "Active",
-    effectiveFromBn: "সক্রিয়",
-    expiresAt: "2026-10-31",
-  },
-  {
-    id: "upd-5",
-    title: "Safe Blood Transfusion & Thalassaemia Screening",
-    titleBn: "নিরাপদ রক্ত সঞ্চালন ও থ্যালাসেমিয়া সচেতনতা কর্মসূচি",
-    body: "DGHS announces free pre-marital screening and blood safety audits at all approved divisional blood transfusion centres.",
-    bodyBn: "সকল বিভাগীয় ব্লাড ব্যাংকে বাধ্যতামূলক ৫টি স্ক্রিনিং পরীক্ষা নিশ্চিতকরণ এবং বিবাহপূর্ব থ্যালাসেমিয়া স্ক্রিনিং কার্যক্রম শুরু।",
-    kind: "campaign",
-    source: "DGHS",
-    effectiveFrom: "Active",
-    effectiveFromBn: "সক্রিয়",
-    expiresAt: "2026-12-31",
-  },
-];
-
-const INITIAL_ARTICLES: AdminArticle[] = [
-  {
-    id: "art-1",
-    title: "7 Dengue Warning Signs You Must Not Ignore",
-    titleBn: "ডেঙ্গুর ৭টি বিপদ চিহ্ন যা কখনোই অবহেলা করা যাবে না",
-    excerpt: "Most dengue cases recover with fluids and rest. These are the critical clinical warning signs requiring immediate emergency hospitalisation.",
-    excerptBn: "বেশিরভাগ ডেঙ্গু রোগী সঠিক তরল ও বিশ্রামে সুস্থ হন। তবে এই জটিল লক্ষণগুলো দেখা দিলে অবিলম্বে জরুরি হাসপাতালে ভর্তি হতে হবে।",
-    doctorName: "Dr. Mohammad Anwar Hossain",
-    doctorNameBn: "ডা. মোহাম্মদ আনোয়ার হোসেন",
-    bmdc: "BMDC-A-88103",
-    specialty: "Internal Medicine & Dengue",
-    specialtyBn: "মেডিসিন ও ডেঙ্গু বিশেষজ্ঞ",
-    publishedAt: "Yesterday",
-    publishedAtBn: "গতকাল",
-    views: 4320,
-    status: "published",
-  },
-  {
-    id: "art-2",
-    title: "Living with Thalassaemia: Why Regular Transfusion Matters",
-    titleBn: "থ্যালাসেমিয়া নিয়ে বেঁচে থাকা: নিয়মিত রক্ত সঞ্চালন কেন জরুরি",
-    excerpt: "For patients with thalassaemia major, scheduled blood transfusions and timely iron chelation therapy prevent multi-organ failure.",
-    excerptBn: "থ্যালাসেমিয়া আক্রান্ত রোগীদের জন্য নিয়মমাফিক রক্ত সঞ্চালন এবং সময়মতো আয়রন চিলেশন থেরাপি অঙ্গ-প্রত্যঙ্গের দীর্ঘমেয়াদি ক্ষতি রোধ করে।",
-    doctorName: "Dr. Mohammad Kamal Uddin",
-    doctorNameBn: "ডা. মোহাম্মদ কামাল উদ্দিন",
-    bmdc: "BMDC-A-88105",
-    specialty: "Hematology & Blood",
-    specialtyBn: "হেমাটোলজি ও রক্ত রোগ",
-    publishedAt: "3 days ago",
-    publishedAtBn: "৩ দিন আগে",
-    views: 2980,
-    status: "published",
-  },
-  {
-    id: "art-3",
-    title: "High Blood Pressure: The Quiet Condition",
-    titleBn: "উচ্চ রক্তচাপ: নীরব ঘাতক ও প্রতিরোধে করণীয়",
-    excerpt: "Hypertension rarely exhibits early symptoms until vital organs suffer. Practical guidelines on daily BP tracking, dietary sodium, and medication.",
-    excerptBn: "উচ্চ রক্তচাপ প্রাথমিক অবস্থায় লক্ষণহীন থাকে। রক্তচাপের সঠিক পরিমাপ, খাদ্যতালিকায় লবণ নিয়ন্ত্রণ এবং চিকিৎসকের পরামর্শে ওষুধের ভূমিকা।",
-    doctorName: "Dr. Mohammad Azizur Rahman",
-    doctorNameBn: "ডা. মোহাম্মদ আজিজুর রহমান",
-    bmdc: "BMDC-A-88101",
-    specialty: "Cardiology",
-    specialtyBn: "কার্ডিওলজি (হৃদরোগ)",
-    publishedAt: "5 days ago",
-    publishedAtBn: "৫ দিন আগে",
-    views: 5120,
-    status: "published",
-  },
-  {
-    id: "art-4",
-    title: "A Parent's Guide to a Child's Fever",
-    titleBn: "শিশুর জ্বর: বাবা-মায়ের জন্য প্রয়োজনীয় চিকিৎসা নির্দেশিকা",
-    excerpt: "When a child's elevated temperature is a normal viral immune defense, and red-flag symptoms that necessitate immediate paediatric evaluation.",
-    excerptBn: "কখন শিশুর জ্বর সাধারণ ভাইরাস সংক্রমণ প্রতিরোধে স্বাভাবিক প্রতিক্রিয়া, আর কোন বিপদ চিহ্নে তাৎক্ষণিক শিশু বিশেষজ্ঞের পরামর্শ নিতে হবে।",
-    doctorName: "Dr. Fatima Begum Chowdhury",
-    doctorNameBn: "ডা. ফাতিমা বেগম চৌধুরী",
-    bmdc: "BMDC-A-88102",
-    specialty: "Pediatrics",
-    specialtyBn: "শিশু রোগ বিশেষজ্ঞ",
-    publishedAt: "1 week ago",
-    publishedAtBn: "১ সপ্তাহ আগে",
-    views: 3840,
-    status: "published",
-  },
-  {
-    id: "art-5",
-    title: "Emergency Antidotes in Snake Bites: What to Do in First Hour",
-    titleBn: "সাপের কামড়ে জরুরি করণীয়: প্রথম এক ঘণ্টার গোল্ডেন টাইম",
-    excerpt: "Golden hour protocols for suspected venomous snakebites: immobilization techniques, what harmful traditional methods to avoid, and antivenom.",
-    excerptBn: "বিষধর সাপের কামড়ে প্রথম এক ঘণ্টার জরুরি প্রটোকল: আক্রান্ত অঙ্গ স্থির রাখা, প্রচলিত ভুল চিকিৎসা এড়িয়ে নিকটস্থ হাসপাতালে অ্যান্টিভেনম গ্রহণ।",
-    doctorName: "Dr. Mohammad Anwar Hossain",
-    doctorNameBn: "ডা. মোহাম্মদ আনোয়ার হোসেন",
-    bmdc: "BMDC-A-88103",
-    specialty: "Internal Medicine",
-    specialtyBn: "মেডিসিন বিশেষজ্ঞ",
-    publishedAt: "2 weeks ago",
-    publishedAtBn: "২ সপ্তাহ আগে",
-    views: 6710,
-    status: "published",
-  },
-  {
-    id: "art-6",
-    title: "Danger Signs in Pregnancy: When to Rush to Hospital",
-    titleBn: "গর্ভাবস্থায় মারাত্মক বিপদ চিহ্ন: কখন তাৎক্ষণিক হাসপাতালে যাবেন",
-    excerpt: "Critical obstetric emergencies including sudden bleeding, persistent headaches, blurred vision, and high blood pressure during pregnancy.",
-    excerptBn: "গর্ভাবস্থায় রক্তক্ষরণ, তীব্র মাথাব্যথা, ঝাপসা দৃষ্টি ও এক্লাম্পশিয়া সহ প্রধান ৫টি বিপদ চিহ্ন এবং মা ও শিশুর জীবন রক্ষায় জরুরি করণীয়।",
-    doctorName: "Dr. Syeda Taslima Akter",
-    doctorNameBn: "ডা. সৈয়দা তাসলিমা আক্তার",
-    bmdc: "BMDC-A-88104",
-    specialty: "Gynecology & Obstetrics",
-    specialtyBn: "স্ত্রী ও প্রসূতি রোগ বিশেষজ্ঞ",
-    publishedAt: "2 weeks ago",
-    publishedAtBn: "২ সপ্তাহ আগে",
-    views: 4590,
-    status: "published",
-  },
-];
-
-const INITIAL_COMPLAINTS: AdminComplaint[] = [
-  {
-    id: "cmp-1",
-    ticketNo: "JR-2026-0041",
-    subject: "False donor contact reported in Mirpur area",
-    subjectBn: "মিরপুর এলাকায় ভুয়া রক্তদাতা নম্বরের রিপোর্ট",
-    targetType: "donor",
-    targetName: "Donor Profile #D-842",
-    severity: 2,
-    status: "in_review",
-    slaClock: "2h 40m remaining",
-    slaClockBn: "২ ঘণ্টা ৪০ মিনিট বাকি",
-    slaClockEn: "2h 40m remaining",
-    slaHours: 72,
-    submittedBy: "User 01711***201",
-    submittedAt: "1 day ago",
-    submittedAtBn: "১ দিন আগে",
-    description: "Donor answered phone unprofessionally and demanded financial compensation in exchange for blood donation.",
-    descriptionBn: "রক্তদাতা ফোন রিসিভ করে অসৌজন্যমূলক আচরণ করেন এবং রক্তের বিনিময়ে আর্থিক সুবিধা দাবি করেন।",
-  },
-  {
-    id: "cmp-2",
-    ticketNo: "JR-2026-0042",
-    subject: "Delayed response for emergency A- blood request",
-    subjectBn: "জরুরি এ নেগেটিভ (A-) রক্তের আবেদনে সাড়া দিতে বিলম্ব",
-    targetType: "blood_bank",
-    targetName: "Regional Blood Center",
-    severity: 1,
-    status: "open",
-    slaClock: "45m remaining (Critical)",
-    slaClockBn: "৪৫ মিনিট বাকি (জরুরি)",
-    slaClockEn: "45m remaining (Critical)",
-    slaHours: 24,
-    submittedBy: "User 01823***411",
-    submittedAt: "23 hours ago",
-    submittedAtBn: "২৩ ঘণ্টা আগে",
-    description: "Due to delay in emergency blood matching notification for ICU patient, alternative arrangements had to be made.",
-    descriptionBn: "আইসিইউতে ভর্তি রোগীর জন্য রক্তের জরুরি ম্যাচিং নোটিফিকেশন পেতে দেরি হওয়ায় বিকল্প ব্যবস্থা করতে হয়েছে।",
-  },
-  {
-    id: "cmp-3",
-    ticketNo: "JR-2026-0043",
-    subject: "Chamber schedule discrepancy at district hospital",
-    subjectBn: "জেলা হাসপাতালের টেলিমেডিসিন চেম্বার সময়সূচি অমিল",
-    targetType: "doctor",
-    targetName: "Telemedicine Queue #T-104",
-    severity: 3,
-    status: "open",
-    slaClock: "6h 15m remaining",
-    slaClockBn: "৬ ঘণ্টা ১৫ মিনিট বাকি",
-    slaClockEn: "6h 15m remaining",
-    slaHours: 168,
-    submittedBy: "User 01934***812",
-    submittedAt: "2 days ago",
-    submittedAtBn: "২ দিন আগে",
-    description: "Online telemedicine consultation appointment did not start on schedule and got disconnected after waiting 30 minutes.",
-    descriptionBn: "অনলাইন কনসালটেশন অ্যাপয়েন্টমেন্ট নির্দিষ্ট সময়ে শুরু হয়নি এবং ৩০ মিনিট অপেক্ষার পর সংযোগ বিচ্ছিন্ন হয়।",
-  },
-];
-
 /** Clean and strip any bilingual slashed text (e.g. 'বাংলা / English') respecting preferred language */
 function cleanSlashText(val: string | undefined | null, preferLang: "bn" | "en"): string {
   if (!val) return "";
@@ -703,13 +169,13 @@ export default function Admin() {
   // Tab 1 Sub-view
   const [doctorView, setDoctorView] = useState<"pending" | "verified" | "rejected">("pending");
 
-  // Reactive Data Stores
-  const [pendingDoctors, setPendingDoctors] = useState<PendingDoctor[]>(INITIAL_PENDING_DOCTORS);
-  const [verifiedDoctors, setVerifiedDoctors] = useState<PendingDoctor[]>(INITIAL_VERIFIED_DOCTORS);
-  const [updates, setUpdates] = useState<AdminHealthUpdate[]>(INITIAL_HEALTH_UPDATES);
-  const [articles, setArticles] = useState<AdminArticle[]>(INITIAL_ARTICLES);
-  const [complaints, setComplaints] = useState<AdminComplaint[]>(INITIAL_COMPLAINTS);
-  const [dataSource, setDataSource] = useState<"demo" | "db">("demo");
+  // Reactive Data Stores — live database rows only. Empty means the
+  // database has none; synthetic stand-ins are never shown.
+  const [pendingDoctors, setPendingDoctors] = useState<PendingDoctor[]>([]);
+  const [verifiedDoctors, setVerifiedDoctors] = useState<PendingDoctor[]>([]);
+  const [updates, setUpdates] = useState<AdminHealthUpdate[]>([]);
+  const [articles, setArticles] = useState<AdminArticle[]>([]);
+  const [complaints, setComplaints] = useState<AdminComplaint[]>([]);
   const [dbLoading, setDbLoading] = useState(false);
 
   // Search filter
@@ -738,7 +204,7 @@ export default function Admin() {
   // Permission Guard
   const isAdmin = isLoggedIn && user?.role === "admin";
 
-  // Live data: replace demo stores with DB rows when available (silent fallback to demo).
+  // Live data: the database is the only source. Empty results stay empty.
   useEffect(() => {
     if (!isAdmin) return;
     let cancelled = false;
@@ -753,45 +219,22 @@ export default function Admin() {
             fetchAdminComplaints(),
           ]);
         if (cancelled) return;
-        let usedDb = false;
         if (doctorsRes.status === "fulfilled" && doctorsRes.value) {
           const { pending, verified } = doctorsRes.value;
-          if (Array.isArray(pending) && pending.length > 0) {
-            setPendingDoctors(pending);
-            usedDb = true;
-          }
-          if (Array.isArray(verified) && verified.length > 0) {
-            setVerifiedDoctors(verified);
-            usedDb = true;
-          }
+          if (Array.isArray(pending)) setPendingDoctors(pending);
+          if (Array.isArray(verified)) setVerifiedDoctors(verified);
         }
-        if (
-          updatesRes.status === "fulfilled" &&
-          Array.isArray(updatesRes.value) &&
-          updatesRes.value.length > 0
-        ) {
+        if (updatesRes.status === "fulfilled" && Array.isArray(updatesRes.value)) {
           setUpdates(updatesRes.value);
-          usedDb = true;
         }
-        if (
-          articlesRes.status === "fulfilled" &&
-          Array.isArray(articlesRes.value) &&
-          articlesRes.value.length > 0
-        ) {
+        if (articlesRes.status === "fulfilled" && Array.isArray(articlesRes.value)) {
           setArticles(articlesRes.value);
-          usedDb = true;
         }
-        if (
-          complaintsRes.status === "fulfilled" &&
-          Array.isArray(complaintsRes.value) &&
-          complaintsRes.value.length > 0
-        ) {
+        if (complaintsRes.status === "fulfilled" && Array.isArray(complaintsRes.value)) {
           setComplaints(complaintsRes.value);
-          usedDb = true;
         }
-        if (usedDb) setDataSource("db");
       } catch (err) {
-        console.warn("[Admin] live data unavailable, keeping demo data:", err);
+        console.warn("[Admin] live data unavailable:", err);
       } finally {
         if (!cancelled) setDbLoading(false);
       }
@@ -1023,7 +466,7 @@ export default function Admin() {
 
   // Dynamic Counts for Stat Cards
   const pendingCount = pendingDoctors.filter((d) => d.status === "pending").length;
-  const verifiedCount = 60 + (verifiedDoctors.length - INITIAL_VERIFIED_DOCTORS.length);
+  const verifiedCount = verifiedDoctors.length;
   const activeBulletinsCount = updates.length;
   const openComplaintsCount = complaints.filter((c) => c.status !== "resolved").length;
 
@@ -1109,16 +552,12 @@ export default function Admin() {
                 className={
                   dbLoading
                     ? "rounded-full border border-line bg-elevated px-2.5 py-1 text-[11px] font-bold text-muted"
-                    : dataSource === "db"
-                      ? "rounded-full border border-emerald-300/50 bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
-                      : "rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-300"
+                    : "rounded-full border border-emerald-300/50 bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
                 }
               >
                 {dbLoading
                   ? l("লাইভ ডেটা লোড হচ্ছে…", "Loading live data…")
-                  : dataSource === "db"
-                    ? l("লাইভ ডিবি", "Live DB")
-                    : l("ডেমো ডেটা", "Demo data")}
+                  : l("লাইভ ডিবি", "Live DB")}
               </span>
               <div className="rounded-xl border border-line bg-elevated px-3 py-1.5 text-right">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-ink justify-end">

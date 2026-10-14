@@ -385,53 +385,6 @@ function makeDonor(index: number): DonorCard & {
   };
 }
 
-export const FEATURED_RASHEDUZZAMAN_DONOR: DonorCard & {
-  _raw_name: string;
-  _raw_name_bn: string;
-  _phone: string;
-  _lat: number;
-  _lng: number;
-  full_name: string;
-  full_name_bn: string;
-  display_name_bn: string;
-  date_of_birth: string;
-  age: number;
-} = {
-  donor_id: "demo-donor-rasheduzzaman",
-  display_name: "Md. Rasheduzzaman",
-  display_name_bn: "মোঃ রাশেদুজ্জামান",
-  full_name: "Md. Rasheduzzaman",
-  full_name_bn: "মোঃ রাশেদুজ্জামান",
-  date_of_birth: "1994-06-15",
-  age: 32,
-  blood_group: "AB+",
-  blood_group_verified: true,
-  distance_band: "1_3km",
-  distance_km: 1.2,
-  upazila_en: "Dhanmondi",
-  upazila_bn: "ধানমন্ডি",
-  district_en: "Dhaka",
-  district_bn: "ঢাকা",
-  division_en: "Dhaka",
-  division_bn: "ঢাকা",
-  address_en: "House 12, Road 5, Dhanmondi, Dhaka",
-  address_bn: "বাসা ১২, রোড ৫, ধানমন্ডি, ঢাকা",
-  lat: 23.7465,
-  lng: 90.3742,
-  ring: 0,
-  available_now: true,
-  can_give_now: true,
-  soft_warnings: [],
-  last_donation_band: "long_ago",
-  score: 0.95,
-  contact_mode: "on_unlock",
-  _raw_name: "Md. Rasheduzzaman",
-  _raw_name_bn: "মোঃ রাশেদুজ্জামান",
-  _phone: "+8801798765432",
-  _lat: 23.7465,
-  _lng: 90.3742,
-};
-
 export const DEMO_DONORS: readonly (DonorCard & {
   _raw_name: string;
   _raw_name_bn: string;
@@ -443,7 +396,7 @@ export const DEMO_DONORS: readonly (DonorCard & {
   display_name_bn: string;
   date_of_birth: string;
   age: number;
-})[] = [FEATURED_RASHEDUZZAMAN_DONOR, ...Array.from({ length: 96 }, (_, i) => makeDonor(i))];
+})[] = Array.from({ length: 96 }, (_, i) => makeDonor(i));
 
 /* -------------------------------------------------------------------------- */
 /* Emergency requests near the user                                            */

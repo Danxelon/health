@@ -7,8 +7,7 @@
  */
 
 import type { DoctorCard } from "@/domain/types.ts";
-import { DEMO_DOCTORS } from "@/lib/demo-data.ts";
-import { DEMO_MODE, requireSupabase, toDomainError } from "@/lib/supabase.ts";
+import { requireSupabase, toDomainError } from "@/lib/supabase.ts";
 
 export interface DoctorFilters {
   specialtySlug?: string | null;
@@ -27,20 +26,8 @@ const specialtySorter = (a: DoctorCard, b: DoctorCard): number => {
 };
 
 export async function fetchDoctors(filters: DoctorFilters = {}): Promise<DoctorCard[]> {
-  if (DEMO_MODE) {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const list = DEMO_DOCTORS.map((d) => ({ ...d, consult_fee: 0 })).filter((d) => {
-      if (filters.specialtySlug && d.specialty_slug !== filters.specialtySlug) return false;
-      if (filters.specialty_id !== undefined && filters.specialty_id !== null && d.specialty_id !== filters.specialty_id) return false;
-      if (filters.district_en && d.district_en !== filters.district_en) return false;
-      if (filters.freeOnly && (d.consult_fee ?? 0) > 0) return false;
-      if (filters.languages && !(d.languages ?? []).includes(filters.languages)) return false;
-      // availableTodayOnly is approximated: the demo has no schedule.
-      return true;
-    });
-    return [...list].sort(specialtySorter);
-  }
-
+  // Live directory only: verified doctors from the `doctor_cards` view.
+  // An empty list means the database has none — never synthetic stand-ins.
   const client = requireSupabase();
   const { data, error } = await client.from("doctor_cards").select("*");
   if (error) throw toDomainError(error);
