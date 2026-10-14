@@ -755,6 +755,27 @@ create unique index if not exists donor_counts_upazila_grp_idx
 -- STEP 15: CLIENT RPCS (For Instant UI Integration)
 -- =============================================================================
 
+-- DROP first: CREATE OR REPLACE cannot change a return type (SQLSTATE 42P13).
+-- The migrations/ folder defines several of these with TABLE vs JSONB shapes,
+-- so drop every signature unconditionally before recreating.
+drop function if exists public.my_profile();
+drop function if exists public.set_contact_visibility(text);
+drop function if exists public.set_donor_availability(text);
+drop function if exists public.search_nearby_donors(blood_group, blood_component, double precision, double precision, int, request_urgency, int);
+drop function if exists public.create_blood_request(text, blood_group, blood_component, int, request_urgency, text, text, int, timestamptz, text, int, text);
+drop function if exists public.my_blood_requests();
+drop function if exists public.request_tracking(uuid);
+drop function if exists public.cancel_blood_request(uuid);
+drop function if exists public.unlock_donor_contact(uuid, uuid, unlock_reason);
+drop function if exists public.my_unlock_history(int);
+drop function if exists public.file_complaint(complaint_target, uuid, text, text, smallint);
+drop function if exists public.my_complaints();
+drop function if exists public.request_consultation(uuid, text, timestamptz);
+drop function if exists public.my_consultations();
+drop function if exists public.consultation_thread(uuid);
+drop function if exists public.send_consultation_message(uuid, text);
+drop function if exists public.respond_consultation(uuid, text, timestamptz);
+
 -- 1. My Profile
 create or replace function public.my_profile()
 returns jsonb
