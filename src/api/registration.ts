@@ -44,18 +44,40 @@ function isAlreadyRegistered(message: string): boolean {
   return /already\s*(been\s*)?registered|already\s*exists|duplicate|unique|conflict/i.test(message);
 }
 
+function isInvalidCredentials(message: string): boolean {
+  return /invalid\s*(login\s*)?credentials|invalid\s*email\s*or\s*password/i.test(message);
+}
+
 /** Auth user exists and a session is active. Creates the login on first sight. */
 export async function ensureCitizenSession(phone: string): Promise<{ email: string; userId: string }> {
   const client = requireSupabase();
   const email = citizenEmailForPhone(phone);
   const password = citizenPasswordForPhone(phone);
 
+  // Sign-in first: returning citizens (including rows created by the SQL
+  // setup) never touch the sign-up lookup at all.
+  const firstTry = await client.auth.signInWithPassword({ email, password });
+  if (!firstTry.error) {
+    const userId = firstTry.data.session?.user.id ?? firstTry.data.user?.id;
+    if (userId) return { email, userId };
+  } else if (!isInvalidCredentials(firstTry.error.message)) {
+    throw new Error(firstTry.error.message);
+  }
+
+  // Unknown number: create the auth user, then sign in.
   const { data: signUpData, error: signUpError } = await client.auth.signUp({
     email,
     password,
     options: { data: { role: "citizen" } },
   });
   if (signUpError && !isAlreadyRegistered(signUpError.message)) {
+    // The project-side lookup itself can fail ("Database error finding
+    // user") while the row was still written — retry sign-in before giving up.
+    const retry = await client.auth.signInWithPassword({ email, password });
+    if (!retry.error) {
+      const userId = retry.data.session?.user.id ?? retry.data.user?.id;
+      if (userId) return { email, userId };
+    }
     throw new Error(signUpError.message);
   }
   if (signUpData.session?.user) {
