@@ -852,6 +852,12 @@ end;
 $$;
 
 -- 4. Search Nearby Donors
+-- DROP first: return type changed across versions (0005 vs 0012 vs setup),
+-- and CREATE OR REPLACE cannot change it (SQLSTATE 42P13).
+drop function if exists public.search_nearby_donors(
+  blood_group, blood_component, double precision, double precision,
+  int, request_urgency, int
+);
 create or replace function public.search_nearby_donors(
   p_recipient_group blood_group,
   p_component       blood_component default 'whole_blood',
