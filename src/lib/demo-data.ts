@@ -10,11 +10,11 @@
  * what decides that, never a runtime guess.
  */
 
-import { acceptableDonorsFor, groupBadge, GROUP_PREVALENCE_BD } from "@/domain/blood.ts";
-import { maxRingFor, scoreDonor } from "@/domain/matching.ts";
-import { expiresAtISO } from "@/domain/requests.ts";
-import { maskName, maskNameBn, maskPhone } from "@/domain/profile.ts";
-import { ageInYears } from "@/domain/eligibility.ts";
+import { acceptableDonorsFor, groupBadge, GROUP_PREVALENCE_BD } from "../domain/blood.ts";
+import { maxRingFor, scoreDonor } from "../domain/matching.ts";
+import { expiresAtISO } from "../domain/requests.ts";
+import { maskName, maskNameBn, maskPhone } from "../domain/profile.ts";
+import { ageInYears } from "../domain/eligibility.ts";
 import type {
   ArticleFeedItem,
   BloodComponent,
@@ -25,8 +25,8 @@ import type {
   NationalHealthUpdate,
   RequestUrgency,
   Specialty,
-} from "@/domain/types.ts";
-import { BD_UPAZILAS } from "@/lib/geo-bd.ts";
+} from "../domain/types.ts";
+import { BD_UPAZILAS } from "./geo-bd.ts";
 
 /* -------------------------------------------------------------------------- */
 /* Deterministic PRNG — mulberry32, seeded once                               */

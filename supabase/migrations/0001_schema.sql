@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- Jibon Rokkha — 0001_schema.sql
 -- Enums, reference geography, core tables, indexes.
 -- Target: Supabase Postgres 15 + PostGIS.
@@ -9,45 +9,75 @@ create extension if not exists "postgis";
 create extension if not exists "pg_trgm";
 
 -- -----------------------------------------------------------------------------
--- ENUMS
+-- ENUMS (Idempotent creation)
 -- -----------------------------------------------------------------------------
-create type blood_group        as enum ('A+','A-','B+','B-','AB+','AB-','O+','O-');
-create type user_role          as enum ('citizen','donor','doctor','admin','blood_bank');
-create type verification_state as enum ('pending','verified','rejected','suspended');
-create type request_status     as enum ('draft','open','matching','fulfilled','expired','cancelled');
-create type request_urgency    as enum ('routine','urgent','critical');
-create type blood_component    as enum ('whole_blood','prbc','platelets','plasma');
-create type consultation_status as enum ('requested','scheduled','in_progress','completed','cancelled','no_show');
-create type complaint_target   as enum ('platform','doctor','blood_bank','user');
-create type complaint_status   as enum ('open','in_review','resolved','dismissed');
-create type donor_temp_status  as enum ('available','unavailable','cooldown','travelling');
-create type unlock_reason      as enum ('requestor','accepted_donor','admin');
-create type response_state     as enum ('invited','accepted','declined','donated','no_show','expired');
-create type article_status     as enum ('draft','published','archived');
-create type contact_visibility as enum ('on_unlock','private_admin');
+do $$ begin
+  if not exists (select 1 from pg_type where typname = 'blood_group') then
+    create type blood_group as enum ('A+','A-','B+','B-','AB+','AB-','O+','O-');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'user_role') then
+    create type user_role as enum ('admin','doctor','citizen');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'verification_state') then
+    create type verification_state as enum ('pending','verified','rejected','suspended');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'request_status') then
+    create type request_status as enum ('draft','open','matching','fulfilled','expired','cancelled');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'request_urgency') then
+    create type request_urgency as enum ('routine','urgent','critical');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'blood_component') then
+    create type blood_component as enum ('whole_blood','prbc','platelets','plasma');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'consultation_status') then
+    create type consultation_status as enum ('requested','scheduled','in_progress','completed','cancelled','no_show');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'complaint_target') then
+    create type complaint_target as enum ('platform','doctor','blood_bank','user');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'complaint_status') then
+    create type complaint_status as enum ('open','in_review','resolved','dismissed');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'donor_temp_status') then
+    create type donor_temp_status as enum ('available','unavailable','cooldown','travelling');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'unlock_reason') then
+    create type unlock_reason as enum ('requestor','accepted_donor','admin');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'response_state') then
+    create type response_state as enum ('invited','accepted','declined','donated','no_show','expired');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'article_status') then
+    create type article_status as enum ('draft','published','archived');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'contact_visibility') then
+    create type contact_visibility as enum ('on_unlock','private_admin');
+  end if;
+end $$;
 
 -- -----------------------------------------------------------------------------
 -- REFERENCE GEOGRAPHY  (8 divisions / 64 districts / ~495 upazilas)
 -- Normalised so "count AB- donors in this district" is an indexed query,
 -- not a LIKE over free-text addresses.
 -- -----------------------------------------------------------------------------
-create table divisions (
+create table if not exists divisions (
   id        serial primary key,
   name_en   text not null,
   name_bn   text not null,
   bbs_code  text unique not null
 );
 
-create table districts (
+create table if not exists districts (
   id          serial primary key,
   division_id int not null references divisions on delete restrict,
   name_en     text not null,
   name_bn     text not null,
   bbs_code    text unique not null
 );
-create index districts_division_idx on districts (division_id);
+create index if not exists districts_division_idx on districts (division_id);
 
-create table upazilas (
+create table if not exists upazilas (
   id          serial primary key,
   district_id int not null references districts on delete restrict,
   name_en     text not null,
@@ -55,9 +85,9 @@ create table upazilas (
   bbs_code    text unique not null,
   geog        geography(Point, 4326)
 );
-create index upazilas_district_idx on upazilas (district_id);
+create index if not exists upazilas_district_idx on upazilas (district_id);
 
-create table specialties (
+create table if not exists specialties (
   id       serial primary key,
   slug     text unique not null,
   name_en  text not null,
@@ -70,7 +100,7 @@ create table specialties (
 -- NID is NEVER stored in plaintext. It is an identity credential, not a
 -- profile field: we keep an HMAC hash for uniqueness + last 4 for display.
 -- -----------------------------------------------------------------------------
-create table profiles (
+create table if not exists profiles (
   id                    uuid primary key references auth.users on delete cascade,
   role                  user_role not null default 'citizen',
   full_name             text,
@@ -100,14 +130,14 @@ create table profiles (
   constraint profiles_nid_hash_unique unique (nid_hash)
 );
 
-create index profiles_home_geog_idx  on profiles using gist (home_geog);
-create index profiles_group_idx      on profiles (blood_group);
-create index profiles_name_trgm_idx  on profiles using gin (full_name gin_trgm_ops);
+create index if not exists profiles_home_geog_idx  on profiles using gist (home_geog);
+create index if not exists profiles_group_idx      on profiles (blood_group);
+create index if not exists profiles_name_trgm_idx  on profiles using gin (full_name gin_trgm_ops);
 
 -- -----------------------------------------------------------------------------
 -- DONORS  (donor-specific state; owner + admin readable only)
 -- -----------------------------------------------------------------------------
-create table donors (
+create table if not exists donors (
   user_id               uuid primary key references profiles on delete cascade,
   last_donation_date    date,
   total_donations       int not null default 0 check (total_donations >= 0),
@@ -128,7 +158,7 @@ create table donors (
   updated_at            timestamptz not null default now()
 );
 
-create table donor_availability (
+create table if not exists donor_availability (
   donor_id     uuid not null references profiles on delete cascade,
   day_of_week  smallint not null check (day_of_week between 0 and 6),
   is_available boolean not null default true,
@@ -142,7 +172,7 @@ create table donor_availability (
 -- -----------------------------------------------------------------------------
 -- BLOOD REQUESTS
 -- -----------------------------------------------------------------------------
-create table blood_requests (
+create table if not exists blood_requests (
   id                 uuid primary key default gen_random_uuid(),
   requestor_id       uuid not null references profiles on delete cascade,
   patient_name       text,
@@ -173,13 +203,13 @@ create table blood_requests (
   constraint blood_requests_units_ok check (units_confirmed <= units_needed)
 );
 
-create index blood_requests_geog_idx    on blood_requests using gist (geog);
-create index blood_requests_open_idx    on blood_requests (geog) where status in ('open','matching');
-create index blood_requests_group_idx   on blood_requests (blood_group_needed, status);
-create index blood_requests_urgency_idx on blood_requests (urgency, status, created_at desc);
-create index blood_requests_requestor   on blood_requests (requestor_id, created_at desc);
+create index if not exists blood_requests_geog_idx    on blood_requests using gist (geog);
+create index if not exists blood_requests_open_idx    on blood_requests (geog) where status in ('open','matching');
+create index if not exists blood_requests_group_idx   on blood_requests (blood_group_needed, status);
+create index if not exists blood_requests_urgency_idx on blood_requests (urgency, status, created_at desc);
+create index if not exists blood_requests_requestor   on blood_requests (requestor_id, created_at desc);
 
-create table request_responses (
+create table if not exists request_responses (
   id                 uuid primary key default gen_random_uuid(),
   request_id         uuid not null references blood_requests on delete cascade,
   donor_id           uuid not null references profiles on delete cascade,
@@ -191,11 +221,11 @@ create table request_responses (
   note               text,
   unique (request_id, donor_id)
 );
-create index request_responses_donor_idx on request_responses (donor_id, state);
+create index if not exists request_responses_donor_idx on request_responses (donor_id, state);
 
 -- Append-only record of every contact disclosure. "Who has my number" must be
 -- answerable by the donor.
-create table contact_unlocks (
+create table if not exists contact_unlocks (
   id          uuid primary key default gen_random_uuid(),
   request_id  uuid references blood_requests on delete set null,
   unlocker_id uuid not null references profiles on delete cascade,
@@ -204,11 +234,11 @@ create table contact_unlocks (
   ip          inet,
   unlocked_at timestamptz not null default now()
 );
-create index contact_unlocks_subject_idx on contact_unlocks (subject_id, unlocked_at desc);
-create index contact_unlocks_unlocker_idx on contact_unlocks (unlocker_id, unlocked_at desc);
+create index if not exists contact_unlocks_subject_idx on contact_unlocks (subject_id, unlocked_at desc);
+create index if not exists contact_unlocks_unlocker_idx on contact_unlocks (unlocker_id, unlocked_at desc);
 
 -- Immutable ledger that makes cooldown computable.
-create table contributions (
+create table if not exists contributions (
   id           uuid primary key default gen_random_uuid(),
   donor_id     uuid not null references profiles on delete cascade,
   request_id   uuid references blood_requests on delete set null,
@@ -220,12 +250,12 @@ create table contributions (
   verified_at  timestamptz,
   created_at   timestamptz not null default now()
 );
-create index contributions_donor_idx on contributions (donor_id, donated_on desc);
+create index if not exists contributions_donor_idx on contributions (donor_id, donated_on desc);
 
 -- -----------------------------------------------------------------------------
 -- DOCTORS
 -- -----------------------------------------------------------------------------
-create table doctors (
+create table if not exists doctors (
   user_id             uuid primary key references profiles on delete cascade,
   bmdc_reg_no         text unique not null,
   specialty_id        int references specialties,
@@ -247,11 +277,11 @@ create table doctors (
   verified_by         uuid references profiles,
   created_at          timestamptz not null default now()
 );
-create index doctors_practice_geog_idx on doctors using gist (practice_geog);
-create index doctors_verify_idx        on doctors (verification, specialty_id);
-create index doctors_upazila_idx       on doctors (practice_upazila_id);
+create index if not exists doctors_practice_geog_idx on doctors using gist (practice_geog);
+create index if not exists doctors_verify_idx        on doctors (verification, specialty_id);
+create index if not exists doctors_upazila_idx       on doctors (practice_upazila_id);
 
-create table doctor_availability (
+create table if not exists doctor_availability (
   id           uuid primary key default gen_random_uuid(),
   doctor_id    uuid not null references profiles on delete cascade,
   day_of_week  smallint not null check (day_of_week between 0 and 6),
@@ -261,12 +291,12 @@ create table doctor_availability (
   is_active    boolean not null default true,
   constraint doctor_availability_order check (start_time < end_time)
 );
-create index doctor_availability_doctor_idx on doctor_availability (doctor_id, day_of_week);
+create index if not exists doctor_availability_doctor_idx on doctor_availability (doctor_id, day_of_week);
 
 -- -----------------------------------------------------------------------------
 -- CONSULTATIONS  (chat is real; audio/video are honest stubs in Phase 1)
 -- -----------------------------------------------------------------------------
-create table consultations (
+create table if not exists consultations (
   id                    uuid primary key default gen_random_uuid(),
   patient_id            uuid not null references profiles on delete cascade,
   doctor_id             uuid not null references doctors on delete cascade,
@@ -284,10 +314,10 @@ create table consultations (
   follow_up_at          timestamptz,
   created_at            timestamptz not null default now()
 );
-create index consultations_patient_idx on consultations (patient_id, created_at desc);
-create index consultations_doctor_idx  on consultations (doctor_id, status, scheduled_for);
+create index if not exists consultations_patient_idx on consultations (patient_id, created_at desc);
+create index if not exists consultations_doctor_idx  on consultations (doctor_id, status, scheduled_for);
 
-create table consultation_messages (
+create table if not exists consultation_messages (
   id              uuid primary key default gen_random_uuid(),
   consultation_id uuid not null references consultations on delete cascade,
   sender_id       uuid not null references profiles on delete cascade,
@@ -297,12 +327,12 @@ create table consultation_messages (
   created_at      timestamptz not null default now(),
   constraint consultation_messages_has_content check (body is not null or attachment_path is not null)
 );
-create index consultation_messages_thread_idx on consultation_messages (consultation_id, created_at);
+create index if not exists consultation_messages_thread_idx on consultation_messages (consultation_id, created_at);
 
 -- -----------------------------------------------------------------------------
 -- CONTENT
 -- -----------------------------------------------------------------------------
-create table articles (
+create table if not exists articles (
   id               uuid primary key default gen_random_uuid(),
   author_id        uuid not null references doctors on delete cascade,
   slug             text unique not null,
@@ -319,11 +349,11 @@ create table articles (
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );
-create index articles_published_idx on articles (status, published_at desc);
-create index articles_author_idx    on articles (author_id);
-create index articles_search_idx    on articles using gin (to_tsvector('simple', coalesce(title,'') || ' ' || coalesce(excerpt,'')));
+create index if not exists articles_published_idx on articles (status, published_at desc);
+create index if not exists articles_author_idx    on articles (author_id);
+create index if not exists articles_search_idx    on articles using gin (to_tsvector('simple', coalesce(title,'') || ' ' || coalesce(excerpt,'')));
 
-create table article_reactions (
+create table if not exists article_reactions (
   article_id uuid not null references articles on delete cascade,
   user_id    uuid not null references profiles on delete cascade,
   reaction   text not null default 'helpful' check (reaction in ('helpful','thanks','saved')),
@@ -334,7 +364,7 @@ create table article_reactions (
 -- -----------------------------------------------------------------------------
 -- COMPLAINTS  (a form without a queue and a clock is theatre)
 -- -----------------------------------------------------------------------------
-create table complaints (
+create table if not exists complaints (
   id              uuid primary key default gen_random_uuid(),
   complainant_id  uuid not null references profiles on delete cascade,
   target_type     complaint_target not null,
@@ -350,13 +380,13 @@ create table complaints (
   created_at      timestamptz not null default now(),
   resolved_at     timestamptz
 );
-create index complaints_queue_idx    on complaints (status, severity desc, sla_due_at);
-create index complaints_mine_idx     on complaints (complainant_id, created_at desc);
+create index if not exists complaints_queue_idx    on complaints (status, severity desc, sla_due_at);
+create index if not exists complaints_mine_idx     on complaints (complainant_id, created_at desc);
 
 -- -----------------------------------------------------------------------------
 -- BLOOD BANKS (Phase 3 stock view)
 -- -----------------------------------------------------------------------------
-create table blood_banks (
+create table if not exists blood_banks (
   id            uuid primary key default gen_random_uuid(),
   name          text not null,
   upazila_id    int references upazilas,
@@ -366,9 +396,9 @@ create table blood_banks (
   opening_hours text,
   created_at    timestamptz not null default now()
 );
-create index blood_banks_geog_idx on blood_banks using gist (geog);
+create index if not exists blood_banks_geog_idx on blood_banks using gist (geog);
 
-create table blood_bank_stock (
+create table if not exists blood_bank_stock (
   bank_id     uuid not null references blood_banks on delete cascade,
   blood_group blood_group not null,
   component   blood_component not null default 'whole_blood',
@@ -381,7 +411,7 @@ create table blood_bank_stock (
 -- OPS: outbox (SMS costs money; nothing calls the gateway directly),
 --      audit_log (append-only), notification prefs, tunable config
 -- -----------------------------------------------------------------------------
-create table outbox (
+create table if not exists outbox (
   id            bigserial primary key,
   topic         text not null,
   payload       jsonb not null default '{}',
@@ -392,9 +422,9 @@ create table outbox (
   sent_at       timestamptz,
   created_at    timestamptz not null default now()
 );
-create index outbox_due_idx on outbox (status, scheduled_for) where status = 'pending';
+create index if not exists outbox_due_idx on outbox (status, scheduled_for) where status = 'pending';
 
-create table audit_log (
+create table if not exists audit_log (
   id         bigserial primary key,
   actor_id   uuid,
   action     text not null,
@@ -405,17 +435,17 @@ create table audit_log (
   ip         inet,
   created_at timestamptz not null default now()
 );
-create index audit_log_entity_idx on audit_log (entity, entity_id, created_at desc);
-create index audit_log_actor_idx  on audit_log (actor_id, created_at desc);
+create index if not exists audit_log_entity_idx on audit_log (entity, entity_id, created_at desc);
+create index if not exists audit_log_actor_idx  on audit_log (actor_id, created_at desc);
 
-create table notification_prefs (
+create table if not exists notification_prefs (
   user_id uuid primary key references profiles on delete cascade,
   sms     boolean not null default true,
   push    boolean not null default true,
   email   boolean not null default false
 );
 
-create table app_config (
+create table if not exists app_config (
   key        text primary key,
   value      jsonb not null,
   updated_at timestamptz not null default now()
@@ -428,7 +458,7 @@ create table app_config (
 create schema if not exists private;
 revoke all on schema private from public, anon, authenticated;
 
-create table private.secrets (
+create table if not exists private.secrets (
   key   text primary key,
   value text not null
 );

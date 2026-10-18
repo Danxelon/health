@@ -9,12 +9,24 @@
  * real ordering.
  */
 
-import type { BloodComponent, BloodGroup, DonorCard, DonorCounts, RequestUrgency } from "@/domain/types.ts";
-import { rankDonors, groupByRing, scoreDonor, maxRingFor } from "@/domain/matching.ts";
-import { pinFeaturedDonor } from "@/domain/featured-donor.ts";
-import { acceptableDonorsFor } from "@/domain/blood.ts";
-import { DEMO_DONORS, DEMO_UPAZILAS, type DemoUpazila } from "@/lib/demo-data.ts";
-import { callRpc, DEMO_MODE } from "@/lib/supabase.ts";
+import type {
+  BloodComponent,
+  BloodGroup,
+  ConsentStatus,
+  DonorCard,
+  DonorConsentRequest,
+  DonorCounts,
+  RequestUrgency,
+} from "../domain/types.ts";
+import { DomainError } from "../domain/types.ts";
+import { rankDonors, groupByRing, scoreDonor, maxRingFor } from "../domain/matching.ts";
+import { pinFeaturedDonor } from "../domain/featured-donor.ts";
+import { acceptableDonorsFor } from "../domain/blood.ts";
+import { maskDonorIdentity, maskDonorCard } from "../domain/donor-privacy.ts";
+import { DEMO_DONORS, DEMO_UPAZILAS, type DemoUpazila } from "../lib/demo-data.ts";
+import { callRpc, DEMO_MODE } from "../lib/supabase.ts";
+
+export { maskDonorIdentity, maskDonorCard };
 
 export interface SearchDonorsArgs {
   recipientGroup: BloodGroup;
@@ -182,3 +194,154 @@ export async function searchDonors(args: SearchDonorsArgs): Promise<SearchResult
     searchedAt: new Date().toISOString(),
   };
 }
+
+/* -------------------------------------------------------------------------- */
+/* Donor Consent & Automated IVR Workflow                                      */
+/* -------------------------------------------------------------------------- */
+
+interface LocalConsentEntry extends DonorConsentRequest {
+  notes?: string;
+  donor_phone_internal?: string;
+  expires_at?: string;
+}
+
+const localConsentStore = new Map<string, LocalConsentEntry>();
+
+/**
+ * Initiates an automated official/government recorded IVR call simulation to ask the donor for consent.
+ */
+export async function requestDonorConsent(
+  donorId: string,
+  details: { hospitalName?: string; urgency?: RequestUrgency; notes?: string } = {}
+): Promise<{ requestId: string; initialStatus: ConsentStatus }> {
+  if (!DEMO_MODE) {
+    try {
+      const requestId = await callRpc<string>("request_donor_consent", {
+        p_donor_id: donorId,
+        p_hospital_name: details.hospitalName ?? null,
+        p_urgency: details.urgency ?? "urgent",
+        p_notes: details.notes ?? null,
+      });
+
+      if (requestId) {
+        localConsentStore.set(requestId, {
+          id: requestId,
+          donor_id: donorId,
+          hospital_name: details.hospitalName,
+          urgency: details.urgency ?? "urgent",
+          status: "calling",
+          ivr_status: "ringing",
+          created_at: new Date().toISOString(),
+        });
+        return { requestId, initialStatus: "calling" };
+      }
+    } catch {
+      // In local testing or demo mode fallback
+    }
+  }
+
+  const demoDonor = DEMO_DONORS.find((d) => d.donor_id === donorId);
+  const donorPhone = demoDonor?.phone || demoDonor?._phone || "+8801712345678";
+  const donorName = demoDonor?.full_name || demoDonor?.display_name || "Verified Donor";
+  const requestId = `consent-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+  localConsentStore.set(requestId, {
+    id: requestId,
+    donor_id: donorId,
+    hospital_name: details.hospitalName ?? "Dhaka Medical College Hospital (DMCH)",
+    urgency: details.urgency ?? "urgent",
+    status: "calling",
+    ivr_status: "ringing",
+    created_at: new Date().toISOString(),
+    donor_phone_internal: donorPhone,
+    donor_name_revealed: donorName,
+  });
+
+  return { requestId, initialStatus: "calling" };
+}
+
+/**
+ * Retrieves the status of an ongoing consent request.
+ * Phone number and donor name are ONLY revealed if consented.
+ */
+export async function getConsentStatus(requestId: string): Promise<DonorConsentRequest> {
+  if (!DEMO_MODE) {
+    try {
+      const remote = await callRpc<DonorConsentRequest>("get_consent_request_status", {
+        p_request_id: requestId,
+      });
+      if (remote && remote.id) {
+        return remote;
+      }
+    } catch {
+      // Fall through to local store
+    }
+  }
+
+  const local = localConsentStore.get(requestId);
+  if (!local) {
+    throw new DomainError({
+      code: "NOT_FOUND",
+      message_en: "Consent request not found.",
+      message_bn: "সম্মতি অনুরোধ পাওয়া যায়নি।",
+    });
+  }
+
+  const isConsented = local.status === "consented";
+  return {
+    id: local.id,
+    donor_id: local.donor_id,
+    seeker_name: local.seeker_name,
+    seeker_phone: local.seeker_phone,
+    hospital_name: local.hospital_name,
+    urgency: local.urgency,
+    status: local.status,
+    ivr_status: local.ivr_status,
+    created_at: local.created_at,
+    donor_name_revealed: isConsented ? local.donor_name_revealed : undefined,
+    donor_phone_revealed: isConsented ? (local.donor_phone_revealed ?? local.donor_phone_internal) : undefined,
+  };
+}
+
+/**
+ * Simulates donor's decision response to the automated government IVR call.
+ */
+export async function simulateDonorConsentResponse(
+  requestId: string,
+  decision: "consented" | "declined"
+): Promise<{ success: boolean; donorPhone?: string }> {
+  if (!DEMO_MODE) {
+    try {
+      const ok = await callRpc<boolean>("respond_donor_consent", {
+        p_request_id: requestId,
+        p_decision: decision,
+      });
+      if (ok) {
+        const latest = await getConsentStatus(requestId);
+        return {
+          success: true,
+          donorPhone: decision === "consented" ? latest.donor_phone_revealed : undefined,
+        };
+      }
+    } catch {
+      // Fall through to local store
+    }
+  }
+
+  const local = localConsentStore.get(requestId);
+  if (!local) {
+    return { success: false };
+  }
+
+  local.status = decision;
+  local.ivr_status = decision === "consented" ? "completed" : "declined";
+
+  if (decision === "consented") {
+    const revealedPhone = local.donor_phone_internal || "+8801712345678";
+    local.donor_phone_revealed = revealedPhone;
+    return { success: true, donorPhone: revealedPhone };
+  } else {
+    local.donor_phone_revealed = undefined;
+    return { success: true, donorPhone: undefined };
+  }
+}

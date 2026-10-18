@@ -22,6 +22,7 @@ import {
   Navigation,
   Phone,
   PhoneCall,
+  Shield,
   ShieldCheck,
   X,
 } from "lucide-react";
@@ -29,6 +30,12 @@ import {
 import { useAppShell } from "@/state/app-shell.tsx";
 import { Badge } from "@/components/ui.tsx";
 import type { DonorCard } from "@/domain/types.ts";
+import { ageBand } from "@/domain/profile.ts";
+import {
+  getAnonymousDonorLabel,
+  getApproximateArea,
+  getApproximateDistance,
+} from "@/domain/donor-privacy.ts";
 
 export interface DonorAddressMapDrawerProps {
   donor: DonorCard | null;
@@ -36,6 +43,8 @@ export interface DonorAddressMapDrawerProps {
   onCall?: (donor: DonorCard) => void;
   onCallModal?: (donor: DonorCard) => void;
   onRequest?: (donor: DonorCard) => void;
+  onRequestConsent?: (donor: DonorCard) => void;
+  isConsented?: boolean;
   lang?: "bn" | "en";
 }
 
@@ -50,6 +59,8 @@ export function DonorAddressMapDrawer({
   onCall,
   onCallModal,
   onRequest,
+  onRequestConsent,
+  isConsented = false,
   lang: propLang,
 }: DonorAddressMapDrawerProps) {
   const shell = useAppShell();
@@ -217,28 +228,39 @@ export function DonorAddressMapDrawer({
                 id="map-drawer-title"
                 className="text-lg sm:text-xl font-black text-ink truncate leading-tight"
               >
-                {lang === "bn"
-                  ? (donor.full_name_bn || donor.display_name_bn || donor.display_name)
-                  : (donor.full_name || donor.display_name)}
+                {isConsented
+                  ? (lang === "bn"
+                      ? (donor.full_name_bn || donor.display_name_bn || donor.display_name)
+                      : (donor.full_name || donor.display_name))
+                  : getAnonymousDonorLabel(donor, lang)}
               </h2>
               <div className="flex items-center gap-2 mt-0.5 text-xs text-muted">
-                {((lang === "bn"
-                  ? (donor.full_name || donor.display_name)
-                  : (donor.full_name_bn || donor.display_name_bn || donor.display_name)) !==
-                  (lang === "bn"
-                    ? (donor.full_name_bn || donor.display_name_bn || donor.display_name)
-                    : (donor.full_name || donor.display_name))) && (
-                  <span className="truncate">
-                    {lang === "bn"
-                      ? (donor.full_name || donor.display_name)
-                      : (donor.full_name_bn || donor.display_name_bn || donor.display_name)}
+                {isConsented ? (
+                  ((lang === "bn"
+                    ? (donor.full_name || donor.display_name)
+                    : (donor.full_name_bn || donor.display_name_bn || donor.display_name)) !==
+                    (lang === "bn"
+                      ? (donor.full_name_bn || donor.display_name_bn || donor.display_name)
+                      : (donor.full_name || donor.display_name))) && (
+                    <span className="truncate">
+                      {lang === "bn"
+                        ? (donor.full_name || donor.display_name)
+                        : (donor.full_name_bn || donor.display_name_bn || donor.display_name)}
+                    </span>
+                  )
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-bold">
+                    <Shield className="h-3 w-3" />
+                    <span>{lang === "bn" ? "🔒 গোপনীয় পরিচয় সংরক্ষিত" : "🔒 Anonymous Donor"}</span>
                   </span>
                 )}
                 {donor.age != null && (
                   <>
                     <span className="opacity-40">•</span>
                     <span className="font-bold text-brand shrink-0">
-                      {lang === "bn" ? `${toBnDigits(donor.age)} বছর` : `${donor.age} yrs old`}
+                      {isConsented
+                        ? (lang === "bn" ? `${toBnDigits(donor.age)} বছর` : `${donor.age} yrs old`)
+                        : (lang === "bn" ? `বয়স: ${ageBand(donor.age).bn} বছর` : `Age: ${ageBand(donor.age).en} yrs`)}
                     </span>
                   </>
                 )}
@@ -284,38 +306,63 @@ export function DonorAddressMapDrawer({
             </Badge>
           </div>
 
-          {/* Donor Identity Card (Bilingual Full Name & Age) */}
+          {/* Donor Identity Card (Bilingual Full Name & Age or Anonymous identity) */}
           <section className="rounded-3xl border border-line bg-surface p-5 space-y-3.5 shadow-2xs">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                {lang === "bn" ? "রক্তদাতার পূর্ণ পরিচিতি ও বয়স" : "Donor Identity & Age"}
+                {isConsented
+                  ? (lang === "bn" ? "রক্তদাতার পূর্ণ পরিচিতি ও বয়স" : "Donor Identity & Age")
+                  : (lang === "bn" ? "রক্তদাতার পরিচিতি (সুরক্ষিত)" : "Donor Identity (Protected)")}
               </span>
               {donor.age != null && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand-deep">
-                  {lang === "bn" ? `বয়স: ${toBnDigits(donor.age)} বছর` : `Age: ${donor.age} yrs`}
+                  {isConsented
+                    ? (lang === "bn" ? `বয়স: ${toBnDigits(donor.age)} বছর` : `Age: ${donor.age} yrs`)
+                    : (lang === "bn" ? `বয়স: ${ageBand(donor.age).bn} বছর` : `Age: ${ageBand(donor.age).en} yrs`)}
                 </span>
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <div className="rounded-2xl border border-line bg-elevated/40 p-3.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted block mb-1">
-                  {lang === "bn" ? "বাংলায় পূর্ণ নাম" : "Name in Bengali"}
-                </span>
-                <span className="text-sm sm:text-base font-black text-ink block truncate">
-                  {donor.full_name_bn || donor.display_name_bn || donor.display_name}
-                </span>
-              </div>
+            {isConsented ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div className="rounded-2xl border border-line bg-elevated/40 p-3.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted block mb-1">
+                    {lang === "bn" ? "বাংলায় পূর্ণ নাম" : "Name in Bengali"}
+                  </span>
+                  <span className="text-sm sm:text-base font-black text-ink block truncate">
+                    {donor.full_name_bn || donor.display_name_bn || donor.display_name}
+                  </span>
+                </div>
 
-              <div className="rounded-2xl border border-line bg-elevated/40 p-3.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted block mb-1">
-                  {lang === "bn" ? "ইংরেজিতে পূর্ণ নাম" : "Name in English"}
-                </span>
-                <span className="text-sm sm:text-base font-black text-ink block truncate">
-                  {donor.full_name || donor.display_name}
-                </span>
+                <div className="rounded-2xl border border-line bg-elevated/40 p-3.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted block mb-1">
+                    {lang === "bn" ? "ইংরেজিতে পূর্ণ নাম" : "Name in English"}
+                  </span>
+                  <span className="text-sm sm:text-base font-black text-ink block truncate">
+                    {donor.full_name || donor.display_name}
+                  </span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="rounded-2xl border border-line bg-elevated/40 p-3.5 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted block mb-1">
+                    {lang === "bn" ? "অজ্ঞাতনামা পরিচিতি কোড" : "Anonymous Identification"}
+                  </span>
+                  <span className="font-mono text-base font-black text-ink block truncate">
+                    {getAnonymousDonorLabel(donor, lang)}
+                  </span>
+                  <p className="mt-1 text-xs text-muted">
+                    {lang === "bn"
+                      ? "🔒 গোপনীয়তার সুরক্ষায় নাম ও যোগাযোগের নম্বর সংরক্ষিত।"
+                      : "🔒 Contact details and real name are protected until consent."}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+              </div>
+            )}
           </section>
 
           {/* 1. Full Address Card */}
@@ -326,7 +373,9 @@ export function DonorAddressMapDrawer({
                   <MapPin className="h-4 w-4" />
                 </span>
                 <h3 className="font-bold text-sm sm:text-base text-ink">
-                  {lang === "bn" ? "পূর্ণাঙ্গ ঠিকানা বিবরণী" : "Full Address Details"}
+                  {isConsented
+                    ? (lang === "bn" ? "পূর্ণাঙ্গ ঠিকানা বিবরণী" : "Full Address Details")
+                    : (lang === "bn" ? "সাধারণ এলাকা বিবরণী (সুরক্ষিত)" : "Area Location (Protected)")}
                 </h3>
               </div>
 
@@ -335,7 +384,7 @@ export function DonorAddressMapDrawer({
                 type="button"
                 onClick={handleCopyAddress}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3 py-1.5 text-xs font-bold text-ink hover:bg-elevated hover:border-line-strong transition-all cursor-pointer shadow-2xs active:scale-95"
-                title={lang === "bn" ? "সম্পূর্ণ ঠিকানা ক্লিপবোর্ডে কপি করুন" : "Copy full address"}
+                title={lang === "bn" ? "ঠিকানা ক্লিপবোর্ডে কপি করুন" : "Copy address"}
               >
                 {copiedAddress ? (
                   <>
@@ -356,10 +405,23 @@ export function DonorAddressMapDrawer({
             {/* Street / Holding Card */}
             <div className="rounded-2xl border border-line bg-surface p-4">
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted block mb-1">
-                {lang === "bn" ? "রাস্তা / হোল্ডিং ঠিকানা" : "Street / Holding Address"}
+                {isConsented
+                  ? (lang === "bn" ? "রাস্তা / হোল্ডিং ঠিকানা" : "Street / Holding Address")
+                  : (lang === "bn" ? "রাস্তা ও হোল্ডিং ঠিকানা (সুরক্ষিত)" : "Street & Holding (Protected)")}
               </span>
-              <p className="text-base font-bold text-ink leading-relaxed">
-                {streetHolding}
+              <p className="text-sm sm:text-base font-bold text-ink leading-relaxed">
+                {isConsented ? (
+                  streetHolding
+                ) : (
+                  <span className="text-muted flex items-center gap-1.5 font-normal text-xs sm:text-sm">
+                    <Shield className="h-4 w-4 text-brand shrink-0" />
+                    <span>
+                      {lang === "bn"
+                        ? "🔒 গোপনীয়তার সুরক্ষায় সঠিক হোল্ডিং ঠিকানা সংরক্ষিত। অনুমতি পাওয়ার পর প্রকাশ করা হবে।"
+                        : "🔒 Street holding address concealed for donor safety. Revealed upon consent."}
+                    </span>
+                  </span>
+                )}
               </p>
             </div>
 
@@ -531,9 +593,11 @@ export function DonorAddressMapDrawer({
           <section className="rounded-3xl border border-line bg-surface p-5 space-y-3.5 shadow-2xs">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                {lang === "bn" ? "রক্তদাতার মোবাইল নম্বর" : "Direct Phone Number"}
+                {isConsented
+                  ? (lang === "bn" ? "রক্তদাতার মোবাইল নম্বর" : "Direct Phone Number")
+                  : (lang === "bn" ? "যোগাযোগ নম্বর (সুরক্ষিত)" : "Contact Number (Protected)")}
               </span>
-              {phone && (
+              {isConsented && phone && (
                 <button
                   type="button"
                   onClick={handleCopyPhone}
@@ -558,12 +622,14 @@ export function DonorAddressMapDrawer({
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-emerald-600" />
                 <span className="font-mono text-base font-black text-ink">
-                  {phone || (lang === "bn" ? "নম্বর লুকানো" : "Number hidden")}
+                  {isConsented
+                    ? (phone || (lang === "bn" ? "নম্বর অনুপলব্ধ" : "Number unavailable"))
+                    : (lang === "bn" ? "🔒 নম্বর লুকানো (অনুমতি আবশ্যক)" : "🔒 Number hidden (Consent required)")}
                 </span>
               </div>
             </div>
 
-            {phone ? (
+            {isConsented && phone ? (
               <div className="grid grid-cols-2 gap-2.5 pt-1">
                 <a
                   href={`sms:${phone}?body=${encodeURIComponent(
@@ -593,8 +659,8 @@ export function DonorAddressMapDrawer({
             ) : (
               <p className="rounded-2xl border border-dashed border-line px-4 py-3 text-xs text-muted leading-relaxed text-center">
                 {lang === "bn"
-                  ? "নম্বরটি সুরক্ষিত। রক্তের অনুরোধ পাঠালে রক্তদাতা নম্বর শেয়ার করবেন।"
-                  : "This number is protected. Send a blood request and the donor will share it."}
+                  ? "🔒 রক্তদাতার ফোন নম্বর ও পরিচয় নিরাপদ রাখতে সুরক্ষিত। 'অনুমতি কল পাঠান' বাটনে চাপ দিয়ে সম্মতি চেয়ে কল করুন।"
+                  : "🔒 Protected for donor privacy. Click 'Request Consent Call' to initiate automated verification."}
               </p>
             )}
           </section>
@@ -621,8 +687,8 @@ export function DonorAddressMapDrawer({
 
         {/* 5. Sticky Action Footer */}
         <footer className="shrink-0 sticky bottom-0 p-4 sm:p-5 bg-surface/95 backdrop-blur-md border-t border-line flex flex-col sm:flex-row items-center gap-3 z-10 shadow-lg">
-          {/* Call Right Now Button — real number only */}
-          {phone ? (
+          {/* Action button: Call if consented, otherwise Request Consent Call */}
+          {isConsented && phone ? (
             <a
               href={`tel:${phone}`}
               onClick={handleCall}
@@ -632,19 +698,30 @@ export function DonorAddressMapDrawer({
               <span>{lang === "bn" ? "সরাসরি কল করুন" : "Call Right Now"}</span>
             </a>
           ) : (
-            <span className="w-full sm:flex-1 inline-flex h-12 items-center justify-center gap-2.5 rounded-2xl bg-elevated text-muted font-black text-sm cursor-not-allowed">
-              <PhoneCall className="h-4.5 w-4.5" />
-              <span>{lang === "bn" ? "নম্বর লুকানো" : "Number hidden"}</span>
-            </span>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                if (onRequestConsent) {
+                  onRequestConsent(donor);
+                } else if (onCallModal) {
+                  onCallModal(donor);
+                }
+              }}
+              className="w-full sm:flex-1 inline-flex h-12 items-center justify-center gap-2.5 rounded-2xl bg-brand hover:bg-brand-deep text-white font-black text-sm shadow-md hover:shadow-lg transition-all active:scale-98 cursor-pointer"
+            >
+              <PhoneCall className="h-4.5 w-4.5 fill-white" />
+              <span>{lang === "bn" ? "অনুমতি কল পাঠান" : "Request Consent Call"}</span>
+            </button>
           )}
 
           {/* Request Blood Now Button */}
           <button
             type="button"
             onClick={handleRequest}
-            className="w-full sm:flex-1 inline-flex h-12 items-center justify-center gap-2.5 rounded-2xl bg-brand hover:bg-brand-deep text-white font-black text-sm shadow-md hover:shadow-lg transition-all active:scale-98 cursor-pointer"
+            className="w-full sm:flex-1 inline-flex h-12 items-center justify-center gap-2.5 rounded-2xl border border-line bg-surface hover:bg-elevated text-ink font-bold text-sm shadow-xs transition-all active:scale-98 cursor-pointer"
           >
-            <Droplet className="h-4.5 w-4.5 fill-white" />
+            <Droplet className="h-4.5 w-4.5 text-brand fill-brand" />
             <span>{lang === "bn" ? "জরুরি রক্তের আবেদন" : "Request Blood Now"}</span>
           </button>
         </footer>

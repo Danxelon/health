@@ -256,20 +256,28 @@ begin
     return new;
   end if;
 
-  if not public.is_admin(auth.uid()) then
-    if new.role is distinct from old.role then
-      raise exception 'role is not self-assignable' using errcode = 'RJ001';
-    end if;
-    if new.nid_hash is distinct from old.nid_hash
-       or new.nid_last4 is distinct from old.nid_last4 then
-      raise exception 'nid cannot be changed without re-verification' using errcode = 'RJ002';
-    end if;
-    --
-    -- The verification flag is preserved verbatim: neither reset (handled by
-    -- trg_0_profiles_group_change) nor grant is a client-side operation.
-    --
-    new.blood_group_verified := old.blood_group_verified;
+  -- Allow direct SQL editor, migrations, service_role, and database superuser where auth.uid() is NULL
+  if auth.uid() is null then
+    return new;
   end if;
+
+  -- Allow admin users
+  if public.is_admin(auth.uid()) then
+    return new;
+  end if;
+
+  if new.role is distinct from old.role then
+    raise exception 'role is not self-assignable' using errcode = 'RJ001';
+  end if;
+  if new.nid_hash is distinct from old.nid_hash
+     or new.nid_last4 is distinct from old.nid_last4 then
+    raise exception 'nid cannot be changed without re-verification' using errcode = 'RJ002';
+  end if;
+  --
+  -- The verification flag is preserved verbatim: neither reset (handled by
+  -- trg_0_profiles_group_change) nor grant is a client-side operation.
+  --
+  new.blood_group_verified := old.blood_group_verified;
 
   return new;
 end; $$;

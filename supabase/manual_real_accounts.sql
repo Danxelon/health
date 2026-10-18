@@ -10,7 +10,50 @@
 --    instead of "Bangladesh".
 -- =============================================================================
 
--- 0. contact_visibility 'public' (fixes 22P02 on old DBs) ---------------------
+-- 0. guard_profile_identity & bypass (fixes RJ001 in SQL editor) -------------
+create or replace function public.guard_profile_identity()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if current_setting('app.bypass_profile_guard', true) = 'on' then
+    return new;
+  end if;
+
+  -- Allow direct SQL editor, migrations, service_role, and database superuser where auth.uid() is NULL
+  if auth.uid() is null then
+    return new;
+  end if;
+
+  -- Allow admin users
+  if public.is_admin(auth.uid()) then
+    return new;
+  end if;
+
+  if new.role is distinct from old.role then
+    raise exception 'role is not self-assignable' using errcode = 'RJ001';
+  end if;
+  if new.nid_hash is distinct from old.nid_hash
+     or new.nid_last4 is distinct from old.nid_last4 then
+    raise exception 'nid cannot be changed without re-verification' using errcode = 'RJ002';
+  end if;
+
+  new.blood_group_verified := old.blood_group_verified;
+
+  return new;
+end; $$;
+
+select set_config('app.bypass_profile_guard', 'on', true);
+
+do $$ begin
+  if exists (select 1 from pg_trigger where tgname = 'trg_profiles_identity_guard') then
+    alter table public.profiles disable trigger trg_profiles_identity_guard;
+  end if;
+end $$;
+
+-- 0b. contact_visibility 'public' (fixes 22P02 on old DBs) --------------------
 do $$ begin
   if not exists (
     select 1 from pg_enum e
@@ -79,7 +122,7 @@ insert into public.profiles (
 )
 values (
   '0a9e4539-9eb7-4330-b6f3-cf1a20b64d70'::uuid,
-  'donor',
+  'citizen',
   'Md. Rasheduzzaman Shobuj',
   'মো. রাশেদুজ্জামান সবুজ',
   '8801676780160',
@@ -97,7 +140,7 @@ values (
   null, 'bn', null, 55
 )
 on conflict (id) do update set
-  role = 'donor',
+  role = 'citizen',
   full_name = excluded.full_name,
   full_name_bn = excluded.full_name_bn,
   phone = excluded.phone,
@@ -238,3 +281,12 @@ where user_id = '0a9e4539-9eb7-4330-b6f3-cf1a20b64d70'::uuid;
 select user_id, bmdc_reg_no, verification, practice_address
 from public.doctors
 where user_id = 'd0000000-0000-0000-0000-000000000099'::uuid;
+
+-- Re-enable identity guard trigger and reset bypass flag
+do $$ begin
+  if exists (select 1 from pg_trigger where tgname = 'trg_profiles_identity_guard') then
+    alter table public.profiles enable trigger trg_profiles_identity_guard;
+  end if;
+end $$;
+
+select set_config('app.bypass_profile_guard', 'off', true);

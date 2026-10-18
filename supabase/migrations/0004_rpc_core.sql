@@ -254,14 +254,8 @@ begin
     updated_at         = now()
   returning * into v_row;
 
-  -- A donor is a citizen with donor state; keep the role in step. This is a
-  -- platform-managed transition, so it uses the same controlled bypass as
-  -- registration rather than being self-assignable.
-  perform set_config('app.bypass_profile_guard', 'on', true);
-  update profiles set role = 'donor'
-   where id = v_uid and role = 'citizen';
-  perform set_config('app.bypass_profile_guard', 'off', true);
-
+  -- A donor is a citizen with registered donor state in public.donors;
+  -- role remains 'citizen'. Any citizen may be a donor or patient.
   return v_row;
 end; $$;
 

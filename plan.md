@@ -20,14 +20,12 @@ Everything else in this document is in service of those two.
 
 ## 1. Scope, roles, and the "non-negotiables"
 
-### 1.1 Roles
+### 1.1 Roles (Simplified 3-Role Model)
 | Role | How it's granted | Can do |
 |---|---|---|
-| `citizen` | self signup | request blood, search donors, book consultations, read/newsfeed, complain |
-| `donor` | citizen + donor profile + availability opt-in | everything above, plus appear in donor search, accept/decline requests |
-| `doctor` | signup **pending** → admin verifies BMDC | publish articles, accept consultations, set schedule/fees |
-| `admin` | seeded / manually promoted | verify doctors, triage complaints, verify blood banks, override requests, read audit log |
-| `blood_bank` | admin-verified institution | publish stock levels, respond to requests (Phase 3) |
+| `citizen` | self signup (default) | Core role for all citizens. Any citizen can act as a **blood donor** (by registering donor availability in `public.donors`) and/or as a **patient / seeker** (requesting blood, tracking matching donors, booking doctor consultations). Also accesses public health feed and complaint system. |
+| `doctor` | signup **pending** → admin verifies BMDC | publish articles, accept telemedicine consultations, set schedule/fees |
+| `admin` | seeded / manually promoted | verify doctors, triage complaints, manage platform records, read audit log |
 
 ### 1.2 Non-negotiables (guardrails that shape the schema)
 - **NID is never public.** It is a verification credential, not a profile field. Stored only as an HMAC hash + last 4 digits for display. This protects donors from identity theft and is the reason a donor's contact details need an *unlock* rather than being open (see §6).
@@ -79,7 +77,7 @@ This single rule is why search is an RPC rather than a table query, and why cont
 ### 3.1 Enums
 ```sql
 create type blood_group       as enum ('A+','A-','B+','B-','AB+','AB-','O+','O-');
-create type user_role         as enum ('citizen','donor','doctor','admin','blood_bank');
+create type user_role         as enum ('admin','doctor','citizen');
 create type verification_state as enum ('pending','verified','rejected','suspended');
 create type request_status    as enum ('draft','open','matching','fulfilled','expired','cancelled');
 create type request_urgency   as enum ('routine','urgent','critical');

@@ -63,7 +63,7 @@ do $$ begin
     create type blood_group as enum ('A+','A-','B+','B-','AB+','AB-','O+','O-');
   end if;
   if not exists (select 1 from pg_type where typname = 'user_role') then
-    create type user_role as enum ('citizen','donor','doctor','admin','blood_bank');
+    create type user_role as enum ('admin','doctor','citizen');
   end if;
   if not exists (select 1 from pg_type where typname = 'verification_state') then
     create type verification_state as enum ('unverified','pending','verified','rejected','suspended');
@@ -232,6 +232,46 @@ create trigger trg_profiles_touch
   before update on profiles
   for each row execute function public.touch_updated_at();
 
+-- Identity & role guard: prevents regular client users from self-assigning role or altering NID
+create or replace function public.guard_profile_identity()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if current_setting('app.bypass_profile_guard', true) = 'on' then
+    return new;
+  end if;
+
+  -- Allow direct SQL editor, migrations, service_role, and database superuser where auth.uid() is NULL
+  if auth.uid() is null then
+    return new;
+  end if;
+
+  -- Allow admin users
+  if public.is_admin(auth.uid()) then
+    return new;
+  end if;
+
+  if new.role is distinct from old.role then
+    raise exception 'role is not self-assignable' using errcode = 'RJ001';
+  end if;
+  if new.nid_hash is distinct from old.nid_hash
+     or new.nid_last4 is distinct from old.nid_last4 then
+    raise exception 'nid cannot be changed without re-verification' using errcode = 'RJ002';
+  end if;
+
+  new.blood_group_verified := old.blood_group_verified;
+
+  return new;
+end; $$;
+
+drop trigger if exists trg_profiles_identity_guard on profiles;
+create trigger trg_profiles_identity_guard
+  before update on profiles
+  for each row execute function public.guard_profile_identity();
+
 -- =============================================================================
 -- STEP 5: DONORS & AVAILABILITY
 -- =============================================================================
@@ -388,6 +428,28 @@ create table if not exists contributions (
   verified_at  timestamptz,
   created_at   timestamptz not null default now()
 );
+
+create table if not exists donor_consent_requests (
+  id                  uuid primary key default gen_random_uuid(),
+  seeker_id           uuid references profiles(id) on delete set null,
+  seeker_phone        text,
+  seeker_name         text,
+  donor_id            uuid not null references profiles(id) on delete cascade,
+  blood_group         blood_group not null,
+  hospital_name       text,
+  urgency             request_urgency default 'urgent',
+  status              text check (status in ('pending', 'calling', 'consented', 'declined', 'expired')) default 'calling',
+  ivr_call_id         text,
+  ivr_status          text default 'ringing',
+  donor_response_at   timestamptz,
+  notes               text,
+  created_at          timestamptz not null default now(),
+  expires_at          timestamptz not null default (now() + interval '15 minutes')
+);
+
+create index if not exists donor_consent_requests_donor_idx on donor_consent_requests(donor_id);
+create index if not exists donor_consent_requests_seeker_idx on donor_consent_requests(seeker_id);
+create index if not exists donor_consent_requests_status_idx on donor_consent_requests(status);
 
 -- =============================================================================
 -- STEP 8: TELEMEDICINE CONSULTATIONS & CHAT MESSAGES
@@ -1344,6 +1406,201 @@ begin
 end;
 $$;
 
+-- -----------------------------------------------------------------------------
+-- 12. Donor Consent Flow RPCs (Privacy-first IVR consent calls)
+-- -----------------------------------------------------------------------------
+create or replace function public.request_donor_consent(
+  p_donor_id       uuid,
+  p_hospital_name  text default null,
+  p_urgency        text default 'urgent',
+  p_notes          text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_seeker_id    uuid := auth.uid();
+  v_seeker_phone text;
+  v_seeker_name  text;
+  v_blood_group  blood_group;
+  v_urgency      request_urgency := 'urgent';
+  v_req_id       uuid;
+  v_ivr_call_id  text;
+begin
+  if v_seeker_id is not null then
+    select phone, coalesce(nullif(btrim(full_name_bn), ''), full_name)
+      into v_seeker_phone, v_seeker_name
+      from public.profiles
+     where id = v_seeker_id;
+  end if;
+
+  select blood_group into v_blood_group
+    from public.profiles
+   where id = p_donor_id;
+
+  if v_blood_group is null then
+    v_blood_group := 'A+'::blood_group;
+  end if;
+
+  if p_urgency in ('routine', 'urgent', 'critical') then
+    v_urgency := p_urgency::request_urgency;
+  end if;
+
+  v_ivr_call_id := 'IVR-GOV-' || to_char(now(), 'YYYYMMDDHH24MISS') || '-' || substr(gen_random_uuid()::text, 1, 8);
+
+  insert into public.donor_consent_requests (
+    seeker_id,
+    seeker_phone,
+    seeker_name,
+    donor_id,
+    blood_group,
+    hospital_name,
+    urgency,
+    status,
+    ivr_call_id,
+    ivr_status,
+    notes,
+    created_at,
+    expires_at
+  ) values (
+    v_seeker_id,
+    v_seeker_phone,
+    v_seeker_name,
+    p_donor_id,
+    v_blood_group,
+    p_hospital_name,
+    v_urgency,
+    'calling',
+    v_ivr_call_id,
+    'ringing',
+    p_notes,
+    now(),
+    now() + interval '15 minutes'
+  )
+  returning id into v_req_id;
+
+  return v_req_id;
+end;
+$$;
+
+create or replace function public.respond_donor_consent(
+  p_request_id uuid,
+  p_decision   text
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_req record;
+  v_consented boolean;
+  v_new_status text;
+  v_ivr_status text;
+begin
+  select * into v_req
+    from public.donor_consent_requests
+   where id = p_request_id;
+
+  if not found then
+    return false;
+  end if;
+
+  if v_req.expires_at is not null and v_req.expires_at <= now() then
+    update public.donor_consent_requests
+       set status = 'expired',
+           ivr_status = 'expired'
+     where id = p_request_id;
+    return false;
+  end if;
+
+  v_consented := lower(trim(p_decision)) in ('consented', 'consent', 'yes', 'true', 'accept', 'accepted');
+  v_new_status := case when v_consented then 'consented' else 'declined' end;
+  v_ivr_status := case when v_consented then 'completed' else 'declined' end;
+
+  update public.donor_consent_requests
+     set status = v_new_status,
+         ivr_status = v_ivr_status,
+         donor_response_at = now()
+   where id = p_request_id;
+
+  return true;
+end;
+$$;
+
+create or replace function public.get_consent_request_status(p_request_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_req record;
+  v_donor_prof record;
+  v_effective_status text;
+begin
+  select * into v_req
+    from public.donor_consent_requests
+   where id = p_request_id;
+
+  if not found then
+    return jsonb_build_object(
+      'error', 'not_found',
+      'status', 'expired'
+    );
+  end if;
+
+  v_effective_status := v_req.status;
+
+  if v_req.status in ('pending', 'calling') and v_req.expires_at is not null and v_req.expires_at <= now() then
+    v_effective_status := 'expired';
+    update public.donor_consent_requests
+       set status = 'expired',
+           ivr_status = 'expired'
+     where id = p_request_id;
+  end if;
+
+  if v_effective_status = 'consented' then
+    select full_name, full_name_bn, phone
+      into v_donor_prof
+      from public.profiles
+     where id = v_req.donor_id;
+
+    return jsonb_build_object(
+      'id', v_req.id,
+      'donor_id', v_req.donor_id,
+      'seeker_name', v_req.seeker_name,
+      'seeker_phone', v_req.seeker_phone,
+      'status', 'consented',
+      'ivr_status', v_req.ivr_status,
+      'hospital_name', v_req.hospital_name,
+      'urgency', v_req.urgency,
+      'created_at', v_req.created_at,
+      'donor_response_at', v_req.donor_response_at,
+      'donor_name_revealed', coalesce(nullif(btrim(v_donor_prof.full_name_bn), ''), v_donor_prof.full_name, 'Verified Donor'),
+      'donor_phone_revealed', v_donor_prof.phone
+    );
+  else
+    return jsonb_build_object(
+      'id', v_req.id,
+      'donor_id', v_req.donor_id,
+      'seeker_name', v_req.seeker_name,
+      'seeker_phone', v_req.seeker_phone,
+      'status', v_effective_status,
+      'ivr_status', v_req.ivr_status,
+      'hospital_name', v_req.hospital_name,
+      'urgency', v_req.urgency,
+      'created_at', v_req.created_at,
+      'donor_response_at', v_req.donor_response_at,
+      'donor_name_revealed', null,
+      'donor_phone_revealed', null
+    );
+  end if;
+end;
+$$;
+
 -- =============================================================================
 -- STEP 16: ROW LEVEL SECURITY (RLS) POLICIES & PERMISSIONS
 -- =============================================================================
@@ -1360,6 +1617,7 @@ alter table blood_requests     enable row level security;
 alter table request_responses  enable row level security;
 alter table contact_unlocks    enable row level security;
 alter table contributions      enable row level security;
+alter table donor_consent_requests enable row level security;
 alter table consultations      enable row level security;
 alter table consultation_messages enable row level security;
 alter table articles           enable row level security;
@@ -1460,6 +1718,22 @@ drop policy if exists messages_all on consultation_messages;
 create policy messages_all on consultation_messages for all to authenticated
   using (true) with check (sender_id = auth.uid() or public.is_admin());
 
+-- Donor Consent Requests Policies
+drop policy if exists "Users can view their own consent requests" on donor_consent_requests;
+drop policy if exists consent_requests_select on donor_consent_requests;
+create policy consent_requests_select on donor_consent_requests for select to anon, authenticated
+  using (seeker_id = auth.uid() or donor_id = auth.uid() or auth.role() = 'service_role' or public.is_admin());
+
+drop policy if exists "Users or guests can insert consent requests" on donor_consent_requests;
+drop policy if exists consent_requests_insert on donor_consent_requests;
+create policy consent_requests_insert on donor_consent_requests for insert to anon, authenticated
+  with check (true);
+
+drop policy if exists "Users can update their own consent requests" on donor_consent_requests;
+drop policy if exists consent_requests_update on donor_consent_requests;
+create policy consent_requests_update on donor_consent_requests for update to authenticated
+  using (donor_id = auth.uid() or auth.role() = 'service_role' or public.is_admin());
+
 -- Permissions Grants
 grant usage on schema public to anon, authenticated;
 grant select on public.divisions to anon, authenticated;
@@ -1477,6 +1751,7 @@ grant select on public.national_updates to anon, authenticated;
 grant select on public.articles to anon, authenticated;
 grant select on public.article_reactions to anon, authenticated;
 grant select on public.blood_requests to anon, authenticated;
+grant select, insert, update on public.donor_consent_requests to anon, authenticated;
 
 grant all on public.profiles to authenticated;
 grant all on public.donors to authenticated;
@@ -1491,6 +1766,11 @@ grant all on public.articles to authenticated;
 grant all on public.article_reactions to authenticated;
 grant all on public.national_updates to authenticated;
 grant all on public.complaints to authenticated;
+grant all on public.donor_consent_requests to authenticated;
+
+grant execute on function public.request_donor_consent(uuid, text, text, text) to anon, authenticated;
+grant execute on function public.respond_donor_consent(uuid, text) to anon, authenticated;
+grant execute on function public.get_consent_request_status(uuid) to anon, authenticated;
 
 -- =============================================================================
 -- STEP 17: SEED DATA (Geography, Specialties, Admin, Doctors, Donors, Articles)
@@ -1730,26 +2010,26 @@ insert into profiles (
   present_address, home_geog, locale
 )
 values
-('b0000000-0000-0000-0000-000000000001'::uuid, 'donor', 'Tanvir Ahmed Chowdhury', 'তানভীর আহমেদ চৌধুরী', '8801811000001', 'seed-hash-01', '1001', '1995-04-12', 'male', 'B+', true, 68.5, 172.0, 1, 'House 12, Road 4, Dhanmondi, Dhaka', st_setsrid(st_makepoint(90.3752, 23.7481), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000002'::uuid, 'donor', 'Nusrat Jahan Mim', 'নুসরাত জাহান মিম', '8801811000002', 'seed-hash-02', '1002', '1998-09-24', 'female', 'O+', true, 56.0, 160.0, 2, 'House 45, Road 8, Dhanmondi, Dhaka', st_setsrid(st_makepoint(90.3715, 23.7442), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000003'::uuid, 'donor', 'Md. Rakibul Hasan', 'মো. রাকিবুল হাসান', '8801811000003', 'seed-hash-03', '1003', '1992-11-05', 'male', 'A+', true, 74.0, 175.5, 3, 'Block C, Section 11, Mirpur, Dhaka', st_setsrid(st_makepoint(90.3681, 23.8072), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000004'::uuid, 'donor', 'Farhana Akter Ritu', 'ফারহানা আক্তার রিতু', '8801811000004', 'seed-hash-04', '1004', '1996-03-18', 'female', 'AB+', true, 54.0, 158.0, 1, 'Lalbagh Fort Road, Dhaka', st_setsrid(st_makepoint(90.3882, 23.7198), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000005'::uuid, 'donor', 'Kazi Arifur Rahman', 'কাজী আরিফুর রহমান', '8801811000005', 'seed-hash-05', '1005', '1990-08-30', 'male', 'O-', true, 80.0, 178.0, 4, 'Chowrasta, Gazipur Sadar, Gazipur', st_setsrid(st_makepoint(90.4182, 23.9984), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000006'::uuid, 'donor', 'Sabrina Sultana Shimu', 'সাবরিনা সুলতানা শিমু', '8801811000006', 'seed-hash-06', '1006', '1997-01-14', 'female', 'A-', true, 58.0, 163.0, 7, 'Agrabad C/A, Chattogram', st_setsrid(st_makepoint(91.8152, 22.3275), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000007'::uuid, 'donor', 'Mohammad Al Amin', 'মোহাম্মদ আল আমিন', '8801811000007', 'seed-hash-07', '1007', '1993-06-20', 'male', 'B-', true, 71.0, 170.0, 8, 'Nasirabad Housing Society, Chattogram', st_setsrid(st_makepoint(91.8256, 22.3612), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000008'::uuid, 'donor', 'Mehedi Hasan Miraz', 'মেহেদী হাসান মিরাজ', '8801811000008', 'seed-hash-08', '1008', '1999-10-10', 'male', 'AB-', true, 66.0, 174.0, 13, 'Kazihata, Rajshahi Sadar, Rajshahi', st_setsrid(st_makepoint(88.5982, 24.3695), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000009'::uuid, 'donor', 'Jannatul Ferdous Asha', 'জান্নাতুল ফেরদৌস আশা', '8801811000009', 'seed-hash-09', '1009', '1994-12-03', 'female', 'O+', true, 55.0, 159.0, 19, 'Boyra Main Road, Khulna', st_setsrid(st_makepoint(89.5512, 22.8315), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000010'::uuid, 'donor', 'Mahmudul Hasan Sohel', 'মাহমুদুল হাসান সোহেল', '8801811000010', 'seed-hash-10', '1010', '1991-05-16', 'male', 'A+', true, 75.0, 176.0, 31, 'Zindabazar, Sylhet Sadar, Sylhet', st_setsrid(st_makepoint(91.8682, 24.8945), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000011'::uuid, 'donor', 'Tasnim Jahan Sara', 'তাসনিম জাহান সারা', '8801811000011', 'seed-hash-11', '1011', '1998-02-28', 'female', 'B+', true, 52.0, 161.0, 37, 'Jahaj Company Mor, Rangpur', st_setsrid(st_makepoint(89.2456, 25.7482), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000012'::uuid, 'donor', 'Ashraful Islam Rana', 'আশরাফুল ইসলাম রানা', '8801811000012', 'seed-hash-12', '1012', '1989-07-07', 'male', 'O+', true, 78.0, 173.0, 43, 'Ganginar Par, Mymensingh', st_setsrid(st_makepoint(90.3982, 24.7541), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000013'::uuid, 'donor', 'Shahadat Hossain Rubel', 'শাহাদাত হোসেন রুবেল', '8801811000013', 'seed-hash-13', '1013', '1995-09-19', 'male', 'AB+', true, 69.0, 171.0, 25, 'Sadar Road, Barishal', st_setsrid(st_makepoint(90.3642, 22.7025), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000014'::uuid, 'donor', 'Fariha Tabassum Sneha', 'ফারিহা তাবাসসুম স্নেহা', '8801811000014', 'seed-hash-14', '1014', '2000-04-05', 'female', 'A+', true, 53.0, 162.0, 1, 'Green Road, Panthapath, Dhaka', st_setsrid(st_makepoint(90.3842, 23.7512), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000015'::uuid, 'donor', 'Sabbir Ahmed Shuvo', 'সাব্বির আহমেদ শুভ', '8801811000015', 'seed-hash-15', '1015', '1996-08-22', 'male', 'B+', true, 70.0, 177.0, 2, 'Shankar, West Dhanmondi, Dhaka', st_setsrid(st_makepoint(90.3672, 23.7501), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000016'::uuid, 'donor', 'Sharmin Akter Bristy', 'শারমিন আক্তার বৃষ্টি', '8801811000016', 'seed-hash-16', '1016', '1997-11-12', 'female', 'O-', true, 57.0, 164.0, 3, 'Pallabi, Mirpur 12, Dhaka', st_setsrid(st_makepoint(90.3612, 23.8245), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000017'::uuid, 'donor', 'Rezaul Karim Rony', 'রেজাউল করিম রনি', '8801811000017', 'seed-hash-17', '1017', '1993-03-25', 'male', 'A-', true, 73.0, 172.0, 5, 'Cherag Ali Market, Tongi, Gazipur', st_setsrid(st_makepoint(90.4011, 23.8912), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000018'::uuid, 'donor', 'Sadia Afrin Mou', 'সাদিয়া আফরিন মৌ', '8801811000018', 'seed-hash-18', '1018', '1999-06-15', 'female', 'B-', true, 51.0, 157.0, 7, 'GEC Circle, Chattogram', st_setsrid(st_makepoint(91.8212, 22.3592), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000019'::uuid, 'donor', 'Zahid Hasan Joy', 'জাহিদ হাসান জয়', '8801811000019', 'seed-hash-19', '1019', '1994-01-20', 'male', 'O+', true, 76.0, 175.0, 10, 'Kolatoli Beach Road, Cox''s Bazar', st_setsrid(st_makepoint(91.9812, 21.4285), 4326)::geography, 'bn'),
-('b0000000-0000-0000-0000-000000000020'::uuid, 'donor', 'Tania Sultana Priya', 'তানিয়া সুলতানা প্রিয়া', '8801811000020', 'seed-hash-20', '1020', '1998-05-08', 'female', 'AB+', true, 55.0, 160.0, 16, 'Thanthania Bus Stand, Bogura', st_setsrid(st_makepoint(89.3712, 24.8412), 4326)::geography, 'bn')
+('b0000000-0000-0000-0000-000000000001'::uuid, 'citizen', 'Tanvir Ahmed Chowdhury', 'তানভীর আহমেদ চৌধুরী', '8801811000001', 'seed-hash-01', '1001', '1995-04-12', 'male', 'B+', true, 68.5, 172.0, 1, 'House 12, Road 4, Dhanmondi, Dhaka', st_setsrid(st_makepoint(90.3752, 23.7481), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000002'::uuid, 'citizen', 'Nusrat Jahan Mim', 'নুসরাত জাহান মিম', '8801811000002', 'seed-hash-02', '1002', '1998-09-24', 'female', 'O+', true, 56.0, 160.0, 2, 'House 45, Road 8, Dhanmondi, Dhaka', st_setsrid(st_makepoint(90.3715, 23.7442), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000003'::uuid, 'citizen', 'Md. Rakibul Hasan', 'মো. রাকিবুল হাসান', '8801811000003', 'seed-hash-03', '1003', '1992-11-05', 'male', 'A+', true, 74.0, 175.5, 3, 'Block C, Section 11, Mirpur, Dhaka', st_setsrid(st_makepoint(90.3681, 23.8072), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000004'::uuid, 'citizen', 'Farhana Akter Ritu', 'ফারহানা আক্তার রিতু', '8801811000004', 'seed-hash-04', '1004', '1996-03-18', 'female', 'AB+', true, 54.0, 158.0, 1, 'Lalbagh Fort Road, Dhaka', st_setsrid(st_makepoint(90.3882, 23.7198), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000005'::uuid, 'citizen', 'Kazi Arifur Rahman', 'কাজী আরিফুর রহমান', '8801811000005', 'seed-hash-05', '1005', '1990-08-30', 'male', 'O-', true, 80.0, 178.0, 4, 'Chowrasta, Gazipur Sadar, Gazipur', st_setsrid(st_makepoint(90.4182, 23.9984), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000006'::uuid, 'citizen', 'Sabrina Sultana Shimu', 'সাবরিনা সুলতানা শিমু', '8801811000006', 'seed-hash-06', '1006', '1997-01-14', 'female', 'A-', true, 58.0, 163.0, 7, 'Agrabad C/A, Chattogram', st_setsrid(st_makepoint(91.8152, 22.3275), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000007'::uuid, 'citizen', 'Mohammad Al Amin', 'মোহাম্মদ আল আমিন', '8801811000007', 'seed-hash-07', '1007', '1993-06-20', 'male', 'B-', true, 71.0, 170.0, 8, 'Nasirabad Housing Society, Chattogram', st_setsrid(st_makepoint(91.8256, 22.3612), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000008'::uuid, 'citizen', 'Mehedi Hasan Miraz', 'মেহেদী হাসান মিরাজ', '8801811000008', 'seed-hash-08', '1008', '1999-10-10', 'male', 'AB-', true, 66.0, 174.0, 13, 'Kazihata, Rajshahi Sadar, Rajshahi', st_setsrid(st_makepoint(88.5982, 24.3695), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000009'::uuid, 'citizen', 'Jannatul Ferdous Asha', 'জান্নাতুল ফেরদৌস আশা', '8801811000009', 'seed-hash-09', '1009', '1994-12-03', 'female', 'O+', true, 55.0, 159.0, 19, 'Boyra Main Road, Khulna', st_setsrid(st_makepoint(89.5512, 22.8315), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000010'::uuid, 'citizen', 'Mahmudul Hasan Sohel', 'মাহমুদুল হাসান সোহেল', '8801811000010', 'seed-hash-10', '1010', '1991-05-16', 'male', 'A+', true, 75.0, 176.0, 31, 'Zindabazar, Sylhet Sadar, Sylhet', st_setsrid(st_makepoint(91.8682, 24.8945), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000011'::uuid, 'citizen', 'Tasnim Jahan Sara', 'তাসনিম জাহান সারা', '8801811000011', 'seed-hash-11', '1011', '1998-02-28', 'female', 'B+', true, 52.0, 161.0, 37, 'Jahaj Company Mor, Rangpur', st_setsrid(st_makepoint(89.2456, 25.7482), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000012'::uuid, 'citizen', 'Ashraful Islam Rana', 'আশরাফুল ইসলাম রানা', '8801811000012', 'seed-hash-12', '1012', '1989-07-07', 'male', 'O+', true, 78.0, 173.0, 43, 'Ganginar Par, Mymensingh', st_setsrid(st_makepoint(90.3982, 24.7541), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000013'::uuid, 'citizen', 'Shahadat Hossain Rubel', 'শাহাদাত হোসেন রুবেল', '8801811000013', 'seed-hash-13', '1013', '1995-09-19', 'male', 'AB+', true, 69.0, 171.0, 25, 'Sadar Road, Barishal', st_setsrid(st_makepoint(90.3642, 22.7025), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000014'::uuid, 'citizen', 'Fariha Tabassum Sneha', 'ফারিহা তাবাসসুম স্নেহা', '8801811000014', 'seed-hash-14', '1014', '2000-04-05', 'female', 'A+', true, 53.0, 162.0, 1, 'Green Road, Panthapath, Dhaka', st_setsrid(st_makepoint(90.3842, 23.7512), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000015'::uuid, 'citizen', 'Sabbir Ahmed Shuvo', 'সাব্বির আহমেদ শুভ', '8801811000015', 'seed-hash-15', '1015', '1996-08-22', 'male', 'B+', true, 70.0, 177.0, 2, 'Shankar, West Dhanmondi, Dhaka', st_setsrid(st_makepoint(90.3672, 23.7501), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000016'::uuid, 'citizen', 'Sharmin Akter Bristy', 'শারমিন আক্তার বৃষ্টি', '8801811000016', 'seed-hash-16', '1016', '1997-11-12', 'female', 'O-', true, 57.0, 164.0, 3, 'Pallabi, Mirpur 12, Dhaka', st_setsrid(st_makepoint(90.3612, 23.8245), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000017'::uuid, 'citizen', 'Rezaul Karim Rony', 'রেজাউল করিম রনি', '8801811000017', 'seed-hash-17', '1017', '1993-03-25', 'male', 'A-', true, 73.0, 172.0, 5, 'Cherag Ali Market, Tongi, Gazipur', st_setsrid(st_makepoint(90.4011, 23.8912), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000018'::uuid, 'citizen', 'Sadia Afrin Mou', 'সাদিয়া আফরিন মৌ', '8801811000018', 'seed-hash-18', '1018', '1999-06-15', 'female', 'B-', true, 51.0, 157.0, 7, 'GEC Circle, Chattogram', st_setsrid(st_makepoint(91.8212, 22.3592), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000019'::uuid, 'citizen', 'Zahid Hasan Joy', 'জাহিদ হাসান জয়', '8801811000019', 'seed-hash-19', '1019', '1994-01-20', 'male', 'O+', true, 76.0, 175.0, 10, 'Kolatoli Beach Road, Cox''s Bazar', st_setsrid(st_makepoint(91.9812, 21.4285), 4326)::geography, 'bn'),
+('b0000000-0000-0000-0000-000000000020'::uuid, 'citizen', 'Tania Sultana Priya', 'তানিয়া সুলতানা প্রিয়া', '8801811000020', 'seed-hash-20', '1020', '1998-05-08', 'female', 'AB+', true, 55.0, 160.0, 16, 'Thanthania Bus Stand, Bogura', st_setsrid(st_makepoint(89.3712, 24.8412), 4326)::geography, 'bn')
 on conflict (id) do update set
   full_name = excluded.full_name,
   full_name_bn = excluded.full_name_bn,

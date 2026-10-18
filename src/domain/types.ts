@@ -45,7 +45,7 @@ export type DonorTempStatus = (typeof DONOR_TEMP_STATUSES)[number];
 export const CONTACT_VISIBILITIES = ["on_unlock", "private_admin", "public"] as const;
 export type ContactVisibility = (typeof CONTACT_VISIBILITIES)[number];
 
-export const USER_ROLES = ["citizen", "donor", "doctor", "admin"] as const;
+export const USER_ROLES = ["admin", "doctor", "citizen"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 export const VERIFICATION_STATES = [
@@ -66,6 +66,29 @@ export const CONSULTATION_STATUSES = [
   "declined",
 ] as const;
 export type ConsultationStatus = (typeof CONSULTATION_STATUSES)[number];
+
+export const CONSENT_STATUSES = [
+  "pending",
+  "calling",
+  "consented",
+  "declined",
+  "expired",
+] as const;
+export type ConsentStatus = "pending" | "calling" | "consented" | "declined" | "expired";
+
+export interface DonorConsentRequest {
+  id: string;
+  donor_id: string;
+  seeker_name?: string;
+  seeker_phone?: string;
+  hospital_name?: string;
+  urgency?: RequestUrgency;
+  status: ConsentStatus;
+  ivr_status?: string;
+  created_at: string;
+  donor_phone_revealed?: string;
+  donor_name_revealed?: string;
+}
 
 /** Distance bands. Deliberately coarse: a public card never shows sub-km truth. */
 export const DISTANCE_BANDS = [
