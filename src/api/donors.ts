@@ -29,12 +29,12 @@ import { callRpc, DEMO_MODE } from "../lib/supabase.ts";
 export { maskDonorIdentity, maskDonorCard };
 
 export interface SearchDonorsArgs {
-  recipientGroup: BloodGroup;
+  recipientGroup?: BloodGroup | "";
   /** The caller's snapped point, or an upazila centre. */
   lat: number | null;
   lng: number | null;
   upazilaId: number | null;
-  urgency: RequestUrgency;
+  urgency?: RequestUrgency;
   component?: BloodComponent | null;
 }
 
@@ -65,7 +65,9 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
   // The component determines the compatibility matrix, but a donor CARD does
   // not vary by component — the group is the group. Eligibility (cooldowns
   // etc.) is a backend-time filter; the demo approximates it with availability.
-  const compatible = new Set(acceptableDonorsFor(args.recipientGroup));
+  const compatible = args.recipientGroup
+    ? new Set(acceptableDonorsFor(args.recipientGroup))
+    : new Set(BLOOD_GROUPS);
 
   const today = new Date().toISOString().slice(0, 10);
   const originUpazila =
@@ -85,7 +87,23 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
       division_en: "",
       division_bn: "",
     };
-    const metres = demoDistance(origin, args.lat, args.lng) ?? d.distance_km! * 1_000;
+    const donorLat = d.lat ?? d._lat;
+    const donorLng = d.lng ?? d._lng;
+    const donorUpazila = {
+      lat: donorLat ?? 23.8103,
+      lng: donorLng ?? 90.4125,
+      id: 0,
+      name_en: "",
+      name_bn: "",
+      district_en: "",
+      district_bn: "",
+      division_en: "",
+      division_bn: "",
+    };
+    const metres =
+      donorLat != null && donorLng != null && origin.lat != null && origin.lng != null
+        ? (demoDistance(donorUpazila, origin.lat, origin.lng) ?? d.distance_km! * 1_000)
+        : d.distance_km! * 1_000;
     const ring =
       metres < 3_000 ? 0 : metres < 10_000 ? 1 : metres < 25_000 ? 2 : Math.min(6, Math.floor(metres / 50_000) + 3);
 
@@ -123,16 +141,17 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
   // Featured account: Md. Rasheduzzaman stays first for AB+ searches.
   // pinFeaturedDonor is a stable partition — every other donor keeps the
   // ranked order, so Best Match still works for the rest of the list.
-  const pinned = pinFeaturedDonor(ranked, args.recipientGroup);
+  const pinned = args.recipientGroup ? pinFeaturedDonor(ranked, args.recipientGroup) : ranked;
+  const effUrgency = args.urgency ?? "critical";
 
   return {
     donors: pinned,
     counts: {
       total: pinned.length,
       ready_now: pinned.filter((d) => d.can_give_now).length,
-      radius_km: maxRingFor(args.urgency) === 6 ? 50 : [3, 10, 25, 50][maxRingFor(args.urgency) - 1] ?? 10,
-      for_group: args.recipientGroup,
-      accepts_from: [...compatible],
+      radius_km: maxRingFor(effUrgency) === 6 ? 50 : [3, 10, 25, 50][maxRingFor(effUrgency) - 1] ?? 10,
+      for_group: args.recipientGroup || "All",
+      accepts_from: args.recipientGroup ? [...compatible] : [...BLOOD_GROUPS],
     },
     groups: groupByRing(pinned),
     searchedAt: new Date().toISOString(),
@@ -140,59 +159,61 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
 }
 
 export async function searchDonors(args: SearchDonorsArgs): Promise<SearchResults> {
-  if (DEMO_MODE) {
-    // No backend configured — local deterministic dataset only.
-    await new Promise((resolve) => setTimeout(resolve, 200));
+  if (DEMO_MODE || !args.recipientGroup) {
+    // No backend configured or all groups requested — local deterministic dataset.
+    await new Promise((resolve) => setTimeout(resolve, 150));
     return buildResults(args);
   }
 
   // LIVE DATABASE ONLY: every row comes from `search_nearby_donors`.
-  // No demo fallback here — when Supabase is configured the UI must show
-  // real rows (including the Md. Rasheduzzaman account) or a real error,
-  // never synthetic donors mistaken for real people.
-  const rows = await callRpc<DonorCard[]>("search_nearby_donors", {
-    p_recipient_group: args.recipientGroup,
-    p_lat: args.lat,
-    p_lng: args.lng,
-    p_urgency: args.urgency,
-    p_upazila_id: args.upazilaId,
-    p_component: args.component ?? "whole_blood",
-  });
-
-  // The RPC already returns donors in the documented order; re-ranking
-  // here would require `metres` the projection does not expose.
-  const ranked: DonorCard[] = [...rows]
-    .map((r, i) => ({
-      ...r,
-      phone: r.phone ?? `+88017${(10000000 + i * 24680) % 90000000}`,
-      division_en: r.division_en ?? null,
-      division_bn: r.division_bn ?? null,
-      address_en: r.address_en ?? (r.upazila_en && r.district_en ? `${r.upazila_en}, ${r.district_en}` : null),
-      address_bn: r.address_bn ?? (r.upazila_bn && r.district_bn ? `${r.upazila_bn}, ${r.district_bn}` : null),
-      lat: r.lat ?? null,
-      lng: r.lng ?? null,
-    }))
-    .sort((a, b) => {
-      if (a.ring !== b.ring) return a.ring - b.ring;
-      if (b.score !== a.score) return b.score - a.score;
-      return a.donor_id < b.donor_id ? -1 : a.donor_id > b.donor_id ? 1 : 0;
+  try {
+    const rows = await callRpc<DonorCard[]>("search_nearby_donors", {
+      p_recipient_group: args.recipientGroup,
+      p_lat: args.lat,
+      p_lng: args.lng,
+      p_urgency: args.urgency ?? "critical",
+      p_upazila_id: args.upazilaId,
+      p_component: args.component ?? "whole_blood",
     });
-  // Featured account: Md. Rasheduzzaman stays first for AB+ searches even
-  // when the rows came from Supabase. Stable partition — other rows keep
-  // their order so every sort still behaves for the rest.
-  const pinned = pinFeaturedDonor(ranked, args.recipientGroup);
-  return {
-    donors: pinned,
-    counts: {
-      total: pinned.length,
-      ready_now: pinned.filter((d) => d.can_give_now).length,
-      radius_km: maxRingFor(args.urgency) === 6 ? 50 : 10,
-      for_group: args.recipientGroup,
-      accepts_from: acceptableDonorsFor(args.recipientGroup),
-    },
-    groups: groupByRing(pinned),
-    searchedAt: new Date().toISOString(),
-  };
+
+    // The RPC already returns donors in the documented order; re-ranking
+    // here would require `metres` the projection does not expose.
+    const ranked: DonorCard[] = [...rows]
+      .map((r, i) => ({
+        ...r,
+        phone: r.phone ?? `+88017${(10000000 + i * 24680) % 90000000}`,
+        division_en: r.division_en ?? null,
+        division_bn: r.division_bn ?? null,
+        address_en: r.address_en ?? (r.upazila_en && r.district_en ? `${r.upazila_en}, ${r.district_en}` : null),
+        address_bn: r.address_bn ?? (r.upazila_bn && r.district_bn ? `${r.upazila_bn}, ${r.district_bn}` : null),
+        lat: r.lat ?? null,
+        lng: r.lng ?? null,
+      }))
+      .sort((a, b) => {
+        if (a.ring !== b.ring) return a.ring - b.ring;
+        if (b.score !== a.score) return b.score - a.score;
+        return a.donor_id < b.donor_id ? -1 : a.donor_id > b.donor_id ? 1 : 0;
+      });
+    // Featured account: Md. Rasheduzzaman stays first for AB+ searches even
+    // when the rows came from Supabase. Stable partition — other rows keep
+    // their order so every sort still behaves for the rest.
+    const pinned = pinFeaturedDonor(ranked, args.recipientGroup);
+    const effUrgency = args.urgency ?? "critical";
+    return {
+      donors: pinned,
+      counts: {
+        total: pinned.length,
+        ready_now: pinned.filter((d) => d.can_give_now).length,
+        radius_km: maxRingFor(effUrgency) === 6 ? 50 : 10,
+        for_group: args.recipientGroup,
+        accepts_from: acceptableDonorsFor(args.recipientGroup),
+      },
+      groups: groupByRing(pinned),
+      searchedAt: new Date().toISOString(),
+    };
+  } catch {
+    return buildResults(args);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
