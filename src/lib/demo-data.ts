@@ -283,7 +283,6 @@ function makeDonor(index: number): DonorCard & {
   date_of_birth: string;
   age: number;
 } {
-  const upazila = pick(DEMO_UPAZILAS);
   const isFemale = rng() < 0.38;
   const name = sample3WordName(isFemale);
   let fullName = name.en;
