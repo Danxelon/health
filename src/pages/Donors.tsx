@@ -57,10 +57,11 @@ export default function Donors() {
   const [matchMode, setMatchMode] = useState<MatchMode>("exact");
   const [selectedUrgency, setSelectedUrgency] = useState<RequestUrgency>("routine");
 
-  // Area sort-out options (without live location)
+  // Area & donor filters
   const [selectedDivision, setSelectedDivision] = useState<string>("");
   const [selectedUpazila, setSelectedUpazila] = useState<number | "">("");
   const [areaSearchQuery, setAreaSearchQuery] = useState<string>("");
+  const [availabilityFilter, setAvailabilityFilter] = useState<"all" | "ready">("all");
   const [sortBy, setSortBy] = useState<AreaSortOption>("match");
 
   const [results, setResults] = useState<SearchResults | null>(null);
@@ -106,21 +107,41 @@ export default function Donors() {
     return Array.from(set).sort();
   }, []);
 
+  const hasActiveFilters = Boolean(
+    selectedDivision ||
+    selectedUpazila !== "" ||
+    areaSearchQuery.trim() ||
+    availabilityFilter !== "all" ||
+    selectedGroup !== "O+"
+  );
+
+  const handleResetFilters = () => {
+    setSelectedDivision("");
+    setSelectedUpazila("");
+    setAreaSearchQuery("");
+    setAvailabilityFilter("all");
+    setSelectedGroup("O+");
+  };
+
   // Filter upazilas based on division and text search
   const filteredUpazilas = useMemo(() => {
-    return DEMO_UPAZILAS.filter((u) => {
-      if (selectedDivision && u.division_en !== selectedDivision) return false;
-      if (areaSearchQuery.trim()) {
-        const q = areaSearchQuery.toLowerCase();
-        const matchesName =
-          u.name_en.toLowerCase().includes(q) ||
-          u.name_bn.includes(q) ||
-          u.district_en.toLowerCase().includes(q) ||
-          u.district_bn.includes(q);
-        if (!matchesName) return false;
-      }
-      return true;
+    const list = selectedDivision
+      ? DEMO_UPAZILAS.filter((u) => u.division_en === selectedDivision)
+      : DEMO_UPAZILAS;
+
+    if (!areaSearchQuery.trim()) return list;
+
+    const q = areaSearchQuery.trim().toLowerCase();
+    const matched = list.filter((u) => {
+      return (
+        u.name_en.toLowerCase().includes(q) ||
+        u.name_bn.includes(q) ||
+        u.district_en.toLowerCase().includes(q) ||
+        u.district_bn.includes(q)
+      );
     });
+
+    return matched.length > 0 ? matched : list;
   }, [selectedDivision, areaSearchQuery]);
 
   const doSearch = async (args: SearchDonorsArgs) => {
@@ -140,7 +161,6 @@ export default function Donors() {
   // Auto-search whenever blood group, area, urgency, or match mode changes
   useEffect(() => {
     if (!isLoggedIn) return;
-    if (!selectedGroup) return;
 
     const upazila = DEMO_UPAZILAS.find((u) => u.id === Number(selectedUpazila));
     const divisionCentre = selectedDivision
@@ -168,7 +188,6 @@ export default function Donors() {
       openLoginModal("/donors");
       return;
     }
-    if (!selectedGroup) return;
 
     const upazila = DEMO_UPAZILAS.find((u) => u.id === Number(selectedUpazila));
     const divisionCentre = selectedDivision
@@ -388,21 +407,40 @@ export default function Donors() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <label className="text-sm font-bold text-ink">
-                {t("donors.patientGroup")} <span className="text-brand">*</span>
+                {t("donors.patientGroup")}
               </label>
               <span className="text-xs text-muted">
                 {lang === "bn" ? "রক্তের গ্রুপে চাপ দিন" : "Click to pick blood group"}
               </span>
             </div>
 
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2.5 sm:gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-9 gap-2 sm:gap-2.5">
+              {/* "All" button */}
+              <button
+                type="button"
+                onClick={() => setSelectedGroup("")}
+                className={`h-14 sm:h-16 flex flex-col items-center justify-center rounded-2xl border font-black transition-all cursor-pointer ${
+                  selectedGroup === ""
+                    ? "border-brand bg-brand text-white shadow-md scale-105 ring-2 ring-brand ring-offset-2 ring-offset-surface"
+                    : "border-line bg-surface text-ink hover:border-brand/50 hover:bg-brand-soft/30 hover:scale-102"
+                }`}
+                aria-pressed={selectedGroup === ""}
+              >
+                <span className="text-xs opacity-75 font-semibold">
+                  <Droplet className={`h-3 w-3 ${selectedGroup === "" ? "fill-white" : "text-brand"}`} />
+                </span>
+                <span className="text-sm sm:text-base leading-tight font-bold mt-0.5">
+                  {lang === "bn" ? "সকল" : "All"}
+                </span>
+              </button>
+
               {BLOOD_GROUPS.map((g) => {
                 const isSelected = selectedGroup === g;
                 return (
                   <button
                     key={g}
                     type="button"
-                    onClick={() => setSelectedGroup(g)}
+                    onClick={() => setSelectedGroup(isSelected ? "" : g)}
                     className={`h-14 sm:h-16 flex flex-col items-center justify-center rounded-2xl border font-black transition-all cursor-pointer ${
                       isSelected
                         ? "border-brand bg-brand text-white shadow-md scale-105 ring-2 ring-brand ring-offset-2 ring-offset-surface"
@@ -453,13 +491,25 @@ export default function Donors() {
 
           {/* Area Sort-Out Filter & Urgency */}
           <div className="pt-4 border-t border-line">
-            <div className="flex items-center gap-2 mb-3 text-xs font-bold uppercase tracking-wider text-muted">
-              <Filter className="h-3.5 w-3.5" />
-              <span>{lang === "bn" ? "এলাকা ও অগ্রাধিকার ফিল্টার" : "Area & Urgency Filters"}</span>
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted">
+                <Filter className="h-3.5 w-3.5" />
+                <span>{lang === "bn" ? "রক্তদাতা ফিল্টার সমূহ" : "Donor Filters"}</span>
+              </div>
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="text-xs font-bold text-brand hover:text-brand-deep cursor-pointer flex items-center gap-1"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  <span>{lang === "bn" ? "সব ফিল্টার মুছুন" : "Clear Filters"}</span>
+                </button>
+              )}
             </div>
 
             <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-5 items-end">
-              {/* Division Sort Option */}
+              {/* Division Filter */}
               <div>
                 <label className="block text-xs font-bold text-ink mb-1.5">
                   {lang === "bn" ? "বিভাগ" : "Division"}
@@ -519,34 +569,68 @@ export default function Donors() {
                 </select>
               </div>
 
-              {/* Urgency Level */}
+              {/* Name or Area Quick Search */}
               <div>
                 <label className="block text-xs font-bold text-ink mb-1.5">
-                  {t("donors.urgency")}
+                  {lang === "bn" ? "নাম বা এলাকা খুঁজুন" : "Search Name or Area"}
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={areaSearchQuery}
+                    onChange={(e) => setAreaSearchQuery(e.target.value)}
+                    placeholder={lang === "bn" ? "যেমন: তানভীর, ধানমন্ডি..." : "e.g. Tanvir, Dhanmondi..."}
+                    className="w-full h-12 sm:h-11 rounded-xl border border-line bg-surface pl-3 pr-8 text-base sm:text-sm text-ink outline-none focus:border-brand font-medium placeholder:text-muted/60"
+                  />
+                  {areaSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setAreaSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink cursor-pointer"
+                      title={lang === "bn" ? "মুছুন" : "Clear"}
+                      aria-label={lang === "bn" ? "মুছুন" : "Clear"}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Availability Filter */}
+              <div>
+                <label className="block text-xs font-bold text-ink mb-1.5">
+                  {lang === "bn" ? "প্রস্তুত অবস্থা" : "Availability"}
                 </label>
                 <select
-                  value={selectedUrgency}
-                  onChange={(e) => setSelectedUrgency(e.target.value as RequestUrgency)}
+                  value={availabilityFilter}
+                  onChange={(e) => setAvailabilityFilter(e.target.value as "all" | "ready")}
                   className="w-full h-12 sm:h-11 rounded-xl border border-line bg-surface px-3 text-base sm:text-sm text-ink outline-none focus:border-brand font-medium"
                 >
-                  {(["routine", "urgent", "critical"] as RequestUrgency[]).map((u) => (
-                    <option key={u} value={u}>
-                      {URGENCY_LABELS[u][lang]}
-                    </option>
-                  ))}
+                  <option value="all">{lang === "bn" ? "সকল রক্তদাতা" : "All Donors"}</option>
+                  <option value="ready">{lang === "bn" ? "এখনই প্রস্তুত (Ready)" : "Ready to Donate Now"}</option>
                 </select>
               </div>
 
-              {/* Search Submit CTA */}
-              <div>
+              {/* Search Submit CTA & Reset */}
+              <div className="flex gap-2">
                 <button
                   type="submit"
-                  disabled={loading || !selectedGroup}
-                  className="w-full inline-flex h-12 sm:h-11 min-h-[44px] items-center justify-center gap-2 rounded-xl bg-brand px-6 text-sm font-bold text-white disabled:opacity-40 hover:bg-brand-deep transition-all shadow-xs cursor-pointer active:scale-98"
+                  disabled={loading}
+                  className="flex-1 inline-flex h-12 sm:h-11 min-h-[44px] items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-bold text-white disabled:opacity-40 hover:bg-brand-deep transition-all shadow-xs cursor-pointer active:scale-98"
                 >
                   <Search className="h-4 w-4" aria-hidden="true" />
-                  {loading ? t("common.loading") : t("common.search")}
+                  <span>{loading ? t("common.loading") : t("common.search")}</span>
                 </button>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    title={lang === "bn" ? "সব ফিল্টার মুছুন" : "Reset Filters"}
+                    className="inline-flex h-12 sm:h-11 min-h-[44px] w-11 items-center justify-center rounded-xl border border-line bg-surface text-muted hover:text-ink hover:bg-elevated transition-colors cursor-pointer shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -852,7 +936,7 @@ export default function Donors() {
         onClose={() => setConsentModalDonor(null)}
         onConsent={handleDonorConsented}
         isConsented={consentModalDonor ? consentedDonorIds.has(consentModalDonor.donor_id) : false}
-        initialUrgency={selectedUrgency}
+        initialUrgency="urgent"
         nextDonor={nextConsentDonor}
         onSelectNextDonor={(d) => setConsentModalDonor(d)}
         lang={lang}
