@@ -286,9 +286,30 @@ function makeDonor(index: number): DonorCard & {
   const upazila = pick(DEMO_UPAZILAS);
   const isFemale = rng() < 0.38;
   const name = sample3WordName(isFemale);
-  const fullName = name.en;
-  const fullNameBn = name.bn;
-  const group = sampleGroup();
+  let fullName = name.en;
+  let fullNameBn = name.bn;
+
+  // Balanced division assignment so all 8 divisions (including Rangpur) have active donors
+  const targetDivision = DEMO_DIVISIONS[index % DEMO_DIVISIONS.length]!;
+  const divisionUpazilas = DEMO_UPAZILAS.filter((u) => u.division_en === targetDivision);
+  const upazila = divisionUpazilas.length > 0
+    ? divisionUpazilas[(index * 7) % divisionUpazilas.length]!
+    : pick(DEMO_UPAZILAS);
+
+  // Group rotation ensuring each division has O+, B+, A+, AB+, O-
+  const groupCycle: BloodGroup[] = ["O+", "B+", "A+", "AB+", "O+", "B+", "A+", "O-", "B-", "A-", "AB-", "O+"];
+  let group = index < 64 ? groupCycle[index % groupCycle.length]! : sampleGroup();
+
+  if (index === 0) {
+    fullName = "Md. Rasheduzzaman";
+    fullNameBn = "মোঃ রাশেদুজ্জামান";
+    group = "AB+";
+  } else if (index === 2) {
+    fullName = "Tasnim Jahan Sara";
+    fullNameBn = "তাসনিম জাহান সারা";
+    group = "B+";
+  }
+
   const lastDonation = rng() < 0.55 ? daysAgoISO(between(20, 400)) : null;
 
   const availableNow = rng() < 0.62;
@@ -334,6 +355,7 @@ function makeDonor(index: number): DonorCard & {
     { en: `Hospital Road, Holding #${h}`, bn: `হাসপাতাল রোড, হোল্ডিং #${h}` },
     { en: `Station Road, Near Rail Gate`, bn: `স্টেশন রোড, রেলগেটের কাছে` },
     { en: `Main Bazar Road, House #${h}`, bn: `মেইন বাজার রোড, বাসা #${h}` },
+    { en: `Jahaj Company Mor, Central Road`, bn: `জাহাজ কোম্পানি মোড়, সেন্ট্রাল রোড` },
   ];
   const street = streetVariants[index % streetVariants.length]!;
   const addressEn = `${street.en}, ${upazila.name_en}, ${upazila.district_en}`;

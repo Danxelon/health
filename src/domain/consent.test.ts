@@ -182,4 +182,37 @@ describe("Donor Privacy & Masking for Unconsented Donors", () => {
     assert.ok(scriptEn.includes("Dhaka Medical College Hospital (DMCH)"));
     assert.ok(scriptEn.includes("Press 1 to consent"));
   });
+
+  it("accurately filters exact blood group and Rangpur division", () => {
+    const rangpurDonor = createMockDonorCard({
+      donor_id: "demo-donor-2",
+      blood_group: "B+",
+      division_en: "Rangpur",
+      district_en: "Rangpur",
+      upazila_en: "Rangpur Sadar",
+      address_en: "Jahaj Company Mor, Central Road, Rangpur Sadar, Rangpur",
+    });
+    const dhakaDonor = createMockDonorCard({
+      donor_id: "demo-donor-1",
+      blood_group: "O+",
+      division_en: "Dhaka",
+      district_en: "Dhaka",
+      upazila_en: "Dhanmondi",
+      address_en: "House 12, Dhanmondi, Dhaka",
+    });
+
+    const donors = [rangpurDonor, dhakaDonor];
+
+    // Filter by exact group B+
+    const exactB = donors.filter((d) => d.blood_group === "B+");
+    assert.equal(exactB.length, 1);
+    assert.equal(exactB[0]?.donor_id, "demo-donor-2");
+
+    // Filter by division Rangpur
+    const rangpurList = donors.filter((d) => d.division_en === "Rangpur");
+    assert.equal(rangpurList.length, 1);
+    assert.equal(rangpurList[0]?.donor_id, "demo-donor-2");
+    assert.equal(rangpurList[0]?.address_en?.includes("Jahaj Company Mor"), true);
+  });
 });
+

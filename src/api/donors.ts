@@ -34,8 +34,10 @@ export interface SearchDonorsArgs {
   lat: number | null;
   lng: number | null;
   upazilaId: number | null;
+  division?: string | null;
   urgency: RequestUrgency;
   component?: BloodComponent | null;
+  exactMatchOnly?: boolean;
 }
 
 /** `metres` rides along for ranking only and is never rendered on a card. */
@@ -71,12 +73,22 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
   const originUpazila =
     args.upazilaId !== null ? DEMO_UPAZILAS.find((u) => u.id === args.upazilaId) : undefined;
 
-  const donors: RankedDonorCard[] = DEMO_DONORS.filter((d) => compatible.has(d.blood_group)).map((d) => {
+  const donorPool = args.exactMatchOnly
+    ? DEMO_DONORS.filter((d) => d.blood_group === args.recipientGroup)
+    : DEMO_DONORS.filter((d) => compatible.has(d.blood_group));
+
+  const originLat = args.lat ?? 23.8103;
+  const originLng = args.lng ?? 90.4125;
+
+  const donors: RankedDonorCard[] = donorPool.map((d) => {
+    const donorLat = d.lat ?? d._lat ?? originLat;
+    const donorLng = d.lng ?? d._lng ?? originLng;
+
     // The demo donor is anchored to their upazila centre; the real RPC does
     // this against the caller's snapped point.
     const origin = originUpazila ?? {
-      lat: args.lat ?? 23.8103,
-      lng: args.lng ?? 90.4125,
+      lat: originLat,
+      lng: originLng,
       id: 0,
       name_en: "",
       name_bn: "",
@@ -85,7 +97,9 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
       division_en: "",
       division_bn: "",
     };
-    const metres = demoDistance(origin, args.lat, args.lng) ?? d.distance_km! * 1_000;
+    const metres = (args.lat !== null && args.lng !== null)
+      ? (demoDistance(origin, donorLat, donorLng) ?? d.distance_km! * 1_000)
+      : (d.distance_km! * 1_000);
     const ring =
       metres < 3_000 ? 0 : metres < 10_000 ? 1 : metres < 25_000 ? 2 : Math.min(6, Math.floor(metres / 50_000) + 3);
 
@@ -106,8 +120,8 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
       ...d,
       address_en: d.address_en ?? (d.upazila_en && d.district_en ? `${d.upazila_en}, ${d.district_en}` : null),
       address_bn: d.address_bn ?? (d.upazila_bn && d.district_bn ? `${d.upazila_bn}, ${d.district_bn}` : null),
-      lat: d.lat ?? d._lat ?? null,
-      lng: d.lng ?? d._lng ?? null,
+      lat: donorLat,
+      lng: donorLng,
       division_en: d.division_en ?? null,
       division_bn: d.division_bn ?? null,
       ring,
@@ -132,7 +146,7 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
       ready_now: pinned.filter((d) => d.can_give_now).length,
       radius_km: maxRingFor(args.urgency) === 6 ? 50 : [3, 10, 25, 50][maxRingFor(args.urgency) - 1] ?? 10,
       for_group: args.recipientGroup,
-      accepts_from: [...compatible],
+      accepts_from: args.exactMatchOnly ? [args.recipientGroup] : [...compatible],
     },
     groups: groupByRing(pinned),
     searchedAt: new Date().toISOString(),
