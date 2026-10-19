@@ -10,6 +10,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import {
   ArrowRight,
+  Building2,
   Droplet,
   Megaphone,
   Stethoscope,
@@ -23,6 +24,7 @@ import { useAuth } from "@/state/auth-context.tsx";
 import { fetchArticles } from "@/api/articles.ts";
 import { fetchNationalUpdates } from "@/api/health-updates.ts";
 import type { ArticleFeedItem, NationalHealthUpdate } from "@/domain/types.ts";
+import BloodBankStockCard from "@/components/BloodBankStockCard.tsx";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -269,6 +271,11 @@ function ActionOptions() {
           </div>
         </div>
       </div>
+
+      {/* Plan §9: Verified Institutional Blood Banks Near You & Emergency Shortage Radar */}
+      <div data-option className="mt-8 sm:mt-12">
+        <BloodBankStockCard />
+      </div>
     </section>
   );
 }
@@ -400,16 +407,55 @@ function NationalRail({
 
   return (
     <aside className="lg:w-80 lg:shrink-0" aria-label={t("home.rightRailTitle")}>
-      <div className="sticky top-24 rounded-3xl border border-line bg-surface p-6 shadow-xs">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand-deep">
-            <Megaphone className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
-          </span>
-          <div>
-            <h2 className="text-base font-bold text-ink leading-tight">{t("home.rightRailTitle")}</h2>
-            <p className="text-xs text-muted mt-0.5">{t("home.rightRailSub")}</p>
+      <div className="sticky top-24 space-y-6">
+        {/* plan.md §9: Blood Banks Near You (Top of Right Rail) */}
+        <div className="rounded-3xl border border-line bg-surface p-6 shadow-xs">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-brand text-white shadow-2xs">
+                <Building2 className="h-5 w-5" />
+              </span>
+              <div>
+                <h2 className="text-base font-bold text-ink leading-tight">
+                  {lang === "bn" ? "কাছের ব্লাড ব্যাংক" : "Blood Banks Near You"}
+                </h2>
+                <p className="text-xs text-muted mt-0.5">
+                  {lang === "bn" ? "৮ গ্রুপের লাইভ স্টক ও হটলাইন" : "Live 8-group stock directory"}
+                </p>
+              </div>
+            </div>
+            <span className="flex h-3 w-3 relative" title={lang === "bn" ? "সক্রিয় রাডার" : "Live radar"}>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600" />
+            </span>
           </div>
+
+          <p className="mt-3 text-xs leading-relaxed text-muted">
+            {lang === "bn"
+              ? "রেড ক্রিসেন্ট, কোয়ান্টাম ল্যাব ও মেডিকেল কলেজ ব্লাড ব্যাংকের জরুরি সংকট রাডার ও রক্তের চাহিদা।"
+              : "Emergency shortage radar & requisition for Red Crescent, Quantum Lab & Medical Colleges."}
+          </p>
+
+          <a
+            href="#blood-bank-stock-radar"
+            className="mt-4 flex items-center justify-between rounded-2xl bg-brand-soft/70 px-4 py-2.5 text-xs font-bold text-brand-deep hover:bg-brand hover:text-white transition-all shadow-2xs group cursor-pointer"
+          >
+            <span>{lang === "bn" ? "লাইভ স্টক রাডার দেখুন" : "View Live Stock Radar"}</span>
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </a>
         </div>
+
+        {/* National Health Updates */}
+        <div className="rounded-3xl border border-line bg-surface p-6 shadow-xs">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand-deep">
+              <Megaphone className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="text-base font-bold text-ink leading-tight">{t("home.rightRailTitle")}</h2>
+              <p className="text-xs text-muted mt-0.5">{t("home.rightRailSub")}</p>
+            </div>
+          </div>
 
         <div className="mt-5 space-y-3">
           {loading &&
@@ -444,7 +490,8 @@ function NationalRail({
             ))}
         </div>
       </div>
-    </aside>
+    </div>
+  </aside>
   );
 }
 

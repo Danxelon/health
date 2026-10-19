@@ -279,6 +279,14 @@ export interface BloodRequest {
   updated_at: string;
   expires_at: string | null;
   matched_donor_id: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  division_en?: string | null;
+  division_bn?: string | null;
+  district_en?: string | null;
+  district_bn?: string | null;
+  upazila_en?: string | null;
+  upazila_bn?: string | null;
 }
 
 /** Redacted row from the `emergency_feed` view. No patient name, no requestor. */

@@ -86,6 +86,11 @@ export function upazilasOf(districtEn: string): DemoUpazila[] {
   return DEMO_UPAZILAS.filter((u) => u.district_en === districtEn);
 }
 
+export function upazilaById(id: number | null | undefined): DemoUpazila | undefined {
+  if (id === null || id === undefined) return undefined;
+  return DEMO_UPAZILAS.find((u) => u.id === id);
+}
+
 /** Approximate centre of Bangladesh, used when a visitor shares no location. */
 export const DEFAULT_ORIGIN = { lat: 23.8103, lng: 90.4125, upazila_id: 149 };
 

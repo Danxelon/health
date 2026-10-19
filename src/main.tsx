@@ -56,3 +56,14 @@ createRoot(rootEl).render(
     </BrowserRouter>
   </StrictMode>
 );
+
+// Register service worker safely in supported environments
+if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    const swPath = basename === "/health" ? "/health/sw.js" : "/sw.js";
+    navigator.serviceWorker.register(swPath).catch((err) => {
+      console.warn("Service worker registration failed:", err);
+    });
+  });
+}
+
