@@ -19,7 +19,6 @@ import {
   maskDonorIdentity,
   maskDonorCard,
   getAnonymousDonorLabel,
-  getApproximateArea,
   getApproximateDistance,
   getIvrPromptScript,
   CONSENT_TRANSITIONS,

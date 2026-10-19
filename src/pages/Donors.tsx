@@ -16,23 +16,21 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
-  CheckCircle2,
   Droplet,
   Filter,
   MapPin,
   PhoneCall,
   Search,
-  Sparkles,
+  X,
 } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
 import { useAuth } from "@/state/auth-context.tsx";
-import { Badge, SectionHeader } from "@/components/ui.tsx";
+import { SectionHeader } from "@/components/ui.tsx";
 import { searchDonors, type SearchDonorsArgs, type SearchResults } from "@/api/donors.ts";
 import { pinFeaturedDonor } from "@/domain/featured-donor.ts";
 import { fetchDoctors } from "@/api/doctors.ts";
 import type { BloodGroup, DoctorCard, DonorCard, RequestUrgency } from "@/domain/types.ts";
-import { URGENCY_LABELS } from "@/lib/strings.ts";
 import { ageBand } from "@/domain/profile.ts";
 import {
   getAnonymousDonorLabel,
@@ -55,7 +53,7 @@ export default function Donors() {
 
   const [selectedGroup, setSelectedGroup] = useState<BloodGroup | "">("O+");
   const [matchMode, setMatchMode] = useState<MatchMode>("exact");
-  const [selectedUrgency, setSelectedUrgency] = useState<RequestUrgency>("routine");
+  const [selectedUrgency] = useState<RequestUrgency>("routine");
 
   // Area & donor filters
   const [selectedDivision, setSelectedDivision] = useState<string>("");
@@ -269,7 +267,6 @@ export default function Donors() {
           const dAddrEn = (d.address_en || "").toLowerCase();
           const dAddrBn = d.address_bn || "";
           return (
-            d.upazila_id === up.id ||
             dUpEn.includes(upNameEn) ||
             dUpBn.includes(upNameBn) ||
             dAddrEn.includes(upNameEn) ||

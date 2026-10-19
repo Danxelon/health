@@ -9,16 +9,17 @@
  * real ordering.
  */
 
-import type {
-  BloodComponent,
-  BloodGroup,
-  ConsentStatus,
-  DonorCard,
-  DonorConsentRequest,
-  DonorCounts,
-  RequestUrgency,
+import {
+  BLOOD_GROUPS,
+  DomainError,
+  type BloodComponent,
+  type BloodGroup,
+  type ConsentStatus,
+  type DonorCard,
+  type DonorConsentRequest,
+  type DonorCounts,
+  type RequestUrgency,
 } from "../domain/types.ts";
-import { DomainError } from "../domain/types.ts";
 import { rankDonors, groupByRing, scoreDonor, maxRingFor } from "../domain/matching.ts";
 import { pinFeaturedDonor } from "../domain/featured-donor.ts";
 import { acceptableDonorsFor } from "../domain/blood.ts";
@@ -140,7 +141,6 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
   // pinFeaturedDonor is a stable partition — every other donor keeps the
   // ranked order, so Best Match still works for the rest of the list.
   const pinned = args.recipientGroup ? pinFeaturedDonor(ranked, args.recipientGroup) : ranked;
-  const effUrgency = args.urgency ?? "critical";
 
   return {
     donors: pinned,
@@ -148,8 +148,10 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
       total: pinned.length,
       ready_now: pinned.filter((d) => d.can_give_now).length,
       radius_km: maxRingFor(args.urgency) === 6 ? 50 : [3, 10, 25, 50][maxRingFor(args.urgency) - 1] ?? 10,
-      for_group: args.recipientGroup,
-      accepts_from: args.exactMatchOnly ? [args.recipientGroup] : [...compatible],
+      for_group: (args.recipientGroup || "O+") as BloodGroup,
+      accepts_from: (args.exactMatchOnly && args.recipientGroup
+        ? [args.recipientGroup]
+        : (args.recipientGroup ? [...compatible] : [...BLOOD_GROUPS])) as BloodGroup[],
     },
     groups: groupByRing(pinned),
     searchedAt: new Date().toISOString(),
