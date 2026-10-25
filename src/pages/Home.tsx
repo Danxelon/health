@@ -93,18 +93,6 @@ function Hero() {
           alt="medilink — মেডিলিঙ্ক"
           className="mx-auto h-72 sm:h-80 w-auto max-w-full object-contain"
         />
-        {/* medilink National Network Pill */}
-        <div
-          data-hero-reveal
-          className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-soft/80 px-4 py-1.5 text-xs font-bold text-brand-deep mb-4 shadow-2xs backdrop-blur-xs"
-        >
-          <ShieldCheck className="h-4 w-4 text-brand shrink-0" />
-          <span>
-            {lang === "bn"
-              ? "মেডিলিঙ্ক — জাতীয় ডিজিটাল স্বাস্থ্য ও জরুরি রক্তসেবা"
-              : "medilink — National Digital Health & Blood Network"}
-          </span>
-        </div>
 
         {/* Hero Title — Bangladesh's First Intelligent Blood Matching Network */}
         <h1
