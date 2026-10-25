@@ -30,10 +30,36 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 /* Hero                                                                       */
 /* -------------------------------------------------------------------------- */
 
+/** Resolved theme (light|dark) as actually applied to <html data-theme>. */
+function useResolvedDark(): boolean {
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document === "undefined") return false;
+    return document.documentElement.getAttribute("data-theme") === "dark";
+  });
+
+  useEffect(() => {
+    const el = document.documentElement;
+    const sync = () => setIsDark(el.getAttribute("data-theme") === "dark");
+    sync();
+    const obs = new MutationObserver(sync);
+    obs.observe(el, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, []);
+
+  return isDark;
+}
+
 function Hero() {
   const { t, lang } = useAppShell();
   const { requireAuth } = useAuth();
   const ref = useRef<HTMLDivElement>(null);
+  const isDark = useResolvedDark();
+
+  // Theme-reactive hero logo: the light wordmark carries a transparent
+  // background and reads on light surfaces; the dark wordmark is built for
+  // dark surfaces (the previous logo.png was a white-boxed raster that
+  // floated awkwardly on the dark hero).
+  const logoSrc = isDark ? "/logo-dark.png" : "/logo-light.png";
 
   useGSAP(
     () => {
@@ -61,7 +87,7 @@ function Hero() {
         {/* medilink full logo in the main screen */}
         <img
           data-hero-reveal
-          src="/logo.png"
+          src={logoSrc}
           alt="medilink — মেডিলিঙ্ক"
           className="mx-auto h-20 sm:h-24 w-auto max-w-full object-contain"
         />

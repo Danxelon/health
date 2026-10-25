@@ -36,6 +36,25 @@ import type { ComponentType } from "react";
 // Re-export useAuth and context for backwards compatibility
 export { useAuth } from "@/state/auth-context.tsx";
 
+/** Resolved theme (light|dark) as actually applied to <html data-theme>. */
+function useResolvedDark(): boolean {
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document === "undefined") return false;
+    return document.documentElement.getAttribute("data-theme") === "dark";
+  });
+
+  useEffect(() => {
+    const el = document.documentElement;
+    const sync = () => setIsDark(el.getAttribute("data-theme") === "dark");
+    sync();
+    const obs = new MutationObserver(sync);
+    obs.observe(el, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, []);
+
+  return isDark;
+}
+
 type NavItem = {
   to: string;
   key: string;
@@ -278,6 +297,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { t, lang } = useAppShell();
   const { isLoggedIn, user, logout, requireAuth } = useAuth();
   const { pathname } = useLocation();
+  const isDark = useResolvedDark();
+  const logoSrc = isDark ? "/logo-dark.png" : "/logo-light.png";
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(() =>
@@ -400,7 +421,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 aria-label={t("app.name")}
               >
                 <img
-                  src="/logo.png"
+                  src={logoSrc}
                   alt="medilink"
                   className="h-10 sm:h-12 w-auto object-contain shrink-0"
                 />
@@ -569,7 +590,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           >
             <div className="flex items-center justify-between pb-3 mb-2 border-b border-line px-1">
               <img
-                src="/logo.png"
+                src={logoSrc}
                 alt="medilink"
                 className="h-10 w-auto object-contain shrink-0"
               />
