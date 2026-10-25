@@ -80,7 +80,7 @@ function Hero() {
   return (
     <section
       ref={ref}
-      className="relative overflow-hidden scroll-mt-20 pt-8 pb-12 md:pt-12 md:pb-16 border-b border-line bg-gradient-to-b from-surface via-surface to-elevated/40"
+      className="relative overflow-hidden scroll-mt-20 pt-2 pb-4 md:pt-4 md:pb-6 border-b border-line bg-gradient-to-b from-surface via-surface to-elevated/40"
       aria-labelledby="hero-h1"
     >
       <div className="aurora absolute inset-0 -z-10 opacity-70" aria-hidden="true" />
@@ -91,14 +91,14 @@ function Hero() {
           data-hero-reveal
           src={logoSrc}
           alt="medilink — মেডিলিঙ্ক"
-          className="mx-auto h-72 sm:h-80 w-auto max-w-full object-contain"
+          className="mx-auto h-48 sm:h-56 w-auto max-w-full object-contain"
         />
 
         {/* Hero Title — Bangladesh's First Intelligent Blood Matching Network */}
         <h1
           id="hero-h1"
           data-hero-reveal
-          className="display mx-auto max-w-5xl text-[clamp(2.5rem,5.5vw,4.75rem)] text-ink leading-[1.05] break-words [overflow-wrap:anywhere] text-balance"
+          className="display mx-auto max-w-5xl mt-0 text-[clamp(2.5rem,5.5vw,4.75rem)] text-ink leading-[1.05] break-words [overflow-wrap:anywhere] text-balance"
         >
           {lang === "bn" ? (
             <>
@@ -116,7 +116,7 @@ function Hero() {
         {/* Hero Sub-copy */}
         <p
           data-hero-reveal
-          className="mx-auto mt-6 max-w-2xl text-base sm:text-xl text-muted font-normal leading-relaxed"
+          className="mx-auto mt-3 max-w-2xl text-base sm:text-xl text-muted font-normal leading-relaxed"
         >
           {lang === "bn"
             ? "সময় যখন জরুরি, আপনার উপযুক্ত রক্তদাতা ভাবনার চেয়েও কাছে।"
