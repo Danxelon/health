@@ -80,7 +80,7 @@ function Hero() {
   return (
     <section
       ref={ref}
-      className="relative overflow-hidden scroll-mt-20 pt-12 pb-16 md:pt-20 md:pb-24 border-b border-line bg-gradient-to-b from-surface via-surface to-elevated/40"
+      className="relative overflow-hidden scroll-mt-20 pt-8 pb-12 md:pt-12 md:pb-16 border-b border-line bg-gradient-to-b from-surface via-surface to-elevated/40"
       aria-labelledby="hero-h1"
     >
       <div className="aurora absolute inset-0 -z-10 opacity-70" aria-hidden="true" />
