@@ -80,7 +80,7 @@ function Hero() {
   return (
     <section
       ref={ref}
-      className="relative overflow-hidden scroll-mt-20 pt-2 pb-4 md:pt-4 md:pb-6 border-b border-line bg-gradient-to-b from-surface via-surface to-elevated/40"
+      className="relative overflow-hidden scroll-mt-20 pt-16 pb-20 md:pt-24 md:pb-28 border-b border-line bg-gradient-to-b from-surface via-surface to-elevated/40"
       aria-labelledby="hero-h1"
     >
       <div className="aurora absolute inset-0 -z-10 opacity-70" aria-hidden="true" />
@@ -91,7 +91,7 @@ function Hero() {
           data-hero-reveal
           src={logoSrc}
           alt="medilink — মেডিলিঙ্ক"
-          className="mx-auto h-48 sm:h-56 w-auto max-w-full object-contain"
+          className="mx-auto h-96 sm:h-[32rem] w-auto max-w-full object-contain"
         />
 
         {/* Hero Title — Bangladesh's First Intelligent Blood Matching Network */}
