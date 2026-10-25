@@ -30,6 +30,9 @@ export interface RequestFormData {
   upazila_id: number | null;
   patient_name?: string | null;
   address_text?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  division?: string | null;
 }
 
 async function requireSession(): Promise<void> {
@@ -67,6 +70,8 @@ export async function createBloodRequest(input: RequestFormData): Promise<BloodR
     p_upazila_id: input.upazila_id,
     p_patient_name: input.patient_name ?? null,
     p_address_text: input.address_text ?? null,
+    p_lat: input.lat ?? null,
+    p_lng: input.lng ?? null,
   });
 }
 

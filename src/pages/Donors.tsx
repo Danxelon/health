@@ -7,48 +7,44 @@
  * - "What is needed" option is excluded.
  * - Area sort-out filter provided without live location/GPS.
  * - Requires citizen to be logged in to access search.
+ * - Donor cards are clean, modern, and uncluttered (no clumsy locked warnings).
+ * - Full grid layout without duplicate right section.
+ * - Clicking any donor opens centered DonorDetailModal.
  */
 
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
-  Check,
-  CheckCircle2,
-  Copy,
   Droplet,
   Filter,
   MapPin,
-  MessageSquare,
-  Phone,
   PhoneCall,
   Search,
-  Shield,
-  ShieldCheck,
-  Sparkles,
   X,
 } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
 import { useAuth } from "@/state/auth-context.tsx";
-import { Badge, DistanceChip, SectionHeader } from "@/components/ui.tsx";
+import { SectionHeader } from "@/components/ui.tsx";
 import { searchDonors, type SearchDonorsArgs, type SearchResults } from "@/api/donors.ts";
 import { pinFeaturedDonor } from "@/domain/featured-donor.ts";
 import { fetchDoctors } from "@/api/doctors.ts";
-import type { BloodGroup, DoctorCard, DonorCard } from "@/domain/types.ts";
-import { ageBand, toBengaliDigits } from "@/domain/profile.ts";
+import type { BloodGroup, DoctorCard, DonorCard, RequestUrgency } from "@/domain/types.ts";
+import { ageBand } from "@/domain/profile.ts";
 import {
   getAnonymousDonorLabel,
   getApproximateArea,
   getApproximateDistance,
 } from "@/domain/donor-privacy.ts";
 import { DEMO_UPAZILAS } from "@/lib/demo-data.ts";
-import DonorAddressMapDrawer from "@/components/DonorAddressMapDrawer.tsx";
+import DonorDetailModal from "@/components/DonorDetailModal.tsx";
 import DonorConsentModal from "@/components/DonorConsentModal.tsx";
 
 const BLOOD_GROUPS: BloodGroup[] = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 type AreaSortOption = "match" | "ready" | "name";
+type MatchMode = "exact" | "compatible";
 
 export default function Donors() {
   const { t, lang } = useAppShell();
@@ -56,6 +52,8 @@ export default function Donors() {
   const navigate = useNavigate();
 
   const [selectedGroup, setSelectedGroup] = useState<BloodGroup | "">("O+");
+  const [matchMode, setMatchMode] = useState<MatchMode>("exact");
+  const [selectedUrgency] = useState<RequestUrgency>("routine");
 
   // Area & donor filters
   const [selectedDivision, setSelectedDivision] = useState<string>("");
@@ -73,39 +71,25 @@ export default function Donors() {
   // Session Consent & Automated Call state
   const [consentedDonorIds, setConsentedDonorIds] = useState<Set<string>>(() => new Set());
   const [consentModalDonor, setConsentModalDonor] = useState<DonorCard | null>(null);
-  const [copiedPhone, setCopiedPhone] = useState(false);
 
-  // Rail selection (right-rail highlight + detail) — independent from drawer.
-  const [selectedMapDonor, setSelectedMapDonor] = useState<DonorCard | null>(null);
-  // Drawer donor (full map lives in DonorAddressMapDrawer).
-  const [mapDonor, setMapDonor] = useState<DonorCard | null>(null);
+  // Centered Detail Modal for selected donor
+  const [selectedDetailDonor, setSelectedDetailDonor] = useState<DonorCard | null>(null);
 
   const handleDonorConsented = (donor: DonorCard) => {
     setConsentedDonorIds((prev) => new Set(prev).add(donor.donor_id));
-  };
-
-  const handleCopyPhone = (phone: string) => {
-    try {
-      navigator.clipboard.writeText(phone);
-      setCopiedPhone(true);
-      setTimeout(() => setCopiedPhone(false), 2000);
-    } catch {
-      /* ignore */
-    }
   };
 
   // Close modals on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (mapDonor) setMapDonor(null);
-        if (selectedMapDonor) setSelectedMapDonor(null);
+        if (selectedDetailDonor) setSelectedDetailDonor(null);
         if (consentModalDonor) setConsentModalDonor(null);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [mapDonor, selectedMapDonor, consentModalDonor]);
+  }, [selectedDetailDonor, consentModalDonor]);
 
   // Require login on page load: redirect unauthenticated users
   useEffect(() => {
@@ -172,20 +156,29 @@ export default function Donors() {
     }
   };
 
-  // Auto-search whenever blood group or area changes
+  // Auto-search whenever blood group, area, urgency, or match mode changes
   useEffect(() => {
     if (!isLoggedIn) return;
 
     const upazila = DEMO_UPAZILAS.find((u) => u.id === Number(selectedUpazila));
+    const divisionCentre = selectedDivision
+      ? DEMO_UPAZILAS.find((u) => u.division_en === selectedDivision)
+      : null;
+
+    const lat = upazila ? upazila.lat : divisionCentre ? divisionCentre.lat : null;
+    const lng = upazila ? upazila.lng : divisionCentre ? divisionCentre.lng : null;
+
     doSearch({
       recipientGroup: selectedGroup,
-      lat: upazila ? upazila.lat : null,
-      lng: upazila ? upazila.lng : null,
+      lat,
+      lng,
       upazilaId: selectedUpazila ? Number(selectedUpazila) : null,
-      urgency: "critical",
+      division: selectedDivision || null,
+      urgency: selectedUrgency,
       component: null, // "what is needed" option is explicitly excluded
+      exactMatchOnly: matchMode === "exact",
     });
-  }, [isLoggedIn, selectedGroup, selectedUpazila]);
+  }, [isLoggedIn, selectedGroup, selectedUpazila, selectedDivision, selectedUrgency, matchMode]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -195,14 +188,22 @@ export default function Donors() {
     }
 
     const upazila = DEMO_UPAZILAS.find((u) => u.id === Number(selectedUpazila));
+    const divisionCentre = selectedDivision
+      ? DEMO_UPAZILAS.find((u) => u.division_en === selectedDivision)
+      : null;
+
+    const lat = upazila ? upazila.lat : divisionCentre ? divisionCentre.lat : null;
+    const lng = upazila ? upazila.lng : divisionCentre ? divisionCentre.lng : null;
 
     doSearch({
       recipientGroup: selectedGroup,
-      lat: upazila ? upazila.lat : null,
-      lng: upazila ? upazila.lng : null,
+      lat,
+      lng,
       upazilaId: selectedUpazila ? Number(selectedUpazila) : null,
-      urgency: "critical",
-      component: null, // "what is needed" option is explicitly excluded
+      division: selectedDivision || null,
+      urgency: selectedUrgency,
+      component: null,
+      exactMatchOnly: matchMode === "exact",
     });
   };
 
@@ -214,66 +215,97 @@ export default function Donors() {
     });
   }, [isLoggedIn]);
 
-  // Filter and sort displayed donors according to user preference and filters.
-  // Featured account Md. Rasheduzzaman is re-pinned to the very first slot
-  // AFTER every sort, so Best Match / Ready First / By Name all keep working
-  // for the rest of the list while the featured card never moves.
+  // Unified sorting and filtering pipeline
   const sortedDonors = useMemo(() => {
     if (!results?.donors) return [];
     let list = [...results.donors];
 
-    // 1. Division filter
-    if (selectedDivision) {
-      const divLower = selectedDivision.toLowerCase();
-      list = list.filter((d) =>
-        d.division_en?.toLowerCase() === divLower ||
-        d.division_bn?.toLowerCase() === divLower
-      );
-    }
-
-    // 2. Area / Upazila filter
-    if (selectedUpazila !== "") {
-      const chosenUpazila = DEMO_UPAZILAS.find((u) => u.id === Number(selectedUpazila));
-      if (chosenUpazila) {
-        const upNameEn = chosenUpazila.name_en.toLowerCase();
-        const upNameBn = chosenUpazila.name_bn;
-        list = list.filter((d) =>
-          d.upazila_en?.toLowerCase() === upNameEn ||
-          d.upazila_bn === upNameBn ||
-          d.address_en?.toLowerCase().includes(upNameEn) ||
-          d.address_bn?.includes(upNameBn)
-        );
+    // 1. Blood group filter
+    if (selectedGroup) {
+      if (matchMode === "exact") {
+        list = list.filter((d) => d.blood_group === selectedGroup);
+      } else {
+        // In compatible mode, sort exact matches to the top
+        list.sort((a, b) => {
+          if (a.blood_group === selectedGroup && b.blood_group !== selectedGroup) return -1;
+          if (b.blood_group === selectedGroup && a.blood_group !== selectedGroup) return 1;
+          return 0;
+        });
       }
     }
 
-    // 3. Name or Area search query filter (matches donor name, area, district, division, address)
-    if (areaSearchQuery.trim()) {
-      const q = areaSearchQuery.trim().toLowerCase();
+    // 2. Division filter (e.g. "Rangpur")
+    if (selectedDivision) {
+      const divLower = selectedDivision.toLowerCase();
       list = list.filter((d) => {
+        const divEn = (d.division_en || "").toLowerCase();
+        const divBn = d.division_bn || "";
+        const addrEn = (d.address_en || "").toLowerCase();
+        const addrBn = d.address_bn || "";
+        const upEn = (d.upazila_en || "").toLowerCase();
+        const distEn = (d.district_en || "").toLowerCase();
         return (
-          d.full_name?.toLowerCase().includes(q) ||
-          d.full_name_bn?.includes(q) ||
-          d.display_name?.toLowerCase().includes(q) ||
-          d.display_name_bn?.includes(q) ||
-          d.upazila_en?.toLowerCase().includes(q) ||
-          d.upazila_bn?.includes(q) ||
-          d.district_en?.toLowerCase().includes(q) ||
-          d.district_bn?.includes(q) ||
-          d.division_en?.toLowerCase().includes(q) ||
-          d.division_bn?.includes(q) ||
-          d.address_en?.toLowerCase().includes(q) ||
-          d.address_bn?.includes(q) ||
-          d.blood_group?.toLowerCase() === q
+          divEn === divLower ||
+          divBn.includes(selectedDivision) ||
+          addrEn.includes(divLower) ||
+          addrBn.includes(selectedDivision) ||
+          upEn.includes(divLower) ||
+          distEn.includes(divLower)
         );
       });
     }
 
-    // 4. Availability / Ready filter
-    if (availabilityFilter === "ready") {
-      list = list.filter((d) => d.can_give_now);
+    // 3. Upazila filter
+    if (selectedUpazila) {
+      const up = DEMO_UPAZILAS.find((u) => u.id === Number(selectedUpazila));
+      if (up) {
+        const upNameEn = up.name_en.toLowerCase();
+        const upNameBn = up.name_bn;
+        list = list.filter((d) => {
+          const dUpEn = (d.upazila_en || "").toLowerCase();
+          const dUpBn = d.upazila_bn || "";
+          const dAddrEn = (d.address_en || "").toLowerCase();
+          const dAddrBn = d.address_bn || "";
+          return (
+            dUpEn.includes(upNameEn) ||
+            dUpBn.includes(upNameBn) ||
+            dAddrEn.includes(upNameEn) ||
+            dAddrBn.includes(upNameBn)
+          );
+        });
+      }
     }
 
-    // 5. Sorting
+    // 4. Area Search Query filter (matches query in EN/BN against address, upazila, district, division)
+    if (areaSearchQuery.trim()) {
+      const q = areaSearchQuery.trim().toLowerCase();
+      list = list.filter((d) => {
+        const addrEn = (d.address_en || "").toLowerCase();
+        const addrBn = d.address_bn || "";
+        const upEn = (d.upazila_en || "").toLowerCase();
+        const upBn = d.upazila_bn || "";
+        const distEn = (d.district_en || "").toLowerCase();
+        const distBn = d.district_bn || "";
+        const divEn = (d.division_en || "").toLowerCase();
+        const divBn = d.division_bn || "";
+        const name = (d.full_name || d.display_name || "").toLowerCase();
+        const nameBn = d.full_name_bn || d.display_name_bn || "";
+        return (
+          addrEn.includes(q) ||
+          addrBn.includes(q) ||
+          upEn.includes(q) ||
+          upBn.includes(q) ||
+          distEn.includes(q) ||
+          distBn.includes(q) ||
+          divEn.includes(q) ||
+          divBn.includes(q) ||
+          name.includes(q) ||
+          nameBn.includes(q)
+        );
+      });
+    }
+
+    // 5. User Sort preference
     if (sortBy === "ready") {
       list.sort((a, b) => (b.can_give_now ? 1 : 0) - (a.can_give_now ? 1 : 0));
     } else if (sortBy === "name") {
@@ -284,25 +316,10 @@ export default function Donors() {
       });
     }
 
-    // 6. Featured account re-pin
+    // 6. Featured account pin for AB+
     if (!selectedGroup) return list;
     return pinFeaturedDonor(list, selectedGroup);
-  }, [results, selectedDivision, selectedUpazila, areaSearchQuery, availabilityFilter, sortBy, lang, selectedGroup]);
-
-  const readyCount = useMemo(
-    () => sortedDonors.filter((d) => d.can_give_now).length,
-    [sortedDonors]
-  );
-
-  // Synchronize right-rail donor if filtered out
-  useEffect(() => {
-    if (selectedMapDonor && sortedDonors.length > 0) {
-      const stillPresent = sortedDonors.some((d) => d.donor_id === selectedMapDonor.donor_id);
-      if (!stillPresent) {
-        setSelectedMapDonor(null);
-      }
-    }
-  }, [sortedDonors, selectedMapDonor]);
+  }, [results, sortBy, lang, selectedGroup, matchMode, selectedDivision, selectedUpazila, areaSearchQuery]);
 
   // Next nearest donor for decline recommendation in consent modal
   const nextConsentDonor = useMemo(() => {
@@ -334,16 +351,15 @@ export default function Donors() {
             <button
               type="button"
               onClick={() => openLoginModal("/donors")}
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand px-6 text-sm font-bold text-white shadow-md hover:bg-brand-deep transition-all cursor-pointer"
+              className="w-full inline-flex h-12 items-center justify-center rounded-xl bg-brand px-6 text-sm font-bold text-white hover:bg-brand-deep transition-all shadow-md cursor-pointer"
             >
-              <Sparkles className="h-4 w-4" />
-              <span>{lang === "bn" ? "১-ক্লিকে তাৎক্ষণিক লগ ইন" : "One-Click Instant Login"}</span>
+              {lang === "bn" ? "লগ ইন করুন" : "Log In"}
             </button>
             <Link
-              to="/login?next=/donors"
-              className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-line bg-surface text-sm font-semibold text-ink hover:bg-elevated transition-colors"
+              to="/signup"
+              className="w-full inline-flex h-12 items-center justify-center rounded-xl border border-line bg-surface px-6 text-sm font-bold text-ink hover:bg-elevated transition-all"
             >
-              {lang === "bn" ? "মোবাইল নম্বর দিয়ে লগ ইন" : "Log in with Mobile Number"}
+              {lang === "bn" ? "নতুন অ্যাকাউন্ট খুলুন" : "Create New Account"}
             </Link>
           </div>
         </div>
@@ -352,27 +368,46 @@ export default function Donors() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 pb-24 pt-8">
-      <SectionHeader
-        eyebrow={t("donors.title")}
-        title={t("donors.title")}
-        body={t("donors.subtitle")}
-      />
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-brand">
+            {lang === "bn" ? "জীবন রক্ষা রক্তদাতা নেটওয়ার্ক" : "Blood Donor Network"}
+          </span>
+          <h1 className="mt-1 text-3xl sm:text-4xl font-black text-ink tracking-tight">
+            {t("donors.title")}
+          </h1>
+          <p className="mt-2 text-sm sm:text-base text-muted max-w-2xl leading-relaxed">
+            {t("donors.subtitle")}
+          </p>
+        </div>
 
-      {/* Main Find Search Form */}
+        <div className="flex items-center gap-3">
+          <Link
+            to="/requests/new"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-brand px-6 text-sm font-bold text-white hover:bg-brand-deep transition-all shadow-sm cursor-pointer active:scale-98"
+          >
+            <Droplet className="h-4 w-4 fill-white" />
+            <span>{t("request.express")}</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Search & Area Filter Controls */}
       <form
         onSubmit={handleSearchSubmit}
         className="mt-8 rounded-3xl border border-line bg-surface p-6 sm:p-8 shadow-xs"
       >
         <div className="space-y-6">
-          {/* Blood Group Picker - interactive pills, NEVER a dropdown menu */}
+          {/* Blood Group Picker - interactive buttons */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <label className="text-sm font-bold text-ink">
                 {t("donors.patientGroup")}
               </label>
               <span className="text-xs text-muted">
-                {lang === "bn" ? "রক্তের গ্রুপ বেছে নিন" : "Click to pick blood group"}
+                {lang === "bn" ? "রক্তের গ্রুপে চাপ দিন" : "Click to pick blood group"}
               </span>
             </div>
 
@@ -418,18 +453,40 @@ export default function Donors() {
                 );
               })}
             </div>
-            <p className="mt-2 text-xs text-muted">
-              {selectedGroup
-                ? lang === "bn"
-                  ? `নির্বাচিত রক্তের গ্রুপের জন্য উপযুক্ত রক্তদাতা দেখানো হচ্ছে (${selectedGroup})`
-                  : `Showing donors medically compatible with ${selectedGroup}`
-                : lang === "bn"
-                  ? "সকল রক্তের গ্রুপের রক্তদাতা দেখানো হচ্ছে"
-                  : "Showing donors across all blood groups"}
-            </p>
+
+            {/* Match Mode Filter: Exact Match vs Compatible */}
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-line/60">
+              <span className="text-xs text-muted font-medium">
+                {lang === "bn" ? "রক্তের গ্রুপের ফিল্টার মোড:" : "Group Filter Mode:"}
+              </span>
+              <div role="group" aria-label="Blood match mode" className="inline-flex rounded-xl border border-line bg-surface p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setMatchMode("exact")}
+                  className={`min-h-[38px] px-4 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    matchMode === "exact"
+                      ? "bg-brand text-white shadow-xs"
+                      : "text-muted hover:text-ink"
+                  }`}
+                >
+                  {lang === "bn" ? `✓ শুধুমাত্র ${selectedGroup || ""} (হুবহু মিল)` : `✓ Exact ${selectedGroup || ""} Only`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMatchMode("compatible")}
+                  className={`min-h-[38px] px-4 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    matchMode === "compatible"
+                      ? "bg-brand text-white shadow-xs"
+                      : "text-muted hover:text-ink"
+                  }`}
+                >
+                  {lang === "bn" ? "চিকিৎসাগত সামঞ্জস্যপূর্ণ সকল গ্রুপ" : "All Compatible Groups"}
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Area & Donor Filters (without live location) */}
+          {/* Area Sort-Out Filter & Urgency */}
           <div className="pt-4 border-t border-line">
             <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted">
@@ -471,12 +528,26 @@ export default function Donors() {
                 </select>
               </div>
 
+              {/* Area Quick Search */}
+              <div>
+                <label className="block text-xs font-bold text-ink mb-1.5">
+                  {lang === "bn" ? "এলাকা বা জেলার নাম" : "Search Area / City"}
+                </label>
+                <input
+                  type="text"
+                  value={areaSearchQuery}
+                  onChange={(e) => setAreaSearchQuery(e.target.value)}
+                  placeholder={lang === "bn" ? "যেমন: রংপুর, মিরপুর, সিলেট..." : "e.g. Rangpur, Mirpur..."}
+                  className="w-full h-12 sm:h-11 rounded-xl border border-line bg-surface px-3 text-base sm:text-sm text-ink outline-none focus:border-brand font-medium placeholder:text-muted/60"
+                />
+              </div>
+
               {/* Area / Upazila Selection */}
               <div>
                 <label className="block text-xs font-bold text-ink mb-1.5">
                   <span className="flex items-center gap-1">
                     <MapPin className="h-3.5 w-3.5 text-brand" />
-                    <span>{lang === "bn" ? "উপজেলা / এলাকা" : "Area / Upazila"}</span>
+                    <span>{lang === "bn" ? "উপজেলা / থানা" : "Upazila / Thana"}</span>
                   </span>
                 </label>
                 <select
@@ -485,7 +556,7 @@ export default function Donors() {
                   className="w-full h-12 sm:h-11 rounded-xl border border-line bg-surface px-3 text-base sm:text-sm text-ink outline-none focus:border-brand font-medium"
                 >
                   <option value="">
-                    {lang === "bn" ? "সকল এলাকা (সারাদেশ)" : "All Areas (Nationwide)"}
+                    {lang === "bn" ? "সকল এলাকা" : "All Areas"}
                   </option>
                   {filteredUpazilas.map((u) => (
                     <option key={u.id} value={u.id}>
@@ -588,17 +659,39 @@ export default function Donors() {
             {/* Results header with sort options */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-line">
               <p className="text-sm text-muted font-semibold">
-                {t("donors.resultsFor")}{" "}
-                <span className="text-ink font-bold">
-                  {lang === "bn" ? toBengaliDigits(sortedDonors.length) : sortedDonors.length}
-                </span> ·{" "}
+                {matchMode === "exact" ? (
+                  lang === "bn" ? (
+                    <>
+                      <span className="text-brand font-black">{selectedGroup}</span> হুবহু গ্রুপের রক্তদাতা পাওয়া গেছে:{" "}
+                      <span className="text-ink font-bold">{sortedDonors.length} জন</span>
+                    </>
+                  ) : (
+                    <>
+                      Exact <span className="text-brand font-black">{selectedGroup}</span> donors found:{" "}
+                      <span className="text-ink font-bold">{sortedDonors.length}</span>
+                    </>
+                  )
+                ) : (
+                  lang === "bn" ? (
+                    <>
+                      <span className="text-brand font-black">{selectedGroup}</span> রোগীর জন্য রক্তদাতা:{" "}
+                      <span className="text-ink font-bold">{sortedDonors.length} জন</span>
+                    </>
+                  ) : (
+                    <>
+                      Donors matching <span className="text-brand font-black">{selectedGroup}</span>:{" "}
+                      <span className="text-ink font-bold">{sortedDonors.length}</span>
+                    </>
+                  )
+                )}
+                {" · "}
                 {t("donors.readyNow")}{" "}
-                <span className="text-brand font-bold">
-                  {lang === "bn" ? toBengaliDigits(readyCount) : readyCount}
+                <span className="text-emerald-600 font-bold">
+                  {sortedDonors.filter((d) => d.can_give_now).length}
                 </span>
               </p>
 
-              {/* Sort By controls — wraps + scrolls on narrow phones, 44px targets */}
+              {/* Sort By controls */}
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span className="text-muted font-medium">{lang === "bn" ? "সাজান:" : "Sort:"}</span>
                 <div role="group" aria-label={lang === "bn" ? "রক্তদাতা সাজান" : "Sort donors"} className="inline-flex max-w-full overflow-x-auto rounded-xl border border-line bg-surface p-0.5">
@@ -606,7 +699,7 @@ export default function Donors() {
                     type="button"
                     onClick={() => setSortBy("match")}
                     aria-pressed={sortBy === "match"}
-                    className={`min-h-[44px] px-4 py-1 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                    className={`min-h-[40px] px-4 py-1 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap ${
                       sortBy === "match" ? "bg-brand text-white shadow-2xs" : "text-muted hover:text-ink"
                     }`}
                   >
@@ -616,7 +709,7 @@ export default function Donors() {
                     type="button"
                     onClick={() => setSortBy("ready")}
                     aria-pressed={sortBy === "ready"}
-                    className={`min-h-[44px] px-4 py-1 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                    className={`min-h-[40px] px-4 py-1 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap ${
                       sortBy === "ready" ? "bg-brand text-white shadow-2xs" : "text-muted hover:text-ink"
                     }`}
                   >
@@ -626,7 +719,7 @@ export default function Donors() {
                     type="button"
                     onClick={() => setSortBy("name")}
                     aria-pressed={sortBy === "name"}
-                    className={`min-h-[44px] px-4 py-1 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                    className={`min-h-[40px] px-4 py-1 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap ${
                       sortBy === "name" ? "bg-brand text-white shadow-2xs" : "text-muted hover:text-ink"
                     }`}
                   >
@@ -636,81 +729,39 @@ export default function Donors() {
               </div>
             </div>
 
+            {/* Empty State */}
             {sortedDonors.length === 0 ? (
               <div className="rounded-3xl border border-line bg-surface p-12 text-center text-muted">
                 <p className="font-bold text-ink text-lg mb-2">{t("donors.noneTitle")}</p>
                 <p className="max-w-md mx-auto">{t("donors.noneBody")}</p>
                 <div className="mt-6 flex flex-wrap gap-3 justify-center">
-                  <button
-                    type="button"
-                    onClick={handleResetFilters}
-                    className="inline-flex h-10 items-center gap-2 rounded-full bg-brand px-5 text-xs font-bold text-white hover:bg-brand-deep cursor-pointer"
-                  >
-                    {lang === "bn" ? "সকল ফিল্টার মুছুন" : "Clear All Filters"}
-                  </button>
-                  {selectedUpazila !== "" && (
+                  {(selectedDivision || selectedUpazila || areaSearchQuery) && (
                     <button
                       type="button"
-                      onClick={() => setSelectedUpazila("")}
-                      className="inline-flex h-10 items-center gap-2 rounded-full border border-line bg-surface px-5 text-xs font-bold text-ink hover:bg-elevated cursor-pointer"
+                      onClick={() => {
+                        setSelectedDivision("");
+                        setSelectedUpazila("");
+                        setAreaSearchQuery("");
+                      }}
+                      className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-xs font-bold text-white hover:bg-brand-deep cursor-pointer"
                     >
-                      {lang === "bn" ? "সারাদেশের রক্তদাতা দেখুন" : "View Nationwide Donors"}
+                      {lang === "bn" ? "সকল এলাকার রক্তদাতা দেখুন" : "View Nationwide Donors"}
+                    </button>
+                  )}
+                  {matchMode === "exact" && (
+                    <button
+                      type="button"
+                      onClick={() => setMatchMode("compatible")}
+                      className="inline-flex h-11 items-center gap-2 rounded-xl border border-brand/30 bg-surface px-5 text-xs font-bold text-brand hover:bg-brand-soft/50 cursor-pointer"
+                    >
+                      {lang === "bn" ? "সামঞ্জস্যপূর্ণ রক্তদাতা খুঁজুন" : "Show Compatible Donors"}
                     </button>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col lg:flex-row gap-6">
-                {/* Mobile: horizontal scroll strip of all donors */}
-                <div
-                  className="lg:hidden -mx-4 px-4 overflow-x-auto no-scrollbar"
-                  role="group"
-                  aria-label={lang === "bn" ? "কাছের রক্তদাতা" : "Nearby donors"}
-                >
-                  <div className="flex gap-2 pb-1 w-max">
-                    {sortedDonors.map((d) => {
-                      const isConsented = consentedDonorIds.has(d.donor_id);
-                      const stripName = isConsented
-                        ? (lang === "bn"
-                            ? (d.full_name_bn || d.display_name_bn || d.display_name)
-                            : (d.full_name || d.display_name))
-                        : getAnonymousDonorLabel(d, lang);
-                      const isStripSelected = selectedMapDonor?.donor_id === d.donor_id;
-                      const approxDist = getApproximateDistance(d.distance_km, lang);
-                      return (
-                        <button
-                          key={d.donor_id}
-                          type="button"
-                          onClick={() => setSelectedMapDonor(d)}
-                          aria-pressed={isStripSelected}
-                          aria-current={isStripSelected || undefined}
-                          className={`flex shrink-0 w-56 items-center gap-2 rounded-2xl border px-2.5 py-2 text-left transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                            isStripSelected
-                              ? "bg-brand-soft/60 border-brand/40"
-                              : "border-line bg-surface hover:border-brand/40"
-                          }`}
-                        >
-                          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-deep font-black text-xs tnum">
-                            {d.blood_group}
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-xs font-bold text-ink">{stripName}</span>
-                            <span className="block text-[11px] text-muted truncate">
-                              {approxDist} • {getApproximateArea(d, lang)}
-                            </span>
-                          </span>
-                          <span
-                            className={`h-2 w-2 shrink-0 rounded-full ${d.can_give_now ? "bg-emerald-500" : "bg-line-strong"}`}
-                            title={d.can_give_now ? t("donors.readyNow") : t("donors.unavailable")}
-                            aria-hidden="true"
-                          />
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              /* Clean Full-Width Donor Cards Grid (No right section) */
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {sortedDonors.map((d) => {
                   const isConsented = consentedDonorIds.has(d.donor_id);
                   const anonymousLabel = getAnonymousDonorLabel(d, lang);
@@ -724,369 +775,109 @@ export default function Donors() {
                         : (d.full_name || d.display_name))
                     : anonymousLabel;
 
-                  const isSelected = selectedMapDonor?.donor_id === d.donor_id;
+                  const isExactMatch = d.blood_group === selectedGroup;
 
                   return (
                     <div
                       key={d.donor_id}
-                      aria-current={isSelected || undefined}
-                      className={`group flex flex-col gap-3 sm:gap-4 p-4 sm:p-6 rounded-3xl border bg-surface hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${
-                        isSelected ? "ring-2 ring-brand border-brand" : "border-line"
-                      }`}
+                      onClick={() => setSelectedDetailDonor(d)}
+                      className="group flex flex-col justify-between p-5 sm:p-6 rounded-3xl border border-line bg-surface hover:border-brand/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer relative"
                     >
-                      {/* Donor Anonymous / Verified Identity Header */}
-                      <div className="flex items-start gap-3">
-                        <div className="relative shrink-0">
-                          <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-soft text-brand-deep font-black text-lg tnum shadow-2xs mt-0.5">
-                            {d.blood_group}
+                      {/* Top Header: Blood Group, Donor Label, Age, Ready Badge */}
+                      <div>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-brand-deep font-black text-xl tnum shadow-2xs group-hover:scale-105 transition-transform">
+                              {d.blood_group}
+                            </span>
+                            <div className="min-w-0">
+                              <h3 className="text-base font-black text-ink truncate group-hover:text-brand transition-colors">
+                                {primaryName}
+                              </h3>
+                              <p className="text-xs text-muted font-medium mt-0.5">
+                                {donorAgeBand && `${lang === "bn" ? "বয়স" : "Age"}: ${donorAgeBand}`}
+                              </p>
+                            </div>
+                          </div>
+
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold shrink-0 ${
+                              d.can_give_now
+                                ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
+                                : "bg-elevated text-muted border border-line"
+                            }`}
+                          >
+                            <span className={`h-1.5 w-1.5 rounded-full ${d.can_give_now ? "bg-emerald-500" : "bg-line-strong"}`} />
+                            <span>{d.can_give_now ? t("donors.readyNow") : t("donors.unavailable")}</span>
                           </span>
-                          {d.can_give_now && (
+                        </div>
+
+                        {/* Badges: Match type & Lab verification */}
+                        <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
+                          {matchMode === "compatible" && (
                             <span
-                              className="absolute -bottom-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-500 text-white text-[10px] font-bold shadow-xs"
-                              title={t("donors.readyNow")}
+                              className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-bold ${
+                                isExactMatch
+                                  ? "bg-brand text-white"
+                                  : "bg-brand-soft text-brand-deep"
+                              }`}
                             >
-                              ✓
+                              {isExactMatch
+                                ? (lang === "bn" ? "হুবহু মিল" : "Exact Match")
+                                : (lang === "bn" ? "সামঞ্জস্যপূর্ণ" : "Compatible")}
+                            </span>
+                          )}
+                          {d.blood_group_verified && (
+                            <span className="inline-flex items-center gap-0.5 rounded-lg bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+                              ✓ {lang === "bn" ? "ল্যাব যাচাইকৃত" : "Verified"}
                             </span>
                           )}
                         </div>
 
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="block truncate font-mono text-base font-black text-ink leading-tight" title={primaryName}>
-                              {primaryName}
-                            </span>
-                            {isConsented ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 shrink-0">
-                                <CheckCircle2 className="h-3 w-3" />
-                                <span>{lang === "bn" ? "অনুমতি প্রাপ্ত" : "Consented"}</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-bold text-brand-deep shrink-0">
-                                <Shield className="h-2.5 w-2.5" />
-                                <span>{lang === "bn" ? "সুরক্ষিত" : "Protected"}</span>
-                              </span>
-                            )}
-                          </div>
-
-                          <span className="block truncate text-[11px] text-muted font-medium mt-1">
-                            {isConsented
-                              ? (lang === "bn" ? "✓ সরাসরি কল ও যোগাযোগ উন্মুক্ত" : "✓ Direct contact verified")
-                              : (lang === "bn" ? "🔒 গোপনীয় সুরক্ষায় পরিচয় ও নম্বর সংরক্ষিত" : "🔒 Identity & phone protected")}
-                          </span>
-
-                          <div className="flex items-center gap-1.5 text-xs text-muted mt-1 truncate">
-                            <span className="font-bold text-brand shrink-0">
-                              {approximateDistance}
-                            </span>
-                            <span className="opacity-40">•</span>
-                            <span className="truncate">{approximateArea}</span>
-                          </div>
+                        {/* Approximate Area & Distance Row */}
+                        <div className="mt-3.5 flex items-center gap-2 text-xs text-muted">
+                          <MapPin className="h-3.5 w-3.5 text-brand shrink-0" />
+                          <span className="font-bold text-ink truncate">{approximateArea}</span>
+                          <span className="opacity-40">•</span>
+                          <span className="text-brand font-bold shrink-0">{approximateDistance}</span>
                         </div>
                       </div>
 
-                      {/* Prominent badges: Blood group, Age Band, Distance Chip, Ready status */}
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <Badge tone="brand">
-                          <Droplet className="h-3 w-3 mr-0.5 inline fill-current" />
-                          <span className="font-black">{d.blood_group}</span>
-                        </Badge>
-                        {donorAgeBand && (
-                          <Badge tone="muted">
-                            {lang === "bn" ? `বয়স: ${donorAgeBand} বছর` : `Age: ${donorAgeBand} yrs`}
-                          </Badge>
-                        )}
-                        <DistanceChip km={d.distance_km} band={d.distance_band} />
-                        <Badge tone={d.can_give_now ? "success" : "muted"}>
-                          {d.can_give_now ? t("donors.readyNow") : t("donors.unavailable")}
-                        </Badge>
-                        {d.blood_group_verified && (
-                          <Badge tone="brand">
-                            ✓ {t("donors.respects")}
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Approximate General Locality on Card with Click to View Map */}
+                      {/* Card Action Buttons (Click-safe) */}
                       <div
-                        role="button"
-                        tabIndex={0}
-                        aria-pressed={isSelected}
-                        aria-current={isSelected || undefined}
-                        onClick={() => {
-                          setSelectedMapDonor(d);
-                          setMapDonor(d);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            setSelectedMapDonor(d);
-                            setMapDonor(d);
-                          }
-                        }}
-                        className="flex items-start gap-2.5 rounded-2xl bg-brand-soft/25 hover:bg-brand-soft/60 p-3 border border-brand/20 hover:border-brand/40 transition-all cursor-pointer group/addr shadow-2xs"
-                        title={lang === "bn" ? "ম্যাপে এলাকা দেখতে ক্লিক করুন" : "Click to view approximate area on map"}
+                        className="mt-5 pt-4 border-t border-line/80 flex items-center gap-2"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <MapPin className="h-4 w-4 text-brand shrink-0 mt-0.5 group-hover/addr:scale-110 group-hover/addr:text-brand-deep transition-all" />
-                        <div className="min-w-0 flex-1">
-                          <span className="block text-xs font-bold text-ink line-clamp-1 group-hover/addr:text-brand-deep transition-colors">
-                            {approximateArea}
-                          </span>
-                          <span className="block text-[11px] text-muted truncate mt-0.5">
-                            {approximateDistance} • {lang === "bn" ? `${d.division_bn || "বাংলাদেশ"}` : `${d.division_en || "Bangladesh"}`}
-                          </span>
-                          <span className="block text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold truncate mt-1">
-                            {lang === "bn"
-                              ? "🔒 গোপনীয়তার সুরক্ষায় সঠিক ঠিকানা ও নম্বর সংরক্ষিত"
-                              : "🔒 Protected for donor safety (Exact address & phone concealed)"}
-                          </span>
-                        </div>
-                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-brand bg-surface px-2 py-1 rounded-lg border border-brand/20 shadow-2xs group-hover/addr:bg-brand group-hover/addr:text-white transition-all shrink-0">
-                          {lang === "bn" ? "ম্যাপ ↗" : "Map ↗"}
-                        </span>
-                      </div>
-
-                      {/* Card Action Area */}
-                      <div className="mt-auto pt-3 border-t border-line space-y-2.5">
-                        {/* If Consented: display real phone number with quick copy */}
-                        {isConsented ? (
-                          <div className="flex items-center justify-between rounded-xl bg-emerald-500/10 px-3 py-1.5 border border-emerald-500/30">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <Phone className="h-3 w-3 text-emerald-600 shrink-0" />
-                              <span className="font-mono text-xs font-bold text-ink truncate">
-                                {d.phone || (lang === "bn" ? "নম্বর উন্মুক্ত" : "Phone unlocked")}
-                              </span>
-                            </div>
-                            {d.phone && (
-                              <button
-                                type="button"
-                                onClick={() => handleCopyPhone(d.phone as string)}
-                                aria-label={lang === "bn" ? "নম্বর কপি করুন" : "Copy phone number"}
-                                className="ml-2 shrink-0 inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer whitespace-nowrap"
-                                title={lang === "bn" ? "নম্বর কপি করুন" : "Copy number"}
-                              >
-                                {copiedPhone ? (lang === "bn" ? "কপি হয়েছে" : "Copied!") : (lang === "bn" ? "কপি" : "Copy")}
-                              </button>
-                            )}
-                          </div>
+                        {isConsented && d.phone ? (
+                          <a
+                            href={`tel:${d.phone}`}
+                            className="flex-1 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition-colors cursor-pointer"
+                          >
+                            <PhoneCall className="h-3.5 w-3.5 fill-white shrink-0" />
+                            <span>{lang === "bn" ? "কল করুন" : "Call Now"}</span>
+                          </a>
                         ) : (
-                          /* If Not Consented: Protected Number placeholder */
-                          <div className="flex items-center justify-between rounded-xl bg-elevated/60 px-3 py-1.5 border border-line/60">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <Shield className="h-3 w-3 text-brand shrink-0" />
-                              <span className="font-mono text-xs font-bold text-muted truncate">
-                                {lang === "bn" ? "🔒 নম্বর সংরক্ষিত (অনুমতি আবশ্যক)" : "🔒 Number protected (Consent required)"}
-                              </span>
-                            </div>
-                            <span className="text-[10px] font-bold text-brand bg-brand-soft px-2 py-0.5 rounded-md">
-                              {lang === "bn" ? "আইভিআর কল" : "IVR Call"}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Action CTA buttons: Request Consent Call or Direct Call if already consented */}
-                        <div className="grid grid-cols-2 gap-2">
-                          {isConsented && d.phone ? (
-                            <a
-                              href={`tel:${d.phone}`}
-                              className="inline-flex h-11 min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition-colors cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                              title={lang === "bn" ? "সরাসরি কল করুন" : "Call Now"}
-                            >
-                              <PhoneCall className="h-3.5 w-3.5 fill-white shrink-0" />
-                              <span>{lang === "bn" ? "কল করুন" : "Call Now"}</span>
-                            </a>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setConsentModalDonor(d)}
-                              className="inline-flex h-11 min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-brand hover:bg-brand-deep text-white text-xs font-black shadow-xs transition-colors cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                              title={lang === "bn" ? "অনুমতি কল পাঠান" : "Request Consent Call"}
-                            >
-                              <PhoneCall className="h-3.5 w-3.5 fill-white shrink-0" />
-                              <span>{lang === "bn" ? "অনুমতি কল পাঠান" : "Request Consent Call"}</span>
-                            </button>
-                          )}
-
                           <button
                             type="button"
-                            onClick={() => {
-                              navigate(`/requests/new?group=${d.blood_group}&donor=${d.donor_id}`);
-                            }}
-                            className="inline-flex h-11 min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-line bg-surface hover:bg-elevated text-ink text-xs font-bold shadow-2xs transition-colors cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                            onClick={() => setConsentModalDonor(d)}
+                            className="flex-1 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand hover:bg-brand-deep text-white text-xs font-black shadow-xs transition-colors cursor-pointer"
                           >
-                            <Droplet className="h-3.5 w-3.5 text-brand fill-brand shrink-0" />
-                            <span>{t("request.express")}</span>
+                            <PhoneCall className="h-3.5 w-3.5 fill-white shrink-0" />
+                            <span>{lang === "bn" ? "অনুমতি কল পাঠান" : "Request Consent"}</span>
                           </button>
-                        </div>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDetailDonor(d)}
+                          className="inline-flex h-11 px-4 items-center justify-center rounded-xl border border-line bg-surface hover:bg-elevated text-xs font-bold text-ink transition-colors cursor-pointer"
+                        >
+                          {lang === "bn" ? "বিস্তারিত" : "Details"}
+                        </button>
                       </div>
                     </div>
                   );
                 })}
-                </div>
-
-                {/* Desktop: permanent right rail */}
-                <aside
-                  className="hidden lg:block lg:w-80 lg:shrink-0 lg:sticky lg:top-24 self-start rounded-3xl border border-line bg-surface p-4 shadow-xs"
-                  aria-label={lang === "bn" ? "কাছের রক্তদাতা" : "Nearby donors"}
-                >
-                  <h2 className="text-sm font-black text-ink">
-                    {lang === "bn" ? "কাছের রক্তদাতা" : "Nearby donors"}
-                  </h2>
-                  <p className="mt-0.5 text-[11px] text-muted font-medium">
-                    {lang === "bn"
-                      ? `${toBengaliDigits(sortedDonors.length)} জন রক্তদাতা`
-                      : `${sortedDonors.length} donors`}
-                  </p>
-
-                  {selectedMapDonor ? (
-                    (() => {
-                      const isSelectedConsented = consentedDonorIds.has(selectedMapDonor.donor_id);
-                      const railName = isSelectedConsented
-                        ? (lang === "bn"
-                            ? (selectedMapDonor.full_name_bn || selectedMapDonor.display_name_bn || selectedMapDonor.display_name)
-                            : (selectedMapDonor.full_name || selectedMapDonor.display_name))
-                        : getAnonymousDonorLabel(selectedMapDonor, lang);
-                      const railApproxArea = getApproximateArea(selectedMapDonor, lang);
-                      const railApproxDist = getApproximateDistance(selectedMapDonor.distance_km, lang);
-                      const railAgeBand = ageBand(selectedMapDonor.age)[lang];
-
-                      return (
-                        <div
-                          key={selectedMapDonor.donor_id}
-                          className="donor-rail-detail mt-3 rounded-2xl border border-line bg-elevated/50 p-3.5"
-                        >
-                          <div className="flex items-start gap-2.5">
-                            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-deep font-black text-sm tnum">
-                              {selectedMapDonor.blood_group}
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <span className="block truncate text-sm font-bold text-ink">
-                                {railName}
-                              </span>
-                              <span className="block truncate text-[11px] text-muted">
-                                {isSelectedConsented ? (
-                                  <span className="text-emerald-700 dark:text-emerald-400 font-bold">
-                                    ✓ {lang === "bn" ? "অনুমতি প্রাপ্ত" : "Consent Granted"}
-                                  </span>
-                                ) : (
-                                  <span className="text-muted font-medium flex items-center gap-1">
-                                    <Shield className="h-2.5 w-2.5 text-brand" />
-                                    <span>{lang === "bn" ? "🔒 পরিচয় সংরক্ষিত" : "🔒 Anonymous Donor"}</span>
-                                  </span>
-                                )}
-                              </span>
-                              <span className="mt-1 block text-[11px] text-muted">
-                                {railAgeBand && (
-                                  <span className="font-bold text-brand">
-                                    {lang === "bn" ? `বয়স: ${railAgeBand} বছর` : `Age: ${railAgeBand} yrs`}
-                                  </span>
-                                )}
-                                {railAgeBand && <span aria-hidden="true"> • </span>}
-                                <span>{railApproxDist}</span>
-                              </span>
-                            </div>
-                          </div>
-
-                          <p className="mt-2 text-[11px] text-muted leading-relaxed">
-                            {isSelectedConsented
-                              ? (selectedMapDonor.address_en || `${selectedMapDonor.upazila_en}, ${selectedMapDonor.district_en}`)
-                              : (
-                                <span className="flex items-center gap-1">
-                                  <Shield className="h-3 w-3 text-brand shrink-0" />
-                                  <span>{railApproxArea} · {lang === "bn" ? "সঠিক ঠিকানা সংরক্ষিত" : "Address protected"}</span>
-                                </span>
-                              )}
-                          </p>
-
-                          <p className="mt-1 font-mono text-xs font-bold text-ink truncate">
-                            {isSelectedConsented
-                              ? (selectedMapDonor.phone || (lang === "bn" ? "নম্বর অনুপলব্ধ" : "Number unavailable"))
-                              : (lang === "bn" ? "🔒 নম্বর লুকানো (অনুমতি আবশ্যক)" : "🔒 Number protected")}
-                          </p>
-
-                          <div className="mt-3 grid grid-cols-2 gap-2">
-                            {isSelectedConsented && selectedMapDonor.phone ? (
-                              <a
-                                href={`tel:${selectedMapDonor.phone}`}
-                                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                              >
-                                <PhoneCall className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                                <span>{lang === "bn" ? "কল করুন" : "Call Now"}</span>
-                              </a>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => setConsentModalDonor(selectedMapDonor)}
-                                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-brand hover:bg-brand-deep text-white text-xs font-black transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                              >
-                                <PhoneCall className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                                <span>{lang === "bn" ? "অনুমতি কল" : "Consent Call"}</span>
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (selectedMapDonor) setMapDonor(selectedMapDonor);
-                              }}
-                              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-brand/30 bg-surface text-xs font-bold text-brand hover:bg-brand-soft/60 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                            >
-                              <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                              <span>{lang === "bn" ? "ম্যাপ" : "Map"}</span>
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })()
-                  ) : (
-                    <p className="mt-3 rounded-2xl border border-dashed border-line px-3 py-4 text-xs text-muted leading-relaxed">
-                      {lang === "bn"
-                        ? "বিস্তারিত দেখতে তালিকা থেকে একজন রক্তদাতা বেছে নিন।"
-                        : "Pick a donor from the list to see details here."}
-                    </p>
-                  )}
-
-                  <ul className="mt-3 space-y-2 max-h-[480px] overflow-y-auto pr-0.5">
-                    {sortedDonors.map((d) => {
-                      const isConsented = consentedDonorIds.has(d.donor_id);
-                      const railName = isConsented
-                        ? (lang === "bn"
-                            ? (d.full_name_bn || d.display_name_bn || d.display_name)
-                            : (d.full_name || d.display_name))
-                        : getAnonymousDonorLabel(d, lang);
-                      const isRailSelected = selectedMapDonor?.donor_id === d.donor_id;
-                      const approxDist = getApproximateDistance(d.distance_km, lang);
-                      return (
-                        <li key={d.donor_id}>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedMapDonor(d)}
-                            aria-pressed={isRailSelected}
-                            aria-current={isRailSelected || undefined}
-                            className={`flex w-full items-center gap-2 rounded-2xl border px-2.5 py-2 text-left transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                              isRailSelected
-                                ? "bg-brand-soft/60 border-brand/40"
-                                : "border-line bg-surface hover:border-brand/40"
-                            }`}
-                          >
-                            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-deep font-black text-xs tnum">
-                              {d.blood_group}
-                            </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-xs font-bold text-ink">{railName}</span>
-                              <span className="block text-[11px] text-muted truncate">
-                                {approxDist} • {getApproximateArea(d, lang)}
-                              </span>
-                            </span>
-                            <span
-                              className={`h-2 w-2 shrink-0 rounded-full ${d.can_give_now ? "bg-emerald-500" : "bg-line-strong"}`}
-                              title={d.can_give_now ? t("donors.readyNow") : t("donors.unavailable")}
-                              aria-hidden="true"
-                            />
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </aside>
               </div>
             )}
           </>
@@ -1148,23 +939,17 @@ export default function Donors() {
         lang={lang}
       />
 
-      {/* Right Horizontal Map & Full Address Drawer */}
-      <DonorAddressMapDrawer
-        donor={mapDonor}
-        onClose={() => setMapDonor(null)}
-        isConsented={mapDonor ? consentedDonorIds.has(mapDonor.donor_id) : false}
-        onRequestConsent={(donor: DonorCard) => {
-          setMapDonor(null);
+      {/* Centered Donor Detail Dialog Modal */}
+      <DonorDetailModal
+        donor={selectedDetailDonor}
+        isOpen={Boolean(selectedDetailDonor)}
+        onClose={() => setSelectedDetailDonor(null)}
+        isConsented={selectedDetailDonor ? consentedDonorIds.has(selectedDetailDonor.donor_id) : false}
+        onConsentRequest={(donor: DonorCard) => {
+          setSelectedDetailDonor(null);
           setConsentModalDonor(donor);
         }}
-        onCall={(donor: DonorCard) => {
-          setMapDonor(null);
-          setConsentModalDonor(donor);
-        }}
-        onRequest={(donor: DonorCard) => {
-          setMapDonor(null);
-          navigate(`/requests/new?group=${donor.blood_group}&donor=${donor.donor_id}`);
-        }}
+        lang={lang}
       />
     </div>
   );

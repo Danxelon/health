@@ -15,24 +15,16 @@
 
 import { useEffect, useState, useRef } from "react";
 import {
-  ArrowRight,
   Building2,
   Check,
   CheckCircle2,
   Copy,
-  Droplet,
-  ExternalLink,
-  Flame,
-  HelpCircle,
   MessageSquare,
-  Phone,
   PhoneCall,
   PhoneForwarded,
   PhoneOff,
-  Radio,
   RotateCcw,
   Shield,
-  ShieldAlert,
   ShieldCheck,
   Sparkles,
   Volume2,
@@ -43,7 +35,7 @@ import {
 import { useAppShell } from "@/state/app-shell.tsx";
 import { Badge } from "@/components/ui.tsx";
 import type { DonorCard, RequestUrgency } from "@/domain/types.ts";
-import { ageBand, toBengaliDigits } from "@/domain/profile.ts";
+import { ageBand } from "@/domain/profile.ts";
 import {
   getAnonymousDonorLabel,
   getApproximateArea,
@@ -87,9 +79,6 @@ export default function DonorConsentModal({
       : "Dhaka Medical College Hospital (DMCH)"
   );
   const [urgency, setUrgency] = useState<RequestUrgency>(initialUrgency);
-  const [patientNote, setPatientNote] = useState<string>(
-    lang === "bn" ? "জরুরি রক্তের প্রয়োজন" : "Urgent blood transfusion required"
-  );
 
   // Call lifecycle state
   const [callStep, setCallStep] = useState<ConsentCallStep>(

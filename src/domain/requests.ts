@@ -415,6 +415,9 @@ export interface RequestFormInput {
   reason: string | null;
   upazila_id: number | null;
   patient_name: string | null;
+  hospital_contact?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export interface FieldIssue {

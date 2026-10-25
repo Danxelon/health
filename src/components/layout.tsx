@@ -304,6 +304,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [isScrolled, setIsScrolled] = useState(() =>
     typeof window !== "undefined" ? window.scrollY > 140 : false
   );
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator !== "undefined" && typeof navigator.onLine === "boolean"
+      ? navigator.onLine
+      : true
+  );
+
+  // Offline / online status listener
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   // Scroll listener for sticky header state (threshold: 140px)
   useEffect(() => {
@@ -404,6 +423,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         {t("nav.skipToContent")}
       </a>
+
+      {/* Offline Status Banner */}
+      {!isOnline && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="sticky top-0 z-60 bg-amber-500 text-amber-950 dark:bg-amber-600 dark:text-amber-50 px-4 py-2.5 text-center text-xs sm:text-sm font-semibold shadow-xs flex items-center justify-center gap-2 border-b border-amber-600/20"
+        >
+          <span>
+            {lang === "bn"
+              ? "⚠️ আপনি অফলাইনে আছেন। সংরক্ষিত তথ্য প্রদর্শিত হচ্ছে।"
+              : "⚠️ You are offline. Showing cached information."}
+          </span>
+        </div>
+      )}
 
       {/* Login Prompt Modal */}
       <LoginPromptModal />

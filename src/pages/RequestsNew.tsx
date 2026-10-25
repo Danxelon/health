@@ -10,7 +10,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Droplet, HeartPulse } from "lucide-react";
+import { Droplet, HeartPulse, MapPin, Search, X } from "lucide-react";
 
 import { useAppShell } from "@/state/app-shell.tsx";
 import { useAuth } from "@/state/auth-context.tsx";
@@ -19,6 +19,7 @@ import { COMPONENT_LABELS, URGENCY_LABELS } from "@/lib/strings.ts";
 import { createBloodRequest } from "@/api/requests.ts";
 import { BLOOD_GROUPS } from "@/domain/types.ts";
 import { todayISO } from "@/domain/eligibility.ts";
+import { DEMO_UPAZILAS } from "@/lib/demo-data.ts";
 
 export default function RequestsNew() {
   const { t, lang } = useAppShell();
@@ -37,6 +38,12 @@ export default function RequestsNew() {
   const [group, setGroup] = useState<BloodGroup | null>(null);
   const [urgency, setUrgency] = useState<"routine" | "urgent" | "critical" | null>(null);
   const [hospital, setHospital] = useState("");
+  const [hospitalContact, setHospitalContact] = useState("");
+
+  // Division & Upazila Geolocation Hierarchy
+  const [selectedDivision, setSelectedDivision] = useState("");
+  const [selectedUpazilaId, setSelectedUpazilaId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Full-form extras
   const [component, setComponent] = useState<BloodComponent>("whole_blood");
@@ -49,12 +56,63 @@ export default function RequestsNew() {
 
   const today = useMemo(() => todayISO().slice(0, 10), []);
 
+  // Unique divisions with bilingual labels
+  const divisions = useMemo(() => {
+    const map = new Map<string, { en: string; bn: string }>();
+    DEMO_UPAZILAS.forEach((u) => {
+      if (!map.has(u.division_en)) {
+        map.set(u.division_en, { en: u.division_en, bn: u.division_bn });
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => a.en.localeCompare(b.en));
+  }, []);
+
+  const selectedUpazila = useMemo(
+    () => (selectedUpazilaId !== null ? DEMO_UPAZILAS.find((u) => u.id === selectedUpazilaId) : null),
+    [selectedUpazilaId]
+  );
+
+  const filteredUpazilas = useMemo(() => {
+    let list = selectedDivision
+      ? DEMO_UPAZILAS.filter((u) => u.division_en === selectedDivision)
+      : DEMO_UPAZILAS;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(
+        (u) =>
+          u.name_en.toLowerCase().includes(q) ||
+          u.name_bn.includes(q) ||
+          u.district_en.toLowerCase().includes(q) ||
+          u.district_bn.includes(q) ||
+          u.division_en.toLowerCase().includes(q) ||
+          u.division_bn.includes(q)
+      );
+    }
+    return list;
+  }, [selectedDivision, searchQuery]);
+
+  // Ensure currently selected upazila is included in dropdown options even during active search
+  const displayUpazilas = useMemo(() => {
+    if (selectedUpazila && !filteredUpazilas.some((u) => u.id === selectedUpazila.id)) {
+      return [selectedUpazila, ...filteredUpazilas];
+    }
+    return filteredUpazilas;
+  }, [filteredUpazilas, selectedUpazila]);
+
   const canSubmit =
-    group !== null && urgency !== null && hospital.trim().length >= 3 && !submitting;
+    group !== null &&
+    urgency !== null &&
+    hospital.trim().length >= 3 &&
+    selectedUpazilaId !== null &&
+    !submitting;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!group || !urgency) return;
+    if (!group || !urgency || !selectedUpazilaId) return;
+    const upazila = DEMO_UPAZILAS.find((u) => u.id === selectedUpazilaId);
+    if (!upazila) return;
+
     setSubmitting(true);
     setError(null);
     try {
@@ -64,11 +122,14 @@ export default function RequestsNew() {
         units_needed: units,
         urgency,
         hospital_name: hospital.trim(),
+        hospital_contact: hospitalContact.trim() || null,
         needed_by: neededBy || null,
         reason: reason.trim() || null,
-        upazila_id: 111,
+        upazila_id: selectedUpazilaId,
+        lat: upazila.lat,
+        lng: upazila.lng,
+        division: upazila.division_en,
         patient_name: patientName.trim() || null,
-        hospital_contact: null,
       });
       navigate(`/requests/${request.id}`, { replace: true });
     } catch (err) {
@@ -180,6 +241,140 @@ export default function RequestsNew() {
             />
           </label>
 
+          {/* Hospital Contact */}
+          <label className="block text-sm font-semibold text-ink">
+            {t("request.hospitalContact")}
+            <input
+              value={hospitalContact}
+              onChange={(e) => setHospitalContact(e.target.value)}
+              placeholder={t("request.hospitalContactPh")}
+              className="mt-2 w-full rounded-xl border border-line bg-surface px-4 py-3 text-ink outline-none focus:border-brand"
+            />
+          </label>
+
+          {/* Division and Upazila Geolocation Selection */}
+          <fieldset className="space-y-4 rounded-2xl border border-line bg-surface/50 p-4 sm:p-5">
+            <legend className="text-sm font-semibold text-ink px-1">
+              <span className="flex items-center gap-1.5">
+                <MapPin className="h-4 w-4 text-brand" />
+                <span>{t("request.locationTitle")}</span>
+              </span>
+            </legend>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {/* Division selector */}
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1.5">
+                  {t("request.division")}
+                </label>
+                <select
+                  value={selectedDivision}
+                  onChange={(e) => {
+                    const newDiv = e.target.value;
+                    setSelectedDivision(newDiv);
+                    if (selectedUpazila && selectedUpazila.division_en !== newDiv && newDiv !== "") {
+                      setSelectedUpazilaId(null);
+                    }
+                  }}
+                  className="w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none focus:border-brand font-medium"
+                >
+                  <option value="">{t("request.selectDivision")}</option>
+                  {divisions.map((d) => (
+                    <option key={d.en} value={d.en}>
+                      {lang === "bn" ? d.bn : d.en}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Upazila Quick Search */}
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1.5">
+                  {t("request.searchUpazilaPh")}
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={lang === "bn" ? "যেমন: সাভার, মিরপুর, সদর..." : "e.g. Savar, Mirpur, Sadar..."}
+                    className="w-full rounded-xl border border-line bg-surface pl-9 pr-8 py-2.5 text-sm text-ink outline-none focus:border-brand font-medium placeholder:text-muted/60"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink cursor-pointer"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Upazila dropdown */}
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1.5">
+                {t("request.upazila")}
+              </label>
+              <select
+                value={selectedUpazilaId ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (!val) {
+                    setSelectedUpazilaId(null);
+                  } else {
+                    const id = Number(val);
+                    setSelectedUpazilaId(id);
+                    const chosen = DEMO_UPAZILAS.find((u) => u.id === id);
+                    if (chosen && !selectedDivision) {
+                      setSelectedDivision(chosen.division_en);
+                    }
+                  }
+                }}
+                className="w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none focus:border-brand font-medium"
+              >
+                <option value="">{t("request.selectUpazila")}</option>
+                {displayUpazilas.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {lang === "bn"
+                      ? `${u.name_bn}, ${u.district_bn} (${u.division_bn})`
+                      : `${u.name_en}, ${u.district_en} (${u.division_en})`}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Selected Location Pill */}
+            {selectedUpazila && (
+              <div className="flex items-center justify-between rounded-xl border border-brand/30 bg-brand-soft/40 px-3.5 py-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-brand shrink-0" />
+                  <span className="font-semibold text-brand-deep">
+                    {lang === "bn"
+                      ? `${selectedUpazila.name_bn}, জেলা: ${selectedUpazila.district_bn}, বিভাগ: ${selectedUpazila.division_bn}`
+                      : `${selectedUpazila.name_en}, Dist: ${selectedUpazila.district_en}, Div: ${selectedUpazila.division_en}`}
+                  </span>
+                  <span className="text-[11px] text-muted">
+                    ({selectedUpazila.lat.toFixed(4)}, {selectedUpazila.lng.toFixed(4)})
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedUpazilaId(null);
+                    setSearchQuery("");
+                  }}
+                  className="text-xs text-muted hover:text-ink cursor-pointer underline"
+                >
+                  {t("request.changeLocation")}
+                </button>
+              </div>
+            )}
+          </fieldset>
+
           {/* Full form extras */}
           {mode === "full" && (
             <>
@@ -250,7 +445,7 @@ export default function RequestsNew() {
             </>
           )}
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col gap-2 pt-2">
             <button
               type="submit"
               disabled={!canSubmit}
@@ -259,6 +454,13 @@ export default function RequestsNew() {
               <HeartPulse className="h-4 w-4" aria-hidden="true" />
               {submitting ? t("request.submitting") : t("request.submit")}
             </button>
+            {!selectedUpazilaId && hospital.trim().length >= 3 && group && urgency && (
+              <p className="text-center text-xs text-muted">
+                {lang === "bn"
+                  ? "অনুরোধ পাঠাতে অনুগ্রহ করে রোগীর উপজেলা নির্বাচন করুন।"
+                  : "Please select the patient's upazila to post the request."}
+              </p>
+            )}
           </div>
         </form>
 

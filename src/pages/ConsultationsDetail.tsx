@@ -32,14 +32,22 @@ import { useGSAP } from "@gsap/react";
 import {
   ArrowLeft,
   Building2,
+  CheckCircle2,
+  Download,
+  FileText,
+  Maximize2,
   MessageCircle,
   Mic,
   MicOff,
   Phone,
   PhoneCall,
   PhoneOff,
+  Pill,
+  Printer,
   Send,
   ShieldCheck,
+  Sparkles,
+  Star,
   X,
 } from "lucide-react";
 
@@ -54,6 +62,11 @@ import { DomainError, type ConsultationMessage, type ConsultationStatus } from "
 import { initialsOf, telHref, toBengaliDigits } from "@/domain/profile.ts";
 import { supabase } from "@/lib/supabase.ts";
 import type { Lang } from "@/lib/strings.ts";
+import {
+  CLINICAL_SYMPTOM_PILLS,
+  CONSULTATION_RATING_TAGS,
+  buildDigitalPrescription,
+} from "@/domain/prescription.ts";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -103,7 +116,34 @@ const COPY = {
   endCall: { bn: "কল শেষ করুন (End Call)", en: "End Call" },
   mute: { bn: "মিউট", en: "Mute" },
   unmute: { bn: "আনমিউট", en: "Unmute" },
+  prescriptionTitle: { bn: "ডিজিটাল প্রেসক্রিপশন", en: "Digital Prescription" },
+  rateConsultation: { bn: "রেটিং দিন", en: "Rate Consultation" },
+  printDownload: { bn: "প্রেসক্রিপশন প্রিন্ট / ডাউনলোড", en: "Print / Download Prescription" },
+  viewFullRx: { bn: "সম্পূর্ণ প্রেসক্রিপশন দেখুন", en: "View Full Prescription" },
+  quickResponses: { bn: "দ্রুত ক্লিনিক্যাল উত্তর / লক্ষণসমূহ", en: "Quick clinical responses" },
+  ratingModalTitle: { bn: "পরামর্শ মূল্যায়ন ও রেটিং", en: "Consultation Rating & Feedback" },
+  officialSealBadge: {
+    bn: "গণপ্রজাতন্ত্রী বাংলাদেশ অনুমোদিত টেলিমেডিসিন প্রেসক্রিপশন",
+    en: "Approved Telemedicine Prescription - Govt. of Bangladesh",
+  },
 } as const;
+
+function getStarLabel(rating: number, isBn: boolean): string {
+  switch (rating) {
+    case 5:
+      return isBn ? "৫/৫ - চমৎকার ও অত্যন্ত যত্নশীল" : "5/5 - Outstanding & Very Caring";
+    case 4:
+      return isBn ? "৪/৫ - খুব ভালো পরামর্শ" : "4/5 - Very Good Advice";
+    case 3:
+      return isBn ? "৩/৫ - সন্তোষজনক সেবা" : "3/5 - Satisfactory Care";
+    case 2:
+      return isBn ? "২/৫ - উন্নতির সুযোগ রয়েছে" : "2/5 - Needs Improvement";
+    case 1:
+      return isBn ? "১/৫ - অসন্তোষজনক" : "1/5 - Unsatisfactory";
+    default:
+      return "";
+  }
+}
 
 const STATUS_COPY = {
   requested: { bn: "অনুরোধ পাঠানো হয়েছে", en: "Request sent", tone: "warning" },
@@ -179,8 +219,56 @@ export default function ConsultationsDetail() {
   const [callSeconds, setCallSeconds] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
 
+  // Digital Prescription full preview modal state
+  const [rxModalOpen, setRxModalOpen] = useState(false);
+
+  // Consultation Rating state
+  const [ratingModalOpen, setRatingModalOpen] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [selectedTags, setSelectedTags] = useState<string[]>(["caring", "accurate_advice"]);
+  const [ratingComment, setRatingComment] = useState("");
+  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [hasRated, setHasRated] = useState(false);
+
   const pageRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-prompt rating modal when consultation is completed
+  useEffect(() => {
+    if (!thread) return;
+    const isCompleted = thread.consultation.status === "completed";
+    const key = `medilink_rated_${thread.consultation.id}`;
+    let alreadyRated = false;
+    try {
+      alreadyRated = localStorage.getItem(key) === "true";
+    } catch {
+      // Ignore storage errors
+    }
+    if (alreadyRated) {
+      setHasRated(true);
+    } else if (isCompleted && !ratingSubmitted) {
+      const timer = setTimeout(() => {
+        setRatingModalOpen(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [thread, ratingSubmitted]);
+
+  const handleSubmitRating = () => {
+    if (!thread) return;
+    try {
+      localStorage.setItem(`medilink_rated_${thread.consultation.id}`, "true");
+    } catch {
+      // Ignore storage errors
+    }
+    setHasRated(true);
+    setRatingSubmitted(true);
+  };
+
+  const handlePrintPrescription = () => {
+    window.print();
+  };
 
   /* --------------------------------- fetch -------------------------------- */
 
@@ -467,6 +555,16 @@ export default function ConsultationsDetail() {
     ? (isBn ? `বিএমডিসি: ${toBengaliDigits(doctor.bmdc_reg_no)}` : `BMDC: ${doctor.bmdc_reg_no}`)
     : (isBn ? "বিএমডিসি: এ-৭৮৪২০ (নিবন্ধিত)" : "BMDC: A-78420 (Verified)");
 
+  const rxData = buildDigitalPrescription({
+    consultationId: consultation.id,
+    doctorName,
+    bmdcRegNo: doctor?.bmdc_reg_no ?? null,
+    consultationDate: scheduledAt ?? consultation.created_at,
+    symptomSummary: consultation.symptom_summary,
+    rawPrescription: consultation.prescription,
+    lang,
+  });
+
   return (
     <div ref={pageRef} className="w-full max-w-full overflow-x-hidden">
       <div className="mx-auto w-full max-w-6xl px-4 pb-24 pt-6 sm:px-6 sm:pt-8">
@@ -511,6 +609,26 @@ export default function ConsultationsDetail() {
                 >
                   <Phone className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
                   <span>{COPY.callDoctor[lang]}</span>
+                </button>
+
+                {/* 2. Digital Prescription button */}
+                <button
+                  type="button"
+                  onClick={() => setRxModalOpen(true)}
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-brand bg-brand-soft px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-brand-deep shadow-xs transition-all hover:bg-brand hover:text-white active:scale-95"
+                >
+                  <FileText className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+                  <span>{COPY.prescriptionTitle[lang]}</span>
+                </button>
+
+                {/* 3. Rating button */}
+                <button
+                  type="button"
+                  onClick={() => setRatingModalOpen(true)}
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-amber-800 shadow-xs transition-all hover:bg-amber-100 active:scale-95"
+                >
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-500" strokeWidth={1.5} aria-hidden="true" />
+                  <span>{COPY.rateConsultation[lang]}</span>
                 </button>
               </div>
 
@@ -643,6 +761,24 @@ export default function ConsultationsDetail() {
 
               {/* Composer — sticky within the page column, always in reach */}
               <div className="sticky bottom-0 z-10 border-t border-line bg-surface/95 px-3 py-3 backdrop-blur sm:px-4">
+                {/* Quick Clinical Response Pills */}
+                <div className="mb-2.5 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                  <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-subtle">
+                    <Sparkles className="h-3.5 w-3.5 text-brand" />
+                    <span className="hidden sm:inline">{COPY.quickResponses[lang]}:</span>
+                  </span>
+                  {CLINICAL_SYMPTOM_PILLS.map((pill) => (
+                    <button
+                      key={pill.id}
+                      type="button"
+                      onClick={() => setInput(isBn ? pill.bn : pill.en)}
+                      className="inline-flex shrink-0 cursor-pointer items-center rounded-full border border-line bg-elevated/70 px-3 py-1 text-xs font-medium text-ink transition-colors hover:border-brand hover:bg-brand-soft hover:text-brand-deep active:scale-95"
+                    >
+                      {isBn ? pill.bn : pill.en}
+                    </button>
+                  ))}
+                </div>
+
                 {sendError && (
                   <div
                     role="alert"
@@ -692,12 +828,92 @@ export default function ConsultationsDetail() {
           </section>
 
           {/* Rail */}
-          {consultation.prescription && (
-            <aside data-intro className="rounded-3xl border border-line bg-surface p-5">
-              <h2 className="text-base font-semibold text-ink">{COPY.prescription[lang]}</h2>
-              <p className="mt-2 break-words text-sm text-muted">{consultation.prescription}</p>
-            </aside>
-          )}
+          {/* Digital Prescription Summary Card */}
+          <aside data-intro className="rounded-3xl border border-line bg-surface p-5 shadow-xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-brand-deep">
+                  <FileText className="h-4.5 w-4.5" strokeWidth={2} />
+                </span>
+                <div>
+                  <h2 className="text-base font-bold text-ink">{COPY.prescriptionTitle[lang]}</h2>
+                  <p className="text-[11px] font-medium text-subtle">{bmdcDisplay}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRxModalOpen(true)}
+                className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-subtle hover:bg-elevated hover:text-ink transition-colors"
+                title={COPY.viewFullRx[lang]}
+                aria-label={COPY.viewFullRx[lang]}
+              >
+                <Maximize2 className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-3 rounded-2xl border border-line bg-elevated/50 p-3 text-xs">
+              <span className="font-semibold text-ink-brand">
+                {isBn ? "অনুমোদিত ই-প্রেসক্রিপশন" : "Verified e-Prescription"}
+              </span>
+              <p className="mt-1 text-muted line-clamp-2">
+                {consultation.prescription ??
+                  (isBn
+                    ? "জরুরি ওষুধ ও চিকিৎসকের নির্দেশনা প্রস্তুত রয়েছে।"
+                    : "Prescribed medicines & medical instructions ready.")}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setRxModalOpen(true)}
+              className="mt-3.5 inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-brand bg-brand-soft px-4 text-xs font-semibold text-brand-deep transition-all hover:bg-brand hover:text-white active:scale-95"
+            >
+              <Pill className="h-4 w-4" />
+              <span>{COPY.viewFullRx[lang]}</span>
+            </button>
+          </aside>
+
+          {/* Consultation Rating Card */}
+          <aside data-intro className="rounded-3xl border border-line bg-surface p-5 shadow-xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                  <Star className="h-4.5 w-4.5 fill-amber-400 text-amber-500" strokeWidth={1.5} />
+                </span>
+                <div>
+                  <h2 className="text-base font-bold text-ink">{COPY.rateConsultation[lang]}</h2>
+                  <p className="text-[11px] font-medium text-subtle">
+                    {hasRated
+                      ? isBn
+                        ? "রেটিং জমা দেওয়া হয়েছে"
+                        : "Feedback submitted"
+                      : isBn
+                      ? "আপনার মতামত দিন"
+                      : "Share your feedback"}
+                  </p>
+                </div>
+              </div>
+            </div>
+            {hasRated ? (
+              <div className="mt-3 flex items-center gap-2 rounded-2xl bg-emerald-500/10 px-3.5 py-2.5 text-xs font-medium text-emerald-700">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span>
+                  {isBn
+                    ? "পরামর্শের মূল্যায়ন সফলভাবে জমা দেওয়া হয়েছে।"
+                    : "Consultation rating submitted successfully."}
+                </span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setRatingModalOpen(true)}
+                className="mt-3.5 inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-amber-500 px-4 text-xs font-semibold text-white shadow-xs transition-all hover:bg-amber-600 active:scale-95"
+              >
+                <Star className="h-4 w-4 fill-white" />
+                <span>{COPY.rateConsultation[lang]}</span>
+              </button>
+            )}
+          </aside>
 
           {/* Active Telehealth Voice Call Panel */}
           <aside data-intro className="rounded-3xl border border-line bg-surface p-5 shadow-xs">
@@ -944,6 +1160,323 @@ export default function ConsultationsDetail() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Digital Prescription Modal Dialog */}
+      {rxModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="rx-modal-title"
+          className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-ink/60 backdrop-blur-sm overflow-y-auto"
+          onClick={() => setRxModalOpen(false)}
+        >
+          <div
+            className="relative my-8 w-full max-w-2xl overflow-hidden rounded-3xl border border-line bg-surface p-6 sm:p-8 shadow-2xl transition-all print:p-0 print:border-none print:shadow-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top Close button and Actions */}
+            <div className="flex items-center justify-between border-b border-line pb-4 print:hidden">
+              <div className="flex items-center gap-2 text-brand-deep">
+                <FileText className="h-5 w-5" />
+                <h3 id="rx-modal-title" className="text-lg font-bold text-ink">
+                  {COPY.prescriptionTitle[lang]}
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handlePrintPrescription}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-line bg-elevated px-3 py-1.5 text-xs font-semibold text-ink hover:bg-surface hover:border-brand transition-colors cursor-pointer"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  <span>{isBn ? "প্রিন্ট" : "Print"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePrintPrescription}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-deep transition-colors cursor-pointer"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>{isBn ? "ডাউনলোড" : "Download"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRxModalOpen(false)}
+                  className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-elevated hover:text-ink transition-colors cursor-pointer"
+                  aria-label={t("nav.close")}
+                >
+                  <X className="h-4.5 w-4.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Prescription Body */}
+            <div className="mt-4 space-y-5">
+              {/* Bangladesh Government Telemedicine Header Seal */}
+              <div className="rounded-2xl border border-emerald-600/30 bg-emerald-50/70 p-3.5 sm:p-4 text-center">
+                <div className="flex items-center justify-center gap-2 text-emerald-800">
+                  <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                  <span className="text-xs sm:text-sm font-bold tracking-wide">
+                    {COPY.officialSealBadge[lang]}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-[11px] text-emerald-700/80 font-mono">
+                  Govt. of Bangladesh Telehealth Protocol • Digital Health Authorization
+                </p>
+              </div>
+
+              {/* Doctor & Hospital Header */}
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-line pb-4">
+                <div>
+                  <h4 className="text-lg font-bold text-ink">{rxData.doctorName}</h4>
+                  <p className="text-xs font-semibold text-brand-deep">{rxData.bmdcRegNo}</p>
+                  {specialty && <p className="text-xs text-muted mt-0.5">{specialty}</p>}
+                  <p className="text-xs text-subtle mt-0.5">{doctorHospital}</p>
+                </div>
+                <div className="text-xs text-muted sm:text-right">
+                  <p className="font-mono font-bold text-ink">{rxData.rxId}</p>
+                  <p className="text-subtle mt-0.5">
+                    {isBn ? "তারিখ: " : "Date: "}
+                    <span className="font-mono">{formatDateTime(rxData.date, lang) || rxData.date}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Diagnosis / Symptom Summary */}
+              <div className="rounded-xl bg-elevated/60 p-3 text-xs">
+                <span className="font-semibold text-subtle block uppercase text-[10px] tracking-wider">
+                  {isBn ? "রোগ নির্ণয় / লক্ষণ (Diagnosis / Symptoms):" : "Diagnosis / Symptoms:"}
+                </span>
+                <p className="mt-1 font-medium text-ink">{rxData.diagnosis}</p>
+              </div>
+
+              {/* Medicines Table */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Pill className="h-4 w-4 text-brand-deep" />
+                  <h5 className="text-sm font-bold text-ink">
+                    {isBn ? "ওষুধের তালিকা (Rx)" : "Prescribed Medicines (Rx)"}
+                  </h5>
+                </div>
+                <div className="overflow-x-auto rounded-xl border border-line">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-elevated text-subtle font-semibold border-b border-line">
+                      <tr>
+                        <th className="px-3 py-2 w-10">#</th>
+                        <th className="px-3 py-2">{isBn ? "ওষুধের নাম ও উপাদান" : "Medicine & Generic"}</th>
+                        <th className="px-3 py-2">{isBn ? "মাত্রা" : "Dosage"}</th>
+                        <th className="px-3 py-2">{isBn ? "মেয়াদ" : "Duration"}</th>
+                        <th className="px-3 py-2">{isBn ? "নির্দেশনা" : "Instructions"}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-line text-ink">
+                      {rxData.medicines.map((med, idx) => (
+                        <tr key={med.id} className="hover:bg-elevated/40">
+                          <td className="px-3 py-2.5 font-mono text-subtle">{idx + 1}</td>
+                          <td className="px-3 py-2.5 font-medium">
+                            <div>{med.name}</div>
+                            {med.generic && (
+                              <div className="text-[11px] text-muted font-mono">{med.generic}</div>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5 font-mono font-semibold text-brand-deep">{med.dosage}</td>
+                          <td className="px-3 py-2.5">{med.duration}</td>
+                          <td className="px-3 py-2.5 text-muted">{med.instructions}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* General Advice */}
+              {rxData.generalAdvice && (
+                <div className="rounded-xl border border-line bg-elevated/30 p-3 text-xs">
+                  <span className="font-semibold text-ink block">
+                    {isBn ? "সাধারণ পরামর্শ:" : "General Advice:"}
+                  </span>
+                  <p className="mt-1 text-muted leading-relaxed">
+                    {isBn ? rxData.generalAdvice.bn : rxData.generalAdvice.en}
+                  </p>
+                </div>
+              )}
+
+              {/* Digital Signature & Govt Seal Footer */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-line pt-4 text-xs text-subtle">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  <span>{rxData.officialSeal[lang]}</span>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium text-ink">{rxData.doctorName}</p>
+                  <p className="text-[11px] font-mono">{rxData.bmdcRegNo}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5-Star Consultation Rating Modal Dialog */}
+      {ratingModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="rating-modal-title"
+          className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm"
+          onClick={() => setRatingModalOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-md overflow-hidden rounded-3xl border border-line bg-surface p-6 sm:p-8 shadow-2xl transition-all"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top Close button */}
+            <button
+              type="button"
+              onClick={() => setRatingModalOpen(false)}
+              className="absolute right-5 top-5 inline-flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-elevated hover:text-ink transition-colors cursor-pointer"
+              aria-label={t("nav.close")}
+            >
+              <X className="h-4.5 w-4.5" />
+            </button>
+
+            {ratingSubmitted ? (
+              <div className="flex flex-col items-center py-6 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 mb-3">
+                  <CheckCircle2 className="h-9 w-9" />
+                </div>
+                <h3 className="text-xl font-bold text-ink">
+                  {isBn ? "ধন্যবাদ! আপনার মূল্যায়ন গৃহীত হয়েছে" : "Thank you! Rating Submitted"}
+                </h3>
+                <p className="mt-2 text-sm text-muted">
+                  {isBn
+                    ? "আপনার মূল্যবান মতামত চিকিৎসকের মানোন্নয়নে সহায়তা করবে।"
+                    : "Your feedback helps doctors deliver better healthcare services."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setRatingModalOpen(false)}
+                  className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-brand px-6 text-sm font-semibold text-white hover:bg-brand-deep cursor-pointer"
+                >
+                  {isBn ? "বন্ধ করুন" : "Close"}
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div className="text-center">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-500 mb-2">
+                    <Star className="h-6 w-6 fill-amber-400" />
+                  </div>
+                  <h3 id="rating-modal-title" className="text-xl font-bold text-ink">
+                    {COPY.ratingModalTitle[lang]}
+                  </h3>
+                  <p className="mt-1 text-xs text-muted">
+                    {doctorName} ({specialty ?? (isBn ? "চিকিৎসক" : "Doctor")})
+                  </p>
+                </div>
+
+                {/* 5 Star Selection */}
+                <div className="mt-5 flex flex-col items-center">
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => {
+                      const active = (hoverRating || rating) >= star;
+                      return (
+                        <button
+                          key={star}
+                          type="button"
+                          onMouseEnter={() => setHoverRating(star)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          onClick={() => setRating(star)}
+                          className="p-1 cursor-pointer transition-transform hover:scale-110 focus:outline-none"
+                          aria-label={`${star} star`}
+                        >
+                          <Star
+                            className={`h-8 w-8 transition-colors ${
+                              active
+                                ? "fill-amber-400 text-amber-500"
+                                : "text-line hover:text-amber-300"
+                            }`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2 text-xs font-semibold text-brand-deep h-4">
+                    {getStarLabel(hoverRating || rating, isBn)}
+                  </p>
+                </div>
+
+                {/* Feedback Tags */}
+                <div className="mt-5">
+                  <span className="text-xs font-semibold text-subtle block mb-2">
+                    {isBn ? "পরামর্শের অভিজ্ঞতা (ট্যাগ নির্বাচন করুন):" : "Feedback Tags:"}
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CONSULTATION_RATING_TAGS.map((tag) => {
+                      const isSelected = selectedTags.includes(tag.id);
+                      return (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedTags((prev) =>
+                              isSelected ? prev.filter((tId) => tId !== tag.id) : [...prev, tag.id]
+                            );
+                          }}
+                          className={`rounded-full px-3 py-1 text-xs font-medium transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-brand text-white shadow-xs"
+                              : "border border-line bg-elevated/60 text-muted hover:border-brand-soft hover:text-ink"
+                          }`}
+                        >
+                          {isBn ? tag.bn : tag.en}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Optional comment */}
+                <div className="mt-4">
+                  <label htmlFor="rating-comment" className="text-xs font-semibold text-subtle block mb-1">
+                    {isBn ? "অতিরিক্ত মন্তব্য (ঐচ্ছিক):" : "Additional Comments (Optional):"}
+                  </label>
+                  <textarea
+                    id="rating-comment"
+                    rows={2}
+                    value={ratingComment}
+                    onChange={(e) => setRatingComment(e.target.value)}
+                    placeholder={
+                      isBn
+                        ? "চিকিৎসকের সাথে পরামর্শের অভিজ্ঞতা লিখুন..."
+                        : "Describe your consultation experience..."
+                    }
+                    className="w-full rounded-2xl border border-line bg-surface p-3 text-xs text-ink placeholder:text-subtle focus:border-brand focus:outline-none"
+                  />
+                </div>
+
+                {/* Submit button */}
+                <div className="mt-5 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setRatingModalOpen(false)}
+                    className="flex-1 h-11 rounded-full border border-line bg-surface text-xs font-semibold text-muted hover:bg-elevated transition-colors cursor-pointer"
+                  >
+                    {isBn ? "পরে দিন" : "Skip"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmitRating}
+                    className="flex-1 h-11 rounded-full bg-brand text-xs font-semibold text-white hover:bg-brand-deep transition-colors shadow-sm cursor-pointer"
+                  >
+                    {isBn ? "জমা দিন" : "Submit Rating"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

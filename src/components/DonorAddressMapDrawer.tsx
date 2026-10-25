@@ -33,8 +33,6 @@ import type { DonorCard } from "@/domain/types.ts";
 import { ageBand } from "@/domain/profile.ts";
 import {
   getAnonymousDonorLabel,
-  getApproximateArea,
-  getApproximateDistance,
 } from "@/domain/donor-privacy.ts";
 
 export interface DonorAddressMapDrawerProps {
