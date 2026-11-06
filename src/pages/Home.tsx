@@ -100,7 +100,7 @@ function Hero() {
         <h1
           id="hero-h1"
           data-hero-reveal
-          className={`display mx-auto max-w-4xl mt-5 sm:mt-6 text-[clamp(1.875rem,4vw,3.5rem)] text-ink ${lang === "bn" ? "leading-[1.2]" : "leading-[1.08]"} break-words [overflow-wrap:anywhere] text-balance`}
+          className={`display mx-auto max-w-4xl mt-7 sm:mt-9 text-[clamp(1.875rem,4vw,3.5rem)] text-ink ${lang === "bn" ? "leading-[1.2]" : "leading-[1.08]"} break-words [overflow-wrap:anywhere] text-balance`}
         >
           {lang === "bn" ? (
             <>

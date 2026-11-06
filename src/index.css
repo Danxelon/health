@@ -142,7 +142,8 @@ body {
   overflow-x: hidden;
 }
 
-h1,
+@layer base {
+  h1,
 h2,
 h3,
 h4 {
@@ -156,6 +157,8 @@ h4 {
 
 p {
   text-wrap: pretty;
+}
+
 }
 
 /* Bengali runs get their own line-height; the script loses its ascenders if
@@ -283,11 +286,14 @@ svg {
 
 /* Large display type: Cabinet Grotesk at 5rem needs negative tracking or the
    line reads loose and merges into a 3-line wall. */
-.display {
+@layer components {
+  .display {
   font-family: var(--font-display);
   font-weight: 800;
   letter-spacing: -0.035em;
   line-height: 1;
+}
+
 }
 
 /* Subtle grain overlay — kills the flat "default Tailwind" look on large
