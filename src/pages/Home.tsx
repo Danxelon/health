@@ -61,7 +61,7 @@ function Hero() {
   // background and reads on light surfaces; the dark wordmark is built for
   // dark surfaces (the previous logo.png was a white-boxed raster that
   // floated awkwardly on the dark hero).
-  const logoSrc = isDark ? "/logo-dark.png" : "/logo-light.png";
+  const logoSrc = isDark ? "/logo-dark.png?v=2" : "/logo-light.png?v=2";
 
   useGSAP(
     () => {
@@ -80,25 +80,27 @@ function Hero() {
   return (
     <section
       ref={ref}
-      className="relative overflow-hidden scroll-mt-20 pt-16 pb-20 md:pt-24 md:pb-28 border-b border-line bg-gradient-to-b from-surface via-surface to-elevated/40"
+      className="relative overflow-hidden scroll-mt-20 min-h-[calc(100dvh-3.5rem)] sm:min-h-[calc(100dvh-4.5rem)] flex flex-col justify-center py-8 sm:py-12 border-b border-line bg-gradient-to-b from-surface via-surface to-elevated/40"
       aria-labelledby="hero-h1"
     >
       <div className="aurora absolute inset-0 -z-10 opacity-70" aria-hidden="true" />
 
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 text-center">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 text-center">
         {/* medilink full logo in the main screen */}
         <img
           data-hero-reveal
           src={logoSrc}
           alt="medilink — মেডিলিঙ্ক"
-          className="mx-auto h-96 sm:h-[32rem] w-auto max-w-full object-contain"
+          width={4689}
+          height={1484}
+          className="mx-auto h-24 sm:h-[8.5rem] w-auto max-w-full object-contain select-none"
         />
 
         {/* Hero Title — Bangladesh's First Intelligent Blood Matching Network */}
         <h1
           id="hero-h1"
           data-hero-reveal
-          className="display mx-auto max-w-5xl mt-0 text-[clamp(2.5rem,5.5vw,4.75rem)] text-ink leading-[1.05] break-words [overflow-wrap:anywhere] text-balance"
+          className={`display mx-auto max-w-4xl mt-5 sm:mt-6 text-[clamp(1.875rem,4vw,3.5rem)] text-ink ${lang === "bn" ? "leading-[1.2]" : "leading-[1.08]"} break-words [overflow-wrap:anywhere] text-balance`}
         >
           {lang === "bn" ? (
             <>
@@ -116,7 +118,7 @@ function Hero() {
         {/* Hero Sub-copy */}
         <p
           data-hero-reveal
-          className="mx-auto mt-3 max-w-2xl text-base sm:text-xl text-muted font-normal leading-relaxed"
+          className="mx-auto mt-3 max-w-2xl text-sm sm:text-lg text-muted font-normal leading-relaxed"
         >
           {lang === "bn"
             ? "সময় যখন জরুরি, আপনার উপযুক্ত রক্তদাতা ভাবনার চেয়েও কাছে।"
@@ -124,11 +126,11 @@ function Hero() {
         </p>
 
         {/* Main CTAs */}
-        <div data-hero-reveal className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div data-hero-reveal className="mt-6 sm:mt-7 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
           <button
             type="button"
             onClick={() => requireAuth("/donors")}
-            className="w-full sm:w-auto inline-flex h-14 items-center justify-center gap-3 rounded-full bg-brand px-8 text-base font-bold text-white shadow-lg hover:bg-brand-deep hover:shadow-xl transition-all cursor-pointer active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-brand focus:ring-offset-2"
+            className="w-full sm:w-auto inline-flex h-12 sm:h-13 items-center justify-center gap-3 rounded-full bg-brand px-7 sm:px-8 text-sm sm:text-base font-bold text-white shadow-lg hover:bg-brand-deep hover:shadow-xl transition-all cursor-pointer active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-surface"
           >
             <Droplet className="h-5 w-5 fill-current" />
             <span>{t("home.ctaPrimary")}</span>
@@ -138,7 +140,7 @@ function Hero() {
           <button
             type="button"
             onClick={() => requireAuth("/doctors?guide=open")}
-            className="w-full sm:w-auto inline-flex h-14 items-center justify-center gap-3 rounded-full border-2 border-ink-brand bg-surface px-8 text-base font-bold text-ink-brand hover:bg-ink-brand-soft transition-all cursor-pointer active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-ink-brand focus:ring-offset-2"
+            className="w-full sm:w-auto inline-flex h-12 sm:h-13 items-center justify-center gap-3 rounded-full border-2 border-ink-brand bg-surface px-7 sm:px-8 text-sm sm:text-base font-bold text-ink-brand hover:bg-ink-brand-soft transition-all cursor-pointer active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-ink-brand focus:ring-offset-2 focus:ring-offset-surface"
           >
             <Stethoscope className="h-5 w-5" />
             <span>{t("home.ctaSecondary")}</span>
@@ -148,7 +150,7 @@ function Hero() {
         {/* Trust Badges Bar */}
         <div
           data-hero-reveal
-          className="mt-10 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs sm:text-sm font-semibold text-muted"
+          className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs sm:text-sm font-semibold text-muted"
         >
           <span className="inline-flex items-center gap-1.5">
             <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />

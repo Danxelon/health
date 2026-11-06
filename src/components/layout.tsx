@@ -150,8 +150,8 @@ function LanguageToggle({ className = "" }: { className?: string }) {
 }
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
-  const { theme, setTheme, toggleTheme, lang } = useAppShell();
-  const isDark = theme === "dark";
+  const { setTheme, toggleTheme, lang } = useAppShell();
+  const isDark = useResolvedDark();
 
   const handleToggle = () => {
     if (typeof toggleTheme === "function") {
@@ -298,7 +298,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { isLoggedIn, user, logout, requireAuth } = useAuth();
   const { pathname } = useLocation();
   const isDark = useResolvedDark();
-  const logoSrc = isDark ? "/logo-dark.png" : "/logo-light.png";
+  const logoSrc = isDark ? "/logo-dark.png?v=2" : "/logo-light.png?v=2";
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(() =>
@@ -457,7 +457,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <img
                   src={logoSrc}
                   alt="medilink"
-                  className="h-10 sm:h-12 w-auto object-contain shrink-0"
+                  className="h-8 sm:h-10 w-auto object-contain shrink-0"
                 />
               </Link>
             ) : (
@@ -626,7 +626,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <img
                 src={logoSrc}
                 alt="medilink"
-                className="h-10 w-auto object-contain shrink-0"
+                className="h-8 w-auto object-contain shrink-0"
               />
               <span className="text-[11px] font-semibold text-muted">
                 {lang === "bn" ? "মেনু" : "Menu"}

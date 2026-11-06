@@ -3,13 +3,15 @@
  * Progressive Web App & Offline Resilience
  */
 
-const CACHE_NAME = "medilink-shell-v1";
+const CACHE_NAME = "medilink-shell-v2";
 const STATIC_ASSETS = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
   "/symbol.png",
   "/logo.png",
+  "/logo-light.png?v=2",
+  "/logo-dark.png?v=2",
   "/assets/logo.png",
 ];
 
