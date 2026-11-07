@@ -7,10 +7,18 @@ import {
   getStockStatusMeta,
   formatDialableHotline,
   formatStockUnits,
+  formatDistanceKm,
+  calculateDistanceKm,
+  findNearestDistrict,
+  resolveLocationFromCoords,
+  resolveLocationFromDistrict,
+  resolveLocationFromDivision,
+  getNearbyBloodBanks,
   filterBloodBanks,
   getEmergencyShortageRadar,
   getDistrictsForDivision,
   DIVISIONS,
+  DISTRICTS,
 } from "./blood-banks.ts";
 import { BLOOD_GROUPS } from "./types.ts";
 
@@ -56,7 +64,16 @@ describe("blood bank directory & emergency shortage radar domain", () => {
     assert.equal(formatStockUnits(18, "en"), "18 bags");
   });
 
-  it("contains all required institutional blood banks with all 8 blood groups", () => {
+  it("formats distances bilingually across sub-km, short, and long ranges", () => {
+    assert.equal(formatDistanceKm(0.2, "en"), "< 0.5 km away");
+    assert.equal(formatDistanceKm(0.2, "bn"), "< ০.৫ কি.মি. দূরে");
+    assert.equal(formatDistanceKm(2.4, "en"), "2.4 km away");
+    assert.equal(formatDistanceKm(2.4, "bn"), "২.৪ কি.মি. দূরে");
+    assert.equal(formatDistanceKm(27.6, "en"), "28 km away");
+    assert.equal(formatDistanceKm(27.6, "bn"), "২৮ কি.মি. দূরে");
+  });
+
+  it("contains all required institutional blood banks with coordinates and all 8 blood groups", () => {
     assert.ok(VERIFIED_BLOOD_BANKS.length >= 7);
 
     // Verify key institutional blood banks exist
@@ -69,13 +86,15 @@ describe("blood bank directory & emergency shortage radar domain", () => {
     assert.ok(names.some((n) => n.includes("Rajshahi Sadar")));
     assert.ok(names.some((n) => n.includes("Rangpur Medical")));
 
-    // Verify each bank has all 8 blood groups with non-negative stock numbers
+    // Verify each bank has coordinates and all 8 blood groups with non-negative stock numbers
     for (const bank of VERIFIED_BLOOD_BANKS) {
       assert.ok(bank.id);
       assert.ok(bank.name_en && bank.name_bn);
       assert.ok(bank.district_en && bank.district_bn);
       assert.ok(bank.division_en && bank.division_bn);
       assert.ok(bank.address_en && bank.address_bn);
+      assert.ok(Number.isFinite(bank.lat) && bank.lat > 20 && bank.lat < 27);
+      assert.ok(Number.isFinite(bank.lng) && bank.lng > 88 && bank.lng < 93);
       assert.ok(bank.hotline);
       assert.equal(bank.verified, true);
 
@@ -133,9 +152,11 @@ describe("blood bank directory & emergency shortage radar domain", () => {
     assert.ok(radar.criticalGroupCounts["AB-"] > 0);
   });
 
-  it("cascades districts for selected division", () => {
+  it("cascades all 64 districts for selected division", () => {
+    assert.equal(DISTRICTS.length, 64);
+
     const allDistricts = getDistrictsForDivision();
-    assert.ok(allDistricts.length > 5);
+    assert.equal(allDistricts.length, 64);
 
     const dhakaDistricts = getDistrictsForDivision("Dhaka");
     assert.ok(dhakaDistricts.every((d) => d.division_en === "Dhaka"));
@@ -146,5 +167,49 @@ describe("blood bank directory & emergency shortage radar domain", () => {
     for (const div of DIVISIONS) {
       assert.ok(div.en && div.bn);
     }
+  });
+
+  it("resolves client GPS coordinates and manual district picks to nearest blood banks", () => {
+    // Dhanmondi, Dhaka coordinates
+    const gpsLoc = resolveLocationFromCoords(23.7461, 90.3742);
+    assert.equal(gpsLoc.source, "gps");
+    assert.equal(gpsLoc.district_en, "Dhaka");
+    assert.equal(gpsLoc.division_en, "Dhaka");
+
+    const nearbyDhaka = getNearbyBloodBanks(VERIFIED_BLOOD_BANKS, gpsLoc);
+    assert.ok(nearbyDhaka.banks.length >= 4);
+    assert.ok(nearbyDhaka.exactDistrictMatchCount >= 4);
+    assert.equal(nearbyDhaka.expandedToRegional, false);
+
+    // Verify sorted strictly by ascending distance
+    for (let i = 1; i < nearbyDhaka.banks.length; i += 1) {
+      assert.ok((nearbyDhaka.banks[i]?.distance_km ?? 0) >= (nearbyDhaka.banks[i - 1]?.distance_km ?? 0));
+    }
+
+    // Distant cities like Rangpur or Cox's Bazar must not appear in Dhaka nearby list
+    assert.ok(nearbyDhaka.banks.every((b) => b.district_en !== "Rangpur" && b.district_en !== "Cox's Bazar"));
+
+    // Manual selection for a district without a listed local bank (e.g. Munshiganj) expands to nearby regional centres
+    const munshiganjLoc = resolveLocationFromDistrict("Munshiganj");
+    assert.ok(munshiganjLoc !== null);
+    assert.equal(munshiganjLoc.source, "manual");
+    const nearbyMunshiganj = getNearbyBloodBanks(VERIFIED_BLOOD_BANKS, munshiganjLoc);
+    assert.ok(nearbyMunshiganj.banks.length > 0);
+    assert.equal(nearbyMunshiganj.expandedToRegional, true);
+
+    // Spelling alias support ("Bogra" -> "Bogura")
+    const bograAlias = resolveLocationFromDistrict("Bogra");
+    assert.ok(bograAlias !== null);
+    assert.equal(bograAlias.district_en, "Bogura");
+
+    // Division-level manual fallback
+    const sylhetDiv = resolveLocationFromDivision("Sylhet");
+    assert.ok(sylhetDiv !== null);
+    assert.equal(sylhetDiv.division_en, "Sylhet");
+
+    // Basic sanity on findNearestDistrict & calculateDistanceKm
+    const nearestCtg = findNearestDistrict(22.3569, 91.7832);
+    assert.equal(nearestCtg.name_en, "Chattogram");
+    assert.equal(calculateDistanceKm({ lat: 23.75, lng: 90.4 }, { lat: 23.75, lng: 90.4 }), 0);
   });
 });
