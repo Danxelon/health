@@ -11,6 +11,7 @@ import { useGSAP } from "@gsap/react";
 import {
   ArrowRight,
   Building2,
+  ChevronDown,
   Droplet,
   Megaphone,
   Stethoscope,
@@ -141,6 +142,41 @@ function Hero() {
             {lang === "bn" ? "তাৎক্ষণিক লোকেশন ম্যাচিং" : "Real-time Location Matching"}
           </span>
         </div>
+
+        {/* Scroll cue indicating Donor & Specialist options are directly below */}
+        <div data-hero-reveal className="mt-8 sm:mt-10 flex justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+              document
+                .getElementById("home-action-cards")
+                ?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+            }}
+            aria-label={
+              lang === "bn"
+                ? "রক্তদাতা ও বিশেষজ্ঞ ডাক্তার খুঁজতে নিচে স্ক্রল করুন"
+                : "Scroll down to find blood donors and specialist doctors"
+            }
+            className="group inline-flex flex-col items-center gap-2 text-xs sm:text-sm font-semibold text-muted hover:text-ink transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 rounded-2xl px-3 py-1"
+          >
+            <span className="inline-flex items-center gap-2 rounded-full border border-line bg-elevated/60 dark:bg-elevated/50 px-4 py-1.5 backdrop-blur-xs group-hover:border-brand/40 group-hover:bg-elevated transition-colors shadow-2xs">
+              <Droplet className="h-3.5 w-3.5 text-brand fill-current shrink-0" aria-hidden="true" />
+              <span>
+                {lang === "bn"
+                  ? "রক্তদাতা ও বিশেষজ্ঞ ডাক্তার নিচে খুঁজুন"
+                  : "Find Donors & Specialist Doctors below"}
+              </span>
+              <Stethoscope className="h-3.5 w-3.5 text-ink-brand shrink-0" aria-hidden="true" />
+            </span>
+            <span
+              aria-hidden="true"
+              className="animate-scroll-cue inline-flex h-7 w-7 items-center justify-center rounded-full border border-line bg-surface text-muted group-hover:border-brand/40 group-hover:text-brand transition-colors shadow-2xs"
+            >
+              <ChevronDown className="h-4 w-4" strokeWidth={2.2} />
+            </span>
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -182,7 +218,7 @@ function ActionOptions() {
         {t("donors.title")} · {t("doctors.title")}
       </h2>
 
-      <div id="home-action-cards" className="grid gap-6 md:grid-cols-2 grid-flow-dense">
+      <div id="home-action-cards" className="scroll-mt-24 grid gap-6 md:grid-cols-2 grid-flow-dense">
         {/* Option 1 — matched donor */}
         <div
           role="button"

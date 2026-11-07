@@ -339,6 +339,20 @@ svg {
   display: none;
 }
 
+/* Gentle vertical float for hero scroll-down indicator */
+@keyframes scroll-cue-float {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, 5px, 0);
+  }
+}
+.animate-scroll-cue {
+  animation: scroll-cue-float 2.2s ease-in-out infinite;
+  will-change: transform;
+}
+
 /* Audio wave equalizer bars for telehealth calls */
 @keyframes audio-wave {
   0%, 100% {
@@ -660,6 +674,12 @@ svg {
   .slider-pill-thumb-brand,
   [role="radiogroup"] [aria-hidden="true"].transition-transform {
     transition: none !important;
+    will-change: auto !important;
+  }
+
+  .animate-scroll-cue {
+    animation: none !important;
+    transform: none !important;
     will-change: auto !important;
   }
 
