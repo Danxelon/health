@@ -158,22 +158,22 @@ function Hero() {
                 ? "রক্তদাতা ও বিশেষজ্ঞ ডাক্তার খুঁজতে নিচে স্ক্রল করুন"
                 : "Scroll down to find blood donors and specialist doctors"
             }
-            className="group inline-flex flex-col items-center gap-2 text-xs sm:text-sm font-semibold text-muted hover:text-ink transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 rounded-2xl px-3 py-1"
+            className="group inline-flex flex-col items-center gap-2.5 text-sm sm:text-base font-semibold text-muted hover:text-ink transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 rounded-2xl px-3 py-1"
           >
-            <span className="inline-flex items-center gap-2 rounded-full border border-line bg-elevated/60 dark:bg-elevated/50 px-4 py-1.5 backdrop-blur-xs group-hover:border-brand/40 group-hover:bg-elevated transition-colors shadow-2xs">
-              <Droplet className="h-3.5 w-3.5 text-brand fill-current shrink-0" aria-hidden="true" />
+            <span className="inline-flex items-center gap-2.5 rounded-full border border-line bg-elevated/60 dark:bg-elevated/50 px-5 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xs group-hover:border-brand/40 group-hover:bg-elevated transition-colors shadow-2xs">
+              <Droplet className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-brand fill-current shrink-0" aria-hidden="true" />
               <span>
                 {lang === "bn"
-                  ? "রক্তদাতা ও বিশেষজ্ঞ ডাক্তার নিচে খুঁজুন"
-                  : "Find Donors & Specialist Doctors below"}
+                  ? "রক্তদাতা ও বিশেষজ্ঞ ডাক্তার খুঁজুন"
+                  : "Find Donors & Specialist Doctors"}
               </span>
-              <Stethoscope className="h-3.5 w-3.5 text-ink-brand shrink-0" aria-hidden="true" />
+              <Stethoscope className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-ink-brand shrink-0" aria-hidden="true" />
             </span>
             <span
               aria-hidden="true"
-              className="animate-scroll-cue inline-flex h-7 w-7 items-center justify-center rounded-full border border-line bg-surface text-muted group-hover:border-brand/40 group-hover:text-brand transition-colors shadow-2xs"
+              className="animate-scroll-cue inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-line bg-surface text-muted group-hover:border-brand/40 group-hover:text-brand transition-colors shadow-2xs"
             >
-              <ChevronDown className="h-4 w-4" strokeWidth={2.2} />
+              <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2.2} />
             </span>
           </button>
         </div>
