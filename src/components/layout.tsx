@@ -483,7 +483,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Modern, clean top navigation bar */}
       <header ref={headerRef} className="sticky top-0 z-50 border-b border-line bg-surface/95 backdrop-blur-md transition-shadow pt-[env(safe-area-inset-top)]">
         <nav aria-label="Primary" className="mx-auto max-w-7xl px-3 sm:px-6">
-          <div className="flex items-center justify-between h-14 sm:h-[4.5rem] gap-2 sm:gap-6">
+          <div className="flex items-center justify-between h-14 sm:h-[4.5rem] gap-2 sm:gap-4">
             {/* Logo: logo.png in the navbar only when scrolled; the main
                 screen carries the brand at the top */}
             {isScrolled ? (
@@ -502,9 +502,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="shrink-0 w-8 sm:w-10" aria-hidden="true" />
             )}
 
-            {/* Center: one stable group — leftmost at the top, centered once scrolled.
-                Clipped + inner scroll so appended pills can never overlap the right controls. */}
-            <div className={`flex-1 hidden md:flex items-center px-2 min-w-0 overflow-hidden ${isScrolled ? "justify-center" : "justify-start"}`}>
+
+            {/* Clipped + inner scroll so appended pills can never overlap the right controls. */}
+            {/* Primary nav group — stays left-aligned next to the brand logo on scroll */}
+            <div className="flex-1 hidden md:flex items-center justify-start min-w-0 overflow-hidden">
               <nav aria-label="Desktop Primary" className="flex items-center gap-1 min-w-0 max-w-full overflow-x-auto no-scrollbar">
                 <ul className="flex items-center gap-1">
                   {primaryNavItems.map((item) => {
