@@ -10,7 +10,7 @@
  */
 
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Droplet,
   FileText,
@@ -300,7 +300,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const isDark = useResolvedDark();
   const logoSrc = isDark ? "/logo-dark.png?v=2" : "/logo-light.png?v=2";
 
+  const headerRef = useRef<HTMLElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showNavActions, setShowNavActions] = useState(false);
   const [isScrolled, setIsScrolled] = useState(() =>
     typeof window !== "undefined" ? window.scrollY > 140 : false
   );
@@ -327,15 +332,48 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // Scroll listener for sticky header state (threshold: 140px)
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 140);
+      const scrolledPastTop = window.scrollY > 140;
+      setIsScrolled(scrolledPastTop);
+      if (pathnameRef.current === "/") {
+        const cardsEl = document.getElementById("home-action-cards");
+        if (!cardsEl) {
+          setShowNavActions(false);
+        } else {
+          const headerBottom = headerRef.current?.getBoundingClientRect().bottom ?? 72;
+          setShowNavActions(cardsEl.getBoundingClientRect().bottom <= headerBottom);
+        }
+      } else {
+        setShowNavActions(scrolledPastTop);
+      }
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleScroll, { passive: true });
+    const ro =
+      typeof ResizeObserver !== "undefined" && mainRef.current
+        ? new ResizeObserver(handleScroll)
+        : null;
+    if (ro && mainRef.current) ro.observe(mainRef.current);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+      ro?.disconnect();
+    };
   }, []);
 
   // Close mobile drawer on navigation
-  useEffect(() => setMobileOpen(false), [pathname]);
+  useEffect(() => {
+    setMobileOpen(false);
+    const scrolledPastTop = window.scrollY > 140;
+    setIsScrolled(scrolledPastTop);
+    if (pathname === "/") {
+      const cardsEl = document.getElementById("home-action-cards");
+      const headerBottom = headerRef.current?.getBoundingClientRect().bottom ?? 72;
+      setShowNavActions(cardsEl ? cardsEl.getBoundingClientRect().bottom <= headerBottom : false);
+    } else {
+      setShowNavActions(scrolledPastTop);
+    }
+  }, [pathname]);
 
   // Mobile drawer a11y: Escape closes, body scroll locks, stale open state
   // clears when resizing up to desktop where the hamburger is hidden.
@@ -443,7 +481,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <LoginPromptModal />
 
       {/* Modern, clean top navigation bar */}
-      <header className="sticky top-0 z-50 border-b border-line bg-surface/95 backdrop-blur-md transition-shadow pt-[env(safe-area-inset-top)]">
+      <header ref={headerRef} className="sticky top-0 z-50 border-b border-line bg-surface/95 backdrop-blur-md transition-shadow pt-[env(safe-area-inset-top)]">
         <nav aria-label="Primary" className="mx-auto max-w-7xl px-3 sm:px-6">
           <div className="flex items-center justify-between h-14 sm:h-[4.5rem] gap-2 sm:gap-6">
             {/* Logo: logo.png in the navbar only when scrolled; the main
@@ -490,7 +528,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     );
                   })}
                 </ul>
-                {isScrolled && (
+                {showNavActions && (
                   <>
                     <span aria-hidden="true" className="mx-2 h-5 w-px bg-line shrink-0 hidden lg:block" />
                     <div className="hidden lg:flex items-center gap-2 sm:gap-3 shrink-0 animate-fade-in">
@@ -733,7 +771,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Content Area - Full width, clean, uncluttered layout */}
-      <main id="main" className="flex-1 w-full min-w-0">
+      <main id="main" ref={mainRef} className="flex-1 w-full min-w-0">
         {children}
       </main>
 

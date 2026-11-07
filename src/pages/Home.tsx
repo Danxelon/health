@@ -14,7 +14,6 @@ import {
   Droplet,
   Megaphone,
   Stethoscope,
-  ShieldCheck,
   Sparkles,
   CheckCircle2,
 } from "lucide-react";
@@ -52,8 +51,7 @@ function useResolvedDark(): boolean {
 }
 
 function Hero() {
-  const { t, lang } = useAppShell();
-  const { requireAuth } = useAuth();
+  const { lang } = useAppShell();
   const ref = useRef<HTMLDivElement>(null);
   const isDark = useResolvedDark();
 
@@ -125,28 +123,6 @@ function Hero() {
             : "When time matters, your matching donor is closer than you think."}
         </p>
 
-        {/* Main CTAs */}
-        <div data-hero-reveal className="mt-6 sm:mt-7 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-          <button
-            type="button"
-            onClick={() => requireAuth("/donors")}
-            className="w-full sm:w-auto inline-flex h-12 sm:h-13 items-center justify-center gap-3 rounded-full bg-brand px-7 sm:px-8 text-sm sm:text-base font-bold text-white shadow-lg hover:bg-brand-deep hover:shadow-xl transition-all cursor-pointer active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-surface"
-          >
-            <Droplet className="h-5 w-5 fill-current" />
-            <span>{t("home.ctaPrimary")}</span>
-            <ArrowRight className="h-4 w-4" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => requireAuth("/doctors?guide=open")}
-            className="w-full sm:w-auto inline-flex h-12 sm:h-13 items-center justify-center gap-3 rounded-full border-2 border-ink-brand bg-surface px-7 sm:px-8 text-sm sm:text-base font-bold text-ink-brand hover:bg-ink-brand-soft transition-all cursor-pointer active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-ink-brand focus:ring-offset-2 focus:ring-offset-surface"
-          >
-            <Stethoscope className="h-5 w-5" />
-            <span>{t("home.ctaSecondary")}</span>
-          </button>
-        </div>
-
         {/* Trust Badges Bar */}
         <div
           data-hero-reveal
@@ -206,7 +182,7 @@ function ActionOptions() {
         {t("donors.title")} · {t("doctors.title")}
       </h2>
 
-      <div className="grid gap-6 md:grid-cols-2 grid-flow-dense">
+      <div id="home-action-cards" className="grid gap-6 md:grid-cols-2 grid-flow-dense">
         {/* Option 1 — matched donor */}
         <div
           role="button"
