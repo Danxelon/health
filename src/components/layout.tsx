@@ -2,10 +2,11 @@
  * Layout — constant top navigation, page body, and footer.
  *
  * Designed with a clean, spacious healthcare UI:
- * - Uncluttered, modern sticky top navigation bar with blur backdrop
+ * - Uncluttered, modern floating top navigation bar with blur backdrop
  * - Primary navigation with authentication guards for key features (Find Blood, Consult Doctor)
  * - Settings option strictly hidden until the citizen is logged in
  * - Quick action buttons smoothly present on scroll
+ * - Hooked mobile hamburger menu that floats with the navigation bar
  * - Integrated Login Prompt Modal for mobile login
  */
 
@@ -300,12 +301,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const isDark = useResolvedDark();
   const logoSrc = isDark ? "/logo-dark.png?v=2" : "/logo-light.png?v=2";
 
+  const topBarRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const pathnameRef = useRef(pathname);
   pathnameRef.current = pathname;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showNavActions, setShowNavActions] = useState(false);
+  const [topBarHeight, setTopBarHeight] = useState(0);
+  const [menuOffsetBottom, setMenuOffsetBottom] = useState(0);
   const [isScrolled, setIsScrolled] = useState(() =>
     typeof window !== "undefined" ? window.scrollY > 140 : false
   );
@@ -329,7 +334,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Scroll listener for sticky header state (threshold: 140px)
+  // Measure fixed floating top stack so the document spacer prevents content overlap
+  // and the hooked mobile menu always fits within the visible viewport.
+  useEffect(() => {
+    const el = topBarRef.current;
+    if (!el) return;
+    const syncTopBarMetrics = () => {
+      const rect = el.getBoundingClientRect();
+      setTopBarHeight(rect.height);
+      const headerBottom = headerRef.current?.getBoundingClientRect().bottom ?? rect.bottom;
+      setMenuOffsetBottom(headerBottom);
+    };
+    syncTopBarMetrics();
+    window.addEventListener("resize", syncTopBarMetrics, { passive: true });
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(syncTopBarMetrics) : null;
+    ro?.observe(el);
+    return () => {
+      window.removeEventListener("resize", syncTopBarMetrics);
+      ro?.disconnect();
+    };
+  }, [isOnline, mobileOpen]);
+
+  // Scroll listener for floating header state (threshold: 140px)
   useEffect(() => {
     const handleScroll = () => {
       const scrolledPastTop = window.scrollY > 140;
@@ -375,16 +401,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
     }
   }, [pathname]);
 
-  // Mobile drawer a11y: Escape closes, body scroll locks, stale open state
-  // clears when resizing up to desktop where the hamburger is hidden.
+  // Hooked mobile menu lifecycle: Escape or outside tap closes without locking page
+  // scroll so the menu stays visibly attached while scrolling; clears on desktop resize.
   useEffect(() => {
     if (!mobileOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMobileOpen(false);
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+    const onDocClick = (e: MouseEvent) => {
+      const target = e.target;
+      if (target instanceof Node && !headerRef.current?.contains(target)) {
+        setMobileOpen(false);
+      }
     };
     window.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    document.addEventListener("click", onDocClick, true);
     const mq = window.matchMedia("(min-width: 768px)");
     const onCross = (ev: MediaQueryListEvent) => {
       if (ev.matches) setMobileOpen(false);
@@ -392,7 +426,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     mq.addEventListener("change", onCross);
     return () => {
       window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
+      document.removeEventListener("click", onDocClick, true);
       mq.removeEventListener("change", onCross);
     };
   }, [mobileOpen]);
@@ -462,45 +496,64 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {t("nav.skipToContent")}
       </a>
 
-      {/* Offline Status Banner */}
-      {!isOnline && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="sticky top-0 z-60 bg-amber-500 text-amber-950 dark:bg-amber-600 dark:text-amber-50 px-4 py-2.5 text-center text-xs sm:text-sm font-semibold shadow-xs flex items-center justify-center gap-2 border-b border-amber-600/20"
-        >
-          <span>
-            {lang === "bn"
-              ? "⚠️ আপনি অফলাইনে আছেন। সংরক্ষিত তথ্য প্রদর্শিত হচ্ছে।"
-              : "⚠️ You are offline. Showing cached information."}
-          </span>
-        </div>
-      )}
-
       {/* Login Prompt Modal */}
       <LoginPromptModal />
 
-      {/* Modern, clean top navigation bar */}
-      <header ref={headerRef} className="sticky top-0 z-50 border-b border-line bg-surface/95 backdrop-blur-md transition-shadow pt-[env(safe-area-inset-top)]">
-        <nav aria-label="Primary" className="mx-auto max-w-7xl px-3 sm:px-6">
-          <div className="flex items-center justify-between h-14 sm:h-[4.5rem] gap-2 sm:gap-4">
-            {/* Logo: logo.png in the navbar only when scrolled; the main
-                screen carries the brand at the top */}
-            {isScrolled ? (
-              <Link
-                to="/"
-                className="flex items-center shrink-0 min-w-max"
-                aria-label={t("app.name")}
-              >
-                <img
-                  src={logoSrc}
-                  alt="medilink"
-                  className="h-8 sm:h-10 w-auto object-contain shrink-0"
-                />
-              </Link>
-            ) : (
-              <span className="shrink-0 w-8 sm:w-10" aria-hidden="true" />
-            )}
+      {/* Fixed floating navigation stack — always follows scroll on mobile & desktop */}
+      <div ref={topBarRef} className="fixed top-0 inset-x-0 z-50 pointer-events-none">
+        {/* Offline Status Banner */}
+        {!isOnline && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="pointer-events-auto bg-amber-500 text-amber-950 dark:bg-amber-600 dark:text-amber-50 px-4 pt-[max(0.625rem,env(safe-area-inset-top))] pb-2.5 text-center text-xs sm:text-sm font-semibold shadow-xs flex items-center justify-center gap-2 border-b border-amber-600/20"
+          >
+            <span>
+              {lang === "bn"
+                ? "⚠️ আপনি অফলাইনে আছেন। সংরক্ষিত তথ্য প্রদর্শিত হচ্ছে।"
+                : "⚠️ You are offline. Showing cached information."}
+            </span>
+          </div>
+        )}
+
+        {/* Modern, clean floating top navigation bar */}
+        <header
+          ref={headerRef}
+          className={`pointer-events-auto relative mx-3 md:mx-0 ${
+            isOnline
+              ? "mt-[max(0.5rem,env(safe-area-inset-top))] md:mt-0"
+              : "mt-2 md:mt-0"
+          }`}
+        >
+          <div
+            className={`transition-shadow duration-200 rounded-2xl border border-line bg-surface/90 backdrop-blur-xl md:rounded-none md:border-x-0 md:border-t-0 md:border-b md:bg-surface/95 md:backdrop-blur-md ${
+              isOnline ? "md:pt-[env(safe-area-inset-top)]" : ""
+            } ${
+              isScrolled
+                ? "shadow-xl dark:shadow-black/50 md:shadow-xs"
+                : "shadow-lg dark:shadow-black/40 md:shadow-none"
+            }`}
+          >
+            <nav aria-label="Primary" className="mx-auto max-w-7xl px-3 md:px-6">
+              <div className="flex items-center justify-between h-14 md:h-[4.5rem] gap-2 md:gap-4">
+                {/* Logo: logo.png in the navbar only when scrolled; the main
+                    screen carries the brand at the top */}
+                {isScrolled ? (
+                  <Link
+                    to="/"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center shrink-0 min-w-max"
+                    aria-label={t("app.name")}
+                  >
+                    <img
+                      src={logoSrc}
+                      alt="medilink"
+                      className="h-8 md:h-10 w-auto object-contain shrink-0"
+                    />
+                  </Link>
+                ) : (
+                  <span className="shrink-0 w-8 md:w-10" aria-hidden="true" />
+                )}
 
 
             {/* Clipped + inner scroll so appended pills can never overlap the right controls. */}
@@ -638,6 +691,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
               {/* Mobile hamburger menu — 44px target for Android/iOS */}
               <button
+                ref={menuButtonRef}
                 type="button"
                 onClick={() => setMobileOpen((open) => !open)}
                 className="md:hidden inline-flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-line bg-surface text-ink cursor-pointer hover:bg-elevated transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
@@ -647,19 +701,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 aria-label={mobileOpen ? t("nav.close") : t("nav.menu")}
               >
                 {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
+                </button>
+              </div>
             </div>
-          </div>
-        </nav>
+          </nav>
+        </div>
 
-        {/* Mobile drawer — hamburger sheet with dialog semantics */}
+        {/* Hooked mobile hamburger view menu — anchored directly below the floating nav bar */}
         {mobileOpen && (
           <div
             id="mobile-menu"
             role="dialog"
-            aria-modal="true"
             aria-label={lang === "bn" ? "মেনু" : "Menu"}
-            className="md:hidden mx-3 mb-3 rounded-2xl border border-line bg-surface p-4 shadow-xl max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom))] animate-fade-in"
+            style={
+              menuOffsetBottom > 0
+                ? { maxHeight: `calc(100dvh - ${Math.ceil(menuOffsetBottom + 16)}px)` }
+                : undefined
+            }
+            className="md:hidden absolute left-0 right-0 top-full mt-2 rounded-2xl border border-line bg-surface/95 backdrop-blur-xl p-4 shadow-2xl dark:shadow-black/50 max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom))] animate-fade-in"
           >
             <div className="flex items-center justify-between pb-3 mb-2 border-b border-line px-1">
               <img
@@ -761,6 +820,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
               <a
                 href="tel:16263"
+                onClick={() => setMobileOpen(false)}
                 className="flex items-center justify-center gap-2 rounded-xl bg-blood text-white min-h-[44px] py-2.5 text-sm font-bold hover:bg-blood-deep transition-colors shadow-xs"
               >
                 <Phone className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
@@ -770,6 +830,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         )}
       </header>
+    </div>
+
+      {/* Flow spacer preserving document offset beneath the fixed floating navigation bar */}
+      <div
+        aria-hidden="true"
+        className="shrink-0 h-[4.125rem] md:h-[4.5rem]"
+        style={topBarHeight > 0 ? { height: `${topBarHeight}px` } : undefined}
+      />
 
       {/* Main Content Area - Full width, clean, uncluttered layout */}
       <main id="main" ref={mainRef} className="flex-1 w-full min-w-0">

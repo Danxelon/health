@@ -328,7 +328,7 @@ export default function BloodBankStockCard({
   return (
     <section
       id="blood-bank-stock-radar"
-      className={`relative rounded-3xl border border-line bg-surface text-ink shadow-sm overflow-hidden ${className}`}
+      className={`scroll-mt-24 relative rounded-3xl border border-line bg-surface text-ink shadow-sm overflow-hidden ${className}`}
       aria-labelledby="blood-bank-directory-title"
     >
       {/* Top Banner / Radar Header */}
@@ -732,7 +732,7 @@ export default function BloodBankStockCard({
             <div
               className={`grid grid-cols-1 gap-3 ${
                 viewScope === "all"
-                  ? "sm:grid-cols-2 lg:grid-cols-4"
+                  ? "sm:grid-cols-2 xl:grid-cols-4"
                   : "sm:grid-cols-3"
               }`}
             >
@@ -899,7 +899,7 @@ export default function BloodBankStockCard({
                 </div>
               </div>
             ) : (
-              <div className={`grid gap-5 ${compact ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
+              <div className={`grid gap-5 ${compact ? "grid-cols-1" : "grid-cols-1 xl:grid-cols-2"}`}>
                 {filteredBanks.map((bank) => {
                   const hasCriticalStock = BLOOD_GROUPS.some(
                     (g) => getStockStatus(bank.stocks[g] ?? 0) === "critical"
@@ -1018,7 +1018,7 @@ export default function BloodBankStockCard({
                       </div>
 
                       {/* Actions Bar */}
-                      <div className="mt-6 pt-4 border-t border-line flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                      <div className="mt-6 pt-4 border-t border-line flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-2.5">
                         {/* Direct Call Hotline Button */}
                         <a
                           href={formatDialableHotline(bank.hotline)}

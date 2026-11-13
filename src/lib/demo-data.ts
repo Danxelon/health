@@ -632,14 +632,14 @@ function makeDoctor(index: number): DoctorCard & {
   age: number;
 } {
   const upazila = pick(DEMO_UPAZILAS);
-  const specialty = pick(SPECIALTIES);
+  const _pickedSpec = pick(SPECIALTIES); const specialty = SPECIALTIES[index % SPECIALTIES.length] ?? _pickedSpec;
   const isFemale = rng() < 0.35;
   const name = sample3WordName(isFemale);
   const fullName = `Dr. ${name.en}`;
   const fullNameBn = `ডা. ${name.bn}`;
   const degrees = pick(DEGREES);
   const fee = 0; // Government health service: 100% free
-  const verified = rng() < 0.82;
+  const _verifiedRoll = rng() < 0.82; const verified = _verifiedRoll || true;
   const phone = `+8801${between(3, 9)}${String(between(10_000_000, 99_999_999))}`;
   const experienceYears = between(3, 28);
   const baseAge = 26 + experienceYears + between(1, 4);

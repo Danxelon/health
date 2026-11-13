@@ -10,7 +10,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import {
   ArrowRight,
-  Building2,
   ChevronDown,
   Droplet,
   Megaphone,
@@ -213,7 +212,7 @@ function ActionOptions() {
   );
 
   return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20" ref={ref} aria-labelledby="actions-h2">
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 pt-14 pb-8 sm:pt-20 sm:pb-12" ref={ref} aria-labelledby="actions-h2">
       <h2 id="actions-h2" className="sr-only">
         {t("donors.title")} · {t("doctors.title")}
       </h2>
@@ -299,102 +298,12 @@ function ActionOptions() {
           </div>
         </div>
       </div>
-
-      {/* Plan §9: Verified Institutional Blood Banks Near You & Emergency Shortage Radar */}
-      <div data-option className="mt-8 sm:mt-12">
-        <BloodBankStockCard />
-      </div>
     </section>
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/* Specialty Consultation Guide Promo Banner                                  */
-/* -------------------------------------------------------------------------- */
-
-function DoctorSpecialtyBanner() {
-  const { lang } = useAppShell();
-  const { requireAuth } = useAuth();
-  const ref = useRef<HTMLDivElement>(null);
-
-  useGSAP(
-    () => {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      const el = ref.current;
-      if (!el) return;
-      gsap.fromTo(
-        el,
-        { y: 24, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.7,
-          ease: "power2.out",
-          scrollTrigger: { trigger: el, start: "top 88%" },
-        }
-      );
-    },
-    { scope: ref }
-  );
-
-  return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-14 sm:pb-18" ref={ref} aria-labelledby="guide-banner-title">
-      <div className="relative overflow-hidden rounded-[2.5rem] border border-ink-brand/30 bg-gradient-to-r from-ink-brand-soft/40 via-surface to-brand-soft/30 dark:from-ink-brand-soft/15 dark:via-surface dark:to-brand-soft/15 p-8 sm:p-12 shadow-sm">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-ink-brand/10 blur-3xl" aria-hidden="true" />
-        <div className="pointer-events-none absolute -left-20 -bottom-20 h-72 w-72 rounded-full bg-brand/10 blur-3xl" aria-hidden="true" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-ink-brand/30 bg-ink-brand-soft px-3.5 py-1 text-xs font-bold text-ink-brand mb-4">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>{lang === "bn" ? "মেডিলিঙ্ক স্পেশালিটি গাইড" : "medilink Specialty Guide"}</span>
-            </div>
-            <h2 id="guide-banner-title" className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-ink leading-tight">
-              {lang === "bn"
-                ? "কোন ডাক্তারের কাছে যাবেন বুঝতে পারছেন না?"
-                : "Not sure which doctor or specialist you need?"}
-            </h2>
-            <p className="mt-3 text-base text-muted leading-relaxed">
-              {lang === "bn"
-                ? "মেডিলিঙ্ক-এর ইন্টারেক্টিভ সিম্পটম গাইড আপনাকে উপসর্গ বিশ্লেষণ করে সঠিক চিকিৎসা বিভাগ ও বিশেষজ্ঞ ডাক্তারের কাছে পৌঁছে দেবে — সম্পূর্ণ বিনামূল্যে সরকারি স্বাস্থ্যসেবায়।"
-                : "medilink's interactive symptom guide guides you to the right medical department and BMDC-verified doctor in seconds — 100% free public service."}
-            </p>
-
-            <div className="mt-5 flex flex-wrap items-center gap-4 text-xs sm:text-sm font-semibold text-muted">
-              <span className="inline-flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-ink-brand shrink-0" />
-                {lang === "bn" ? "১২টি চিকিৎসা বিভাগ" : "12 Medical Specialties"}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-ink-brand shrink-0" />
-                {lang === "bn" ? "বিএমডিসি যাচাইকৃত ডাক্তার" : "BMDC-Verified Doctors"}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-ink-brand shrink-0" />
-                {lang === "bn" ? "১০০% বিনামূল্যে সেবা" : "100% Free Public Service"}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex shrink-0 items-center">
-            <button
-              type="button"
-              onClick={() => requireAuth("/doctors?guide=open")}
-              className="inline-flex h-14 items-center justify-center gap-3 rounded-full bg-ink-brand px-8 text-base font-bold text-white shadow-lg hover:opacity-90 hover:shadow-xl transition-all cursor-pointer active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-ink-brand focus:ring-offset-2"
-            >
-              <Stethoscope className="h-5 w-5" />
-              <span>{lang === "bn" ? "পরামর্শ গাইড চালু করুন" : "Open Doctor Guide"}</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* National Rail                                                              */
+/* National Health Updates Rail                                               */
 /* -------------------------------------------------------------------------- */
 
 function NationalRail({
@@ -413,7 +322,7 @@ function NationalRail({
       case "campaign":
         return "border-brand/30 bg-brand-soft/60 text-brand-deep dark:bg-brand-soft/20 dark:text-rose-300";
       default:
-        return "border-line bg-surface text-ink";
+        return "border-line bg-elevated/45 text-ink";
     }
   };
 
@@ -434,65 +343,39 @@ function NationalRail({
     lang === "bn" ? u.body_bn ?? u.body : u.body;
 
   return (
-    <aside className="lg:w-80 lg:shrink-0" aria-label={t("home.rightRailTitle")}>
-      <div className="sticky top-24 space-y-6">
-        {/* plan.md §9: Blood Banks Near You (Top of Right Rail) */}
-        <div className="rounded-3xl border border-line bg-surface p-6 shadow-xs">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-brand text-white shadow-2xs">
-                <Building2 className="h-5 w-5" />
-              </span>
-              <div>
-                <h2 className="text-base font-bold text-ink leading-tight">
-                  {lang === "bn" ? "কাছের ব্লাড ব্যাংক" : "Blood Banks Near You"}
-                </h2>
-                <p className="text-xs text-muted mt-0.5">
-                  {lang === "bn" ? "৮ গ্রুপের লাইভ স্টক ও হটলাইন" : "Live 8-group stock directory"}
-                </p>
-              </div>
-            </div>
-            <span className="flex h-3 w-3 relative" title={lang === "bn" ? "সক্রিয় রাডার" : "Live radar"}>
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600" />
-            </span>
-          </div>
-
-          <p className="mt-3 text-xs leading-relaxed text-muted">
-            {lang === "bn"
-              ? "রেড ক্রিসেন্ট, কোয়ান্টাম ল্যাব ও মেডিকেল কলেজ ব্লাড ব্যাংকের জরুরি সংকট রাডার ও রক্তের চাহিদা।"
-              : "Emergency shortage radar & requisition for Red Crescent, Quantum Lab & Medical Colleges."}
-          </p>
-
-          <a
-            href="#blood-bank-stock-radar"
-            className="mt-4 flex items-center justify-between rounded-2xl bg-brand-soft/70 px-4 py-2.5 text-xs font-bold text-brand-deep hover:bg-brand hover:text-white transition-all shadow-2xs group cursor-pointer"
-          >
-            <span>{lang === "bn" ? "লাইভ স্টক রাডার দেখুন" : "View Live Stock Radar"}</span>
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </a>
-        </div>
-
-        {/* National Health Updates */}
-        <div className="rounded-3xl border border-line bg-surface p-6 shadow-xs">
+    <aside
+      className="w-full lg:w-80 xl:w-[22rem] lg:shrink-0 lg:sticky lg:top-24"
+      aria-label={t("home.rightRailTitle")}
+    >
+      <div
+        data-live-panel
+        className="rounded-3xl border border-line bg-surface shadow-sm overflow-hidden"
+      >
+        <div className="border-b border-line bg-gradient-to-r from-brand-soft/40 via-surface to-ink-brand-soft/30 dark:from-brand-soft/15 dark:via-surface dark:to-ink-brand-soft/10 p-5 sm:p-6">
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand-deep">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-brand-deep border border-brand/20 shadow-2xs">
               <Megaphone className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-base font-bold text-ink leading-tight">{t("home.rightRailTitle")}</h2>
-              <p className="text-xs text-muted mt-0.5">{t("home.rightRailSub")}</p>
+              <h2 className="text-base sm:text-lg font-extrabold text-ink leading-tight">
+                {t("home.rightRailTitle")}
+              </h2>
+              <p className="text-xs text-muted mt-0.5 leading-snug">{t("home.rightRailSub")}</p>
             </div>
           </div>
+        </div>
 
-        <div className="mt-5 space-y-3">
-          {loading &&
-            Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="animate-pulse rounded-2xl border border-line bg-elevated p-4 h-24" aria-hidden="true" />
-            ))}
+        <div className="p-4 sm:p-5 space-y-3">
+          {loading && (
+            <div role="status" aria-live="polite" aria-label={t("common.loading")} className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="animate-pulse rounded-2xl border border-line bg-elevated p-4 h-24" aria-hidden="true" />
+              ))}
+            </div>
+          )}
 
           {!loading && items.length === 0 && (
-            <p className="rounded-2xl border border-line bg-surface p-4 text-sm text-muted">
+            <p className="rounded-2xl border border-line bg-elevated/40 p-4 text-sm text-muted">
               {t("home.rightRailEmpty")}
             </p>
           )}
@@ -518,8 +401,63 @@ function NationalRail({
             ))}
         </div>
       </div>
-    </div>
-  </aside>
+    </aside>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Live Blood Banks & National Updates Hub                                    */
+/* -------------------------------------------------------------------------- */
+
+function BloodAndUpdatesSection({
+  updates,
+  updatesLoading,
+}: {
+  updates: NationalHealthUpdate[];
+  updatesLoading: boolean;
+}) {
+  const { lang } = useAppShell();
+  const ref = useRef<HTMLElement>(null);
+
+  useGSAP(
+    () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const panels = ref.current?.querySelectorAll("[data-live-panel]");
+      if (!panels?.length) return;
+      gsap.fromTo(
+        panels,
+        { y: 24, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.65,
+          stagger: 0.12,
+          ease: "power2.out",
+          clearProps: "transform",
+          scrollTrigger: { trigger: ref.current, start: "top 94%" },
+        }
+      );
+    },
+    { scope: ref }
+  );
+
+  return (
+    <section
+      ref={ref}
+      className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12"
+      aria-label={
+        lang === "bn"
+          ? "কাছের প্রাতিষ্ঠানিক ব্লাড ব্যাংক ও জাতীয় স্বাস্থ্য আপডেট"
+          : "Verified Institutional Blood Banks Near You and National Health Updates"
+      }
+    >
+      <div className="flex flex-col lg:flex-row lg:items-start gap-6 xl:gap-8">
+        <div data-live-panel className="min-w-0 flex-1">
+          <BloodBankStockCard />
+        </div>
+        <NationalRail items={updates} loading={updatesLoading} />
+      </div>
+    </section>
   );
 }
 
@@ -529,7 +467,7 @@ function NationalRail({
 
 function ArticlesRail({ items, loading }: { items: ArticleFeedItem[]; loading: boolean }) {
   const { t, lang } = useAppShell();
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLElement>(null);
 
   useGSAP(
     () => {
@@ -545,7 +483,7 @@ function ArticlesRail({ items, loading }: { items: ArticleFeedItem[]; loading: b
           duration: 0.6,
           stagger: 0.1,
           ease: "power2.out",
-          scrollTrigger: { trigger: ref.current, start: "top 85%" },
+          scrollTrigger: { trigger: ref.current, start: "top 88%" },
         }
       );
     },
@@ -553,8 +491,8 @@ function ArticlesRail({ items, loading }: { items: ArticleFeedItem[]; loading: b
   );
 
   return (
-    <section ref={ref} className="min-w-0 flex-1" aria-labelledby="articles-h2">
-      <div className="flex items-center justify-between">
+    <section ref={ref} className="mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16" aria-labelledby="articles-h2">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <span className="text-xs font-bold uppercase tracking-widest text-brand">
             {lang === "bn" ? "মেডিলিঙ্ক স্বাস্থ্য" : "medilink Health"}
@@ -565,7 +503,7 @@ function ArticlesRail({ items, loading }: { items: ArticleFeedItem[]; loading: b
         </div>
         <Link
           to="/articles"
-          className="inline-flex items-center gap-1.5 text-sm font-bold text-brand hover:text-brand-deep transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm font-bold text-brand hover:text-brand-deep transition-colors shrink-0"
         >
           {t("common.seeAll")}
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -632,20 +570,122 @@ function ArticlesRail({ items, loading }: { items: ArticleFeedItem[]; loading: b
 }
 
 /* -------------------------------------------------------------------------- */
+/* Specialty Consultation Guide Promo Banner                                  */
+/* -------------------------------------------------------------------------- */
+
+function DoctorSpecialtyBanner() {
+  const { lang } = useAppShell();
+  const { requireAuth } = useAuth();
+  const ref = useRef<HTMLElement>(null);
+
+  useGSAP(
+    () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const el = ref.current;
+      if (!el) return;
+      gsap.fromTo(
+        el,
+        { y: 24, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.7,
+          ease: "power2.out",
+          scrollTrigger: { trigger: el, start: "top 88%" },
+        }
+      );
+    },
+    { scope: ref }
+  );
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 pt-4 pb-6 sm:pt-6 sm:pb-10" ref={ref} aria-labelledby="guide-banner-title">
+      <div className="relative overflow-hidden rounded-[2.5rem] border border-ink-brand/30 bg-gradient-to-r from-ink-brand-soft/40 via-surface to-brand-soft/30 dark:from-ink-brand-soft/15 dark:via-surface dark:to-brand-soft/15 p-8 sm:p-12 shadow-sm">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-ink-brand/10 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -left-20 -bottom-20 h-72 w-72 rounded-full bg-brand/10 blur-3xl" aria-hidden="true" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-ink-brand/30 bg-ink-brand-soft px-3.5 py-1 text-xs font-bold text-ink-brand mb-4">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{lang === "bn" ? "মেডিলিঙ্ক স্পেশালিটি গাইড" : "medilink Specialty Guide"}</span>
+            </div>
+            <h2 id="guide-banner-title" className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-ink leading-tight">
+              {lang === "bn"
+                ? "কোন ডাক্তারের কাছে যাবেন বুঝতে পারছেন না?"
+                : "Not sure which doctor or specialist you need?"}
+            </h2>
+            <p className="mt-3 text-base text-muted leading-relaxed">
+              {lang === "bn"
+                ? "মেডিলিঙ্ক-এর ইন্টারেক্টিভ সিম্পটম গাইড আপনাকে উপসর্গ বিশ্লেষণ করে সঠিক চিকিৎসা বিভাগ ও বিশেষজ্ঞ ডাক্তারের কাছে পৌঁছে দেবে — সম্পূর্ণ বিনামূল্যে সরকারি স্বাস্থ্যসেবায়।"
+                : "medilink's interactive symptom guide guides you to the right medical department and BMDC-verified doctor in seconds — 100% free public service."}
+            </p>
+
+            <div className="mt-5 flex flex-wrap items-center gap-4 text-xs sm:text-sm font-semibold text-muted">
+              <span className="inline-flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-ink-brand shrink-0" />
+                {lang === "bn" ? "১২টি চিকিৎসা বিভাগ" : "12 Medical Specialties"}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-ink-brand shrink-0" />
+                {lang === "bn" ? "বিএমডিসি যাচাইকৃত ডাক্তার" : "BMDC-Verified Doctors"}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-ink-brand shrink-0" />
+                {lang === "bn" ? "১০০% বিনামূল্যে সেবা" : "100% Free Public Service"}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 items-center">
+            <button
+              type="button"
+              onClick={() => requireAuth("/doctors?guide=open")}
+              className="inline-flex h-14 items-center justify-center gap-3 rounded-full bg-ink-brand px-8 text-base font-bold text-white shadow-lg hover:opacity-90 hover:shadow-xl transition-all cursor-pointer active:scale-95 focus:outline-hidden focus:ring-2 focus:ring-ink-brand focus:ring-offset-2"
+            >
+              <Stethoscope className="h-5 w-5" />
+              <span>{lang === "bn" ? "পরামর্শ গাইড চালু করুন" : "Open Doctor Guide"}</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /* Main Home Component                                                        */
 /* -------------------------------------------------------------------------- */
 
 export default function Home() {
   const { lang, theme } = useAppShell();
+  const rootRef = useRef<HTMLDivElement>(null);
   const [updates, setUpdates] = useState<NationalHealthUpdate[]>([]);
   const [updatesLoading, setUpdatesLoading] = useState(true);
   const [articles, setArticles] = useState<ArticleFeedItem[]>([]);
   const [articlesLoading, setArticlesLoading] = useState(true);
 
-  // Seamless GSAP recalculation whenever user switches language or theme sliders
+  // Seamless GSAP recalculation whenever user switches language/theme or async data settles
   useEffect(() => {
     ScrollTrigger.refresh();
-  }, [lang, theme]);
+  }, [lang, theme, updatesLoading, articlesLoading]);
+
+  // Keep ScrollTrigger aligned when BloodBankStockCard changes height after location resolution
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    let frame = 0;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => ScrollTrigger.refresh());
+    });
+    ro.observe(el);
+    return () => {
+      cancelAnimationFrame(frame);
+      ro.disconnect();
+    };
+  }, []);
 
   const load = useMemo(
     () => async () => {
@@ -673,15 +713,15 @@ export default function Home() {
   }, [load]);
 
   return (
-    <div className="overflow-x-hidden w-full max-w-full bg-bg text-ink transition-colors duration-200">
+    <div
+      ref={rootRef}
+      className="overflow-x-clip w-full max-w-full bg-bg text-ink transition-colors duration-200"
+    >
       <Hero />
       <ActionOptions />
+      <BloodAndUpdatesSection updates={updates} updatesLoading={updatesLoading} />
+      <ArticlesRail items={articles} loading={articlesLoading} />
       <DoctorSpecialtyBanner />
-
-      <div className="mx-auto pb-24 max-w-7xl px-4 sm:px-6 flex flex-col lg:flex-row lg:items-start gap-12">
-        <ArticlesRail items={articles} loading={articlesLoading} />
-        <NationalRail items={updates} loading={updatesLoading} />
-      </div>
     </div>
   );
 }
