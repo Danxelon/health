@@ -6,7 +6,7 @@
  */
 
 import { DEMO_DOCTORS, DEMO_SPECIALTIES } from "@/lib/demo-data.ts";
-import { DEMO_MODE, mapPostgrestError, requireSupabase } from "@/lib/supabase.ts";
+import { DEMO_MODE, requireSupabase, toDomainError } from "@/lib/supabase.ts";
 import { getDoctorAuthorProfile } from "@/domain/doctor-profiles.ts";
 import type { DoctorCard, Specialty } from "@/domain/types.ts";
 
@@ -241,7 +241,7 @@ export async function fetchDoctors(filters: DoctorFilters = {}): Promise<DoctorC
         .select("*")
         .order("rating_avg", { ascending: false })
         .limit(100);
-      if (error) throw mapPostgrestError(error);
+      if (error) throw toDomainError(error);
       liveRows = ((data ?? []) as DoctorCard[]).map(normalizeDoctorCard);
     } catch {
       liveRows = [];

@@ -483,6 +483,8 @@ export default function Admin() {
       d.nameBn.includes(doctorSearch) ||
       d.bmdc.toLowerCase().includes(doctorSearch.toLowerCase()) ||
       d.specialty.toLowerCase().includes(doctorSearch.toLowerCase()) ||
+      d.specialtyBn.includes(doctorSearch) ||
+      d.degrees.toLowerCase().includes(doctorSearch.toLowerCase()) ||
       d.hospital.toLowerCase().includes(doctorSearch.toLowerCase())
   );
 
@@ -494,6 +496,8 @@ export default function Admin() {
       (a.excerptBn ? a.excerptBn.includes(articleSearch) : false) ||
       a.doctorName.toLowerCase().includes(articleSearch.toLowerCase()) ||
       (a.doctorNameBn ? a.doctorNameBn.includes(articleSearch) : false) ||
+      a.specialty.toLowerCase().includes(articleSearch.toLowerCase()) ||
+      (a.specialtyBn ? a.specialtyBn.includes(articleSearch) : false) ||
       a.bmdc.toLowerCase().includes(articleSearch.toLowerCase())
   );
 

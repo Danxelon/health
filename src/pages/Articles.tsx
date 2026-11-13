@@ -278,7 +278,10 @@ export default function Articles() {
   const visible = useMemo(() => {
     let list = articles;
     if (activeTag !== null) {
-      list = list.filter((article) => article.tags?.includes(activeTag));
+      const targetTag = activeTag.toLowerCase();
+      list = list.filter((article) =>
+        (article.tags ?? []).some((tag) => tag.toLowerCase() === targetTag)
+      );
     }
     const q = searchQuery.trim().toLowerCase();
     if (q) {
@@ -311,11 +314,7 @@ export default function Articles() {
           bmdc.includes(q) ||
           specEn.includes(q) ||
           specBn.includes(q) ||
-          tagList.includes(q) ||
-          "medilink".includes(q) ||
-          "মেডিলিঙ্ক".includes(q) ||
-          "free".includes(q) ||
-          "বিনামূল্যে".includes(q)
+          tagList.includes(q)
         );
       });
     }
@@ -532,14 +531,17 @@ export default function Articles() {
                 ? (isBn ? `"${searchQuery}" এর জন্য কোনো আর্টিকেল পাওয়া যায়নি` : `No articles found matching "${searchQuery}"`)
                 : t("articles.noResults")}
             </p>
-            {searchQuery && (
+            {(searchQuery || activeTag !== null) && (
               <button
                 type="button"
-                onClick={() => setSearchQuery("")}
+                onClick={() => {
+                  setSearchQuery("");
+                  setActiveTag(null);
+                }}
                 className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-surface px-4 text-xs font-semibold text-ink hover:bg-elevated cursor-pointer"
               >
                 <X className="h-3.5 w-3.5" />
-                <span>{isBn ? "অনুসন্ধান রিসেট করুন" : "Reset Search"}</span>
+                <span>{isBn ? "ফিল্টার রিসেট করুন" : "Reset Filters"}</span>
               </button>
             )}
             <div className="mt-6">

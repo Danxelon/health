@@ -234,7 +234,7 @@ export default function Donors() {
       }
     }
 
-    // 2. Division filter (e.g. "Rangpur")
+    // 2. Division filter (e.g. "Rangpur", including districts belonging to that division)
     if (selectedDivision) {
       const divLower = selectedDivision.toLowerCase();
       list = list.filter((d) => {
@@ -244,8 +244,15 @@ export default function Donors() {
         const addrBn = d.address_bn || "";
         const upEn = (d.upazila_en || "").toLowerCase();
         const distEn = (d.district_en || "").toLowerCase();
+        const resolvedUpazila = DEMO_UPAZILAS.find(
+          (u) =>
+            (upEn && u.name_en.toLowerCase() === upEn) ||
+            (distEn && u.district_en.toLowerCase() === distEn)
+        );
+        const resolvedDivEn = (resolvedUpazila?.division_en || "").toLowerCase();
         return (
           divEn === divLower ||
+          resolvedDivEn === divLower ||
           divBn.includes(selectedDivision) ||
           addrEn.includes(divLower) ||
           addrBn.includes(selectedDivision) ||
@@ -276,7 +283,7 @@ export default function Donors() {
       }
     }
 
-    // 4. Area Search Query filter (matches query in EN/BN against address, upazila, district, division)
+    // 4. Area Search Query filter (matches query in EN/BN against address, upazila, district, division, name)
     if (areaSearchQuery.trim()) {
       const q = areaSearchQuery.trim().toLowerCase();
       list = list.filter((d) => {
@@ -305,7 +312,12 @@ export default function Donors() {
       });
     }
 
-    // 5. User Sort preference
+    // 5. Availability filter ("Ready to Donate Now")
+    if (availabilityFilter === "ready") {
+      list = list.filter((d) => d.can_give_now);
+    }
+
+    // 6. User Sort preference
     if (sortBy === "ready") {
       list.sort((a, b) => (b.can_give_now ? 1 : 0) - (a.can_give_now ? 1 : 0));
     } else if (sortBy === "name") {
@@ -316,10 +328,10 @@ export default function Donors() {
       });
     }
 
-    // 6. Featured account pin for AB+
+    // 7. Featured account pin for AB+
     if (!selectedGroup) return list;
     return pinFeaturedDonor(list, selectedGroup);
-  }, [results, sortBy, lang, selectedGroup, matchMode, selectedDivision, selectedUpazila, areaSearchQuery]);
+  }, [results, sortBy, lang, selectedGroup, matchMode, selectedDivision, selectedUpazila, areaSearchQuery, availabilityFilter]);
 
   // Next nearest donor for decline recommendation in consent modal
   const nextConsentDonor = useMemo(() => {
@@ -469,7 +481,13 @@ export default function Donors() {
                       : "text-muted hover:text-ink"
                   }`}
                 >
-                  {lang === "bn" ? `✓ শুধুমাত্র ${selectedGroup || ""} (হুবহু মিল)` : `✓ Exact ${selectedGroup || ""} Only`}
+                  {selectedGroup
+                    ? lang === "bn"
+                      ? `✓ শুধুমাত্র ${selectedGroup} (হুবহু মিল)`
+                      : `✓ Exact ${selectedGroup} Only`
+                    : lang === "bn"
+                      ? "✓ হুবহু গ্রুপ মিল"
+                      : "✓ Exact Group Match"}
                 </button>
                 <button
                   type="button"
@@ -528,20 +546,6 @@ export default function Donors() {
                 </select>
               </div>
 
-              {/* Area Quick Search */}
-              <div>
-                <label className="block text-xs font-bold text-ink mb-1.5">
-                  {lang === "bn" ? "এলাকা বা জেলার নাম" : "Search Area / City"}
-                </label>
-                <input
-                  type="text"
-                  value={areaSearchQuery}
-                  onChange={(e) => setAreaSearchQuery(e.target.value)}
-                  placeholder={lang === "bn" ? "যেমন: রংপুর, মিরপুর, সিলেট..." : "e.g. Rangpur, Mirpur..."}
-                  className="w-full h-12 sm:h-11 rounded-xl border border-line bg-surface px-3 text-base sm:text-sm text-ink outline-none focus:border-brand font-medium placeholder:text-muted/60"
-                />
-              </div>
-
               {/* Area / Upazila Selection */}
               <div>
                 <label className="block text-xs font-bold text-ink mb-1.5">
@@ -566,17 +570,17 @@ export default function Donors() {
                 </select>
               </div>
 
-              {/* Name or Area Quick Search */}
+              {/* Unified Name, District or Area Quick Search */}
               <div>
                 <label className="block text-xs font-bold text-ink mb-1.5">
-                  {lang === "bn" ? "নাম বা এলাকা খুঁজুন" : "Search Name or Area"}
+                  {lang === "bn" ? "নাম, জেলা বা এলাকা খুঁজুন" : "Search Name, District or Area"}
                 </label>
                 <div className="relative">
                   <input
                     type="text"
                     value={areaSearchQuery}
                     onChange={(e) => setAreaSearchQuery(e.target.value)}
-                    placeholder={lang === "bn" ? "যেমন: তানভীর, ধানমন্ডি..." : "e.g. Tanvir, Dhanmondi..."}
+                    placeholder={lang === "bn" ? "যেমন: রংপুর, মিরপুর, তানভীর..." : "e.g. Rangpur, Mirpur, Tanvir..."}
                     className="w-full h-12 sm:h-11 rounded-xl border border-line bg-surface pl-3 pr-8 text-base sm:text-sm text-ink outline-none focus:border-brand font-medium placeholder:text-muted/60"
                   />
                   {areaSearchQuery && (
@@ -659,7 +663,19 @@ export default function Donors() {
             {/* Results header with sort options */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-line">
               <p className="text-sm text-muted font-semibold">
-                {matchMode === "exact" ? (
+                {!selectedGroup ? (
+                  lang === "bn" ? (
+                    <>
+                      সকল গ্রুপের রক্তদাতা পাওয়া গেছে:{" "}
+                      <span className="text-ink font-bold">{sortedDonors.length} জন</span>
+                    </>
+                  ) : (
+                    <>
+                      All blood group donors found:{" "}
+                      <span className="text-ink font-bold">{sortedDonors.length}</span>
+                    </>
+                  )
+                ) : matchMode === "exact" ? (
                   lang === "bn" ? (
                     <>
                       <span className="text-brand font-black">{selectedGroup}</span> হুবহু গ্রুপের রক্তদাতা পাওয়া গেছে:{" "}
@@ -735,13 +751,14 @@ export default function Donors() {
                 <p className="font-bold text-ink text-lg mb-2">{t("donors.noneTitle")}</p>
                 <p className="max-w-md mx-auto">{t("donors.noneBody")}</p>
                 <div className="mt-6 flex flex-wrap gap-3 justify-center">
-                  {(selectedDivision || selectedUpazila || areaSearchQuery) && (
+                  {(selectedDivision || selectedUpazila || areaSearchQuery || availabilityFilter !== "all") && (
                     <button
                       type="button"
                       onClick={() => {
                         setSelectedDivision("");
                         setSelectedUpazila("");
                         setAreaSearchQuery("");
+                        setAvailabilityFilter("all");
                       }}
                       className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-xs font-bold text-white hover:bg-brand-deep cursor-pointer"
                     >

@@ -139,6 +139,13 @@ describe("blood bank directory & emergency shortage radar domain", () => {
     });
     assert.ok(oNegShortage.length > 0);
     assert.ok(oNegShortage.every((b) => getStockStatus(b.stocks["O-"]) === "critical"));
+
+    const abNegAvailable = filterBloodBanks(VERIFIED_BLOOD_BANKS, {
+      bloodGroup: "AB-",
+      shortageOnly: false,
+    });
+    assert.ok(abNegAvailable.length > 0);
+    assert.ok(abNegAvailable.every((b) => (b.stocks["AB-"] ?? 0) > 0));
   });
 
   it("calculates emergency shortage radar metrics correctly", () => {

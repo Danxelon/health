@@ -37,12 +37,12 @@ const HelplinePage = lazy(() => import("@/pages/Helpline.tsx"));
 const LegalPage = lazy(() => import("@/pages/Legal.tsx"));
 const NotFoundPage = lazy(() => import("@/pages/NotFound.tsx"));
 
-/** Scrolls to the top on every navigation, so a deep link never lands mid-page. */
+/** Scrolls to the top on every route pathname change, without resetting scroll when filter query params change. */
 function ScrollToTop({ children }: { children: React.ReactNode }) {
-  const { pathname, search } = useLocation();
+  const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-  }, [pathname, search]);
+  }, [pathname]);
   return <>{children}</>;
 }
 

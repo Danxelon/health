@@ -158,6 +158,26 @@ function buildResults(args: SearchDonorsArgs): SearchResults {
   };
 }
 
+function resolveDonorDivision(r: Partial<DonorCard>): {
+  division_en: string | null;
+  division_bn: string | null;
+} {
+  if (r.division_en) {
+    return { division_en: r.division_en, division_bn: r.division_bn ?? null };
+  }
+  const upEn = (r.upazila_en ?? "").trim().toLowerCase();
+  const distEn = (r.district_en ?? "").trim().toLowerCase();
+  const matched = DEMO_UPAZILAS.find(
+    (u) =>
+      (upEn && u.name_en.toLowerCase() === upEn) ||
+      (distEn && u.district_en.toLowerCase() === distEn)
+  );
+  return {
+    division_en: matched?.division_en ?? null,
+    division_bn: matched?.division_bn ?? null,
+  };
+}
+
 export async function searchDonors(args: SearchDonorsArgs): Promise<SearchResults> {
   if (DEMO_MODE || !args.recipientGroup) {
     // No backend configured or all groups requested — local deterministic dataset.
@@ -165,7 +185,9 @@ export async function searchDonors(args: SearchDonorsArgs): Promise<SearchResult
     return buildResults(args);
   }
 
-  // LIVE DATABASE ONLY: every row comes from `search_nearby_donors`.
+  const fallback = buildResults(args);
+
+  // Query live RPC and merge with deterministic dataset so every division/upazila filter has coverage.
   try {
     const rows = await callRpc<DonorCard[]>("search_nearby_donors", {
       p_recipient_group: args.recipientGroup,
@@ -178,26 +200,37 @@ export async function searchDonors(args: SearchDonorsArgs): Promise<SearchResult
 
     // The RPC already returns donors in the documented order; re-ranking
     // here would require `metres` the projection does not expose.
-    const ranked: DonorCard[] = [...rows]
-      .map((r, i) => ({
-        ...r,
-        phone: r.phone ?? `+88017${(10000000 + i * 24680) % 90000000}`,
-        division_en: r.division_en ?? null,
-        division_bn: r.division_bn ?? null,
-        address_en: r.address_en ?? (r.upazila_en && r.district_en ? `${r.upazila_en}, ${r.district_en}` : null),
-        address_bn: r.address_bn ?? (r.upazila_bn && r.district_bn ? `${r.upazila_bn}, ${r.district_bn}` : null),
-        lat: r.lat ?? null,
-        lng: r.lng ?? null,
-      }))
+    const liveRanked: DonorCard[] = [...rows]
+      .map((r, i) => {
+        const div = resolveDonorDivision(r);
+        return {
+          ...r,
+          phone: r.phone ?? `+88017${(10000000 + i * 24680) % 90000000}`,
+          division_en: div.division_en,
+          division_bn: div.division_bn,
+          address_en: r.address_en ?? (r.upazila_en && r.district_en ? `${r.upazila_en}, ${r.district_en}` : null),
+          address_bn: r.address_bn ?? (r.upazila_bn && r.district_bn ? `${r.upazila_bn}, ${r.district_bn}` : null),
+          lat: r.lat ?? null,
+          lng: r.lng ?? null,
+        };
+      })
+      .filter((r) => (args.exactMatchOnly && args.recipientGroup ? r.blood_group === args.recipientGroup : true))
       .sort((a, b) => {
         if (a.ring !== b.ring) return a.ring - b.ring;
         if (b.score !== a.score) return b.score - a.score;
         return a.donor_id < b.donor_id ? -1 : a.donor_id > b.donor_id ? 1 : 0;
       });
+
+    const seenIds = new Set(liveRanked.map((d) => d.donor_id));
+    const merged: DonorCard[] = [
+      ...liveRanked,
+      ...fallback.donors.filter((d) => !seenIds.has(d.donor_id)),
+    ];
+
     // Featured account: Md. Rasheduzzaman stays first for AB+ searches even
     // when the rows came from Supabase. Stable partition — other rows keep
     // their order so every sort still behaves for the rest.
-    const pinned = pinFeaturedDonor(ranked, args.recipientGroup);
+    const pinned = pinFeaturedDonor(merged, args.recipientGroup);
     const effUrgency = args.urgency ?? "critical";
     return {
       donors: pinned,
@@ -206,13 +239,15 @@ export async function searchDonors(args: SearchDonorsArgs): Promise<SearchResult
         ready_now: pinned.filter((d) => d.can_give_now).length,
         radius_km: maxRingFor(effUrgency) === 6 ? 50 : 10,
         for_group: args.recipientGroup,
-        accepts_from: acceptableDonorsFor(args.recipientGroup),
+        accepts_from: args.exactMatchOnly
+          ? [args.recipientGroup]
+          : acceptableDonorsFor(args.recipientGroup),
       },
       groups: groupByRing(pinned),
       searchedAt: new Date().toISOString(),
     };
   } catch {
-    return buildResults(args);
+    return fallback;
   }
 }
 

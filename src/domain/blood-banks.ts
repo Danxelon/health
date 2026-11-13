@@ -984,6 +984,8 @@ export function filterBloodBanks<T extends BloodBank>(
       const units = bank.stocks[bloodGroup] ?? 0;
       if (shortageOnly) {
         if (getStockStatus(units) !== "critical") return false;
+      } else {
+        if (units <= 0) return false;
       }
     } else if (shortageOnly) {
       // Any group in critical shortage

@@ -9,20 +9,42 @@
  */
 
 import type { ArticleFeedItem } from "@/domain/types.ts";
-import { requireSupabase, toDomainError } from "@/lib/supabase.ts";
+import { DEMO_ARTICLES, DEMO_ARTICLE_BODIES } from "@/lib/demo-data.ts";
+import { DEMO_MODE, requireSupabase, toDomainError } from "@/lib/supabase.ts";
 
 export interface ArticleFeedArgs {
   tag?: string | null;
 }
 
+function filterByTag(items: readonly ArticleFeedItem[], tag?: string | null): ArticleFeedItem[] {
+  if (!tag) return [...items];
+  const tagLower = tag.trim().toLowerCase();
+  return items.filter((item) => (item.tags ?? []).some((t) => t.toLowerCase() === tagLower));
+}
+
 export async function fetchArticles(args: ArticleFeedArgs = {}): Promise<ArticleFeedItem[]> {
-  const client = requireSupabase();
-  const base = client.from("article_feed").select("*");
-  const query = args.tag ? base.contains("tags", [args.tag]) : base;
-  const { data, error } = await query.order("published_at", { ascending: false, nullsFirst: false });
-  if (error) throw toDomainError(error);
-  const dbArticles = (data as ArticleFeedItem[] | null) ?? [];
-  return dbArticles.sort((a, b) => ((a.published_at ?? "") < (b.published_at ?? "") ? 1 : -1));
+  if (DEMO_MODE) {
+    return filterByTag(DEMO_ARTICLES, args.tag).sort((a, b) =>
+      (a.published_at ?? "") < (b.published_at ?? "") ? 1 : -1
+    );
+  }
+
+  try {
+    const client = requireSupabase();
+    const base = client.from("article_feed").select("*");
+    const query = args.tag ? base.contains("tags", [args.tag]) : base;
+    const { data, error } = await query.order("published_at", { ascending: false, nullsFirst: false });
+    if (error) throw toDomainError(error);
+    const dbArticles = (data as ArticleFeedItem[] | null) ?? [];
+    if (dbArticles.length === 0) {
+      return filterByTag(DEMO_ARTICLES, args.tag);
+    }
+    return dbArticles.sort((a, b) => ((a.published_at ?? "") < (b.published_at ?? "") ? 1 : -1));
+  } catch {
+    return filterByTag(DEMO_ARTICLES, args.tag).sort((a, b) =>
+      (a.published_at ?? "") < (b.published_at ?? "") ? 1 : -1
+    );
+  }
 }
 
 export interface ArticleDetail {
@@ -32,16 +54,35 @@ export interface ArticleDetail {
 }
 
 export async function fetchArticle(slug: string): Promise<ArticleDetail | null> {
-  const client = requireSupabase();
-  const { data, error } = await client
-    .from("article_feed")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle();
-  if (error) throw toDomainError(error);
-  const item = data as ArticleFeedItem | null;
-  if (!item) return null;
-  return { item, bodyEn: item.excerpt ?? "", bodyBn: item.excerpt_bn ?? "" };
+  const fallbackDemo = (): ArticleDetail | null => {
+    const demoItem = DEMO_ARTICLES.find((a) => a.slug === slug) ?? null;
+    if (!demoItem) return null;
+    const body = DEMO_ARTICLE_BODIES[slug];
+    return {
+      item: demoItem,
+      bodyEn: body?.body_en ?? demoItem.excerpt ?? "",
+      bodyBn: body?.body_bn ?? demoItem.excerpt_bn ?? "",
+    };
+  };
+
+  if (DEMO_MODE) {
+    return fallbackDemo();
+  }
+
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from("article_feed")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (error) throw toDomainError(error);
+    const item = data as ArticleFeedItem | null;
+    if (!item) return fallbackDemo();
+    return { item, bodyEn: item.excerpt ?? "", bodyBn: item.excerpt_bn ?? "" };
+  } catch {
+    return fallbackDemo();
+  }
 }
 
 export interface PublishArticleInput {

@@ -142,7 +142,7 @@ export async function fetchAdminDoctors(): Promise<{
   };
   const all = rows.map(map).filter((d) => d.id);
   return {
-    pending: all.filter((d) => d.status === "pending"),
+    pending: all.filter((d) => d.status === "pending" || d.status === "rejected"),
     verified: all.filter((d) => d.status === "verified"),
   };
 }
